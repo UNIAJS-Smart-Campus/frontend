@@ -1,35 +1,46 @@
-import { NavLink } from "react-router-dom";
 import "./Navbar.css";
 
 function Navbar() {
     return (
-        <nav className="navbar">
+        <header className="navbar">
+            <div className="navbar__left">
+                <button className="navbar__menu">
+                    ☰
+                </button>
 
-            <h2 className="navbar__title">
-                UAJS Smart Campus
-            </h2>
-
-            <div className="navbar__menu">
-
-                <NavLink to="/" className="navbar__item">
-                    Dashboard
-                </NavLink>
-
-                <NavLink to="/solicitudes" className="navbar__item">
-                    Solicitudes
-                </NavLink>
-
-                <NavLink to="/reservas" className="navbar__item">
-                    Reservas
-                </NavLink>
-
-                <NavLink to="/eventos" className="navbar__item">
-                    Eventos
-                </NavLink>
-
+                <h1 className="navbar__title">
+                    UAJS Smart Campus
+                </h1>
             </div>
 
-        </nav>
+            <div className="navbar__right">
+
+                <button className="navbar__notification">
+                    🔔
+                </button>
+
+                <div className="navbar__profile">
+                    <div className="navbar__avatar">
+                        N
+                    </div>
+
+                    <div className="navbar__user">
+                        <span className="navbar__name">
+                            Natalia
+                        </span>
+
+                        <span className="navbar__role">
+                            Administrador
+                        </span>
+                    </div>
+
+                    <button className="navbar__dropdown">
+                        ▾
+                    </button>
+                </div>
+
+            </div>
+        </header>
     );
 }
 
