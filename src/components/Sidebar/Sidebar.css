@@ -11,6 +11,33 @@
 
     display: flex;
     flex-direction: column;
+
+    transition: width 0.3s ease;
+    overflow: hidden;
+}
+
+.sidebar--collapsed {
+    width: 70px;
+}
+
+.sidebar--collapsed .sidebar__title {
+    padding: 20px 0;
+    text-align: center;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar--collapsed .sidebar__menu {
+    padding: 20px 8px;
+}
+
+.sidebar--collapsed .sidebar__item {
+    padding: 12px 0;
+    text-align: center;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .sidebar__title {

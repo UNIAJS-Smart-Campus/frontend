@@ -1,23 +1,39 @@
 const menuItems = [
     {
         name: "Dashboard",
-        path: "/",
-        icon: "🏠"
+        path: "/dashboard"
     },
     {
         name: "Solicitudes",
-        path: "/solicitudes",
-        icon: "📋"
+        path: "/solicitudes"
     },
     {
         name: "Reservas",
-        path: "/reservas",
-        icon: "📅"
+        path: "/reservas"
+    },
+    {
+        name: "Recursos",
+        path: "/recursos"
     },
     {
         name: "Eventos",
-        path: "/eventos",
-        icon: "🎓"
+        path: "/eventos"
+    },
+    {
+        name: "Notificaciones",
+        path: "/notificaciones"
+    },
+    {
+        name: "PQRS",
+        path: "/pqrs"
+    },
+    {
+        name: "Perfil",
+        path: "/perfil"
+    },
+    {
+        name: "Configuración",
+        path: "/configuracion"
     }
 ];
 

@@ -1,10 +1,10 @@
 import "./Navbar.css";
 
-function Navbar() {
+function Navbar({ onToggle }) {
     return (
         <header className="navbar">
             <div className="navbar__left">
-                <button className="navbar__menu">
+                <button className="navbar__menu" onClick={onToggle}>
                     ☰
                 </button>
 
