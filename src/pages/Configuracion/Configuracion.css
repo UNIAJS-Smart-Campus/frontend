@@ -1,0 +1,143 @@
+.configuracion {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.configuracion__header {
+    text-align: center;
+}
+
+.configuracion__title {
+    margin: 0 0 8px;
+
+    font-family: var(--font-heading);
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.configuracion__subtitle {
+    margin: 0;
+
+    font-size: 15px;
+    color: var(--color-text-muted);
+}
+
+.configuracion__card {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+
+    padding: 24px;
+
+    box-shadow: var(--shadow-sm);
+}
+
+.configuracion__card-title {
+    margin: 0;
+
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.configuracion__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 18px;
+}
+
+.configuracion__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.configuracion__label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-text-faint);
+}
+
+.configuracion__value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+/* Lista de toggles */
+.configuracion__list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.configuracion__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+}
+
+.configuracion__toggle-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.configuracion__switch {
+    width: 46px;
+    height: 26px;
+
+    border: none;
+    border-radius: 999px;
+
+    background-color: var(--color-border-strong);
+
+    cursor: pointer;
+
+    position: relative;
+
+    transition: background-color 0.2s ease;
+}
+
+.configuracion__switch--on {
+    background-color: var(--color-accent);
+}
+
+.configuracion__switch-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+
+    width: 20px;
+    height: 20px;
+
+    border-radius: 50%;
+    background-color: var(--color-surface);
+
+    box-shadow: var(--shadow-sm);
+
+    transition: left 0.2s ease;
+}
+
+.configuracion__switch--on .configuracion__switch-knob {
+    left: 23px;
+}
+
+@media (max-width: 768px) {
+    .configuracion__title {
+        font-size: 24px;
+    }
+}

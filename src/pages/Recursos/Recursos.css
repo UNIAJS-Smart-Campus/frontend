@@ -1,0 +1,218 @@
+.recursos {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.recursos__header {
+    text-align: center;
+}
+
+.recursos__title {
+    margin: 0 0 8px;
+
+    font-family: var(--font-heading);
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.recursos__subtitle {
+    margin: 0;
+
+    font-size: 15px;
+    color: var(--color-text-muted);
+}
+
+/* Estadísticas */
+.recursos__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.recursos__stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+
+    padding: 18px;
+
+    box-shadow: var(--shadow-sm);
+}
+
+.recursos__stat-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.recursos__stat-label {
+    font-size: 13px;
+    color: var(--color-text-muted);
+}
+
+/* Filtros */
+.recursos__filters {
+    display: flex;
+    gap: 12px;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-wrap: wrap;
+}
+
+.recursos__search {
+    width: 100%;
+    max-width: 420px;
+}
+
+.recursos__select {
+    padding: 12px 16px;
+
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--color-text);
+
+    background-color: var(--color-input-bg);
+
+    cursor: pointer;
+}
+
+/* Tabla */
+.recursos__table {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+
+    overflow: hidden;
+
+    box-shadow: var(--shadow-sm);
+}
+
+.recursos__row {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr 1.5fr 1fr 1fr;
+    gap: 12px;
+
+    padding: 14px 20px;
+
+    align-items: center;
+}
+
+.recursos__row:not(:last-child) {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.recursos__row--header {
+    background-color: var(--color-surface-alt);
+}
+
+.recursos__row--header .recursos__cell {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-text-faint);
+}
+
+.recursos__cell {
+    font-size: 14px;
+    color: var(--color-text);
+}
+
+.recursos__cell--code {
+    font-weight: 700;
+    color: var(--color-primary-600);
+}
+
+.recursos__cell--name {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+/* Badges de estado */
+.recursos__estado {
+    display: inline-block;
+
+    padding: 3px 10px;
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.recursos__estado--activo {
+    background-color: var(--color-success-100);
+    color: var(--color-success);
+}
+
+.recursos__estado--inactivo {
+    background-color: var(--color-hover);
+    color: var(--color-text-muted);
+}
+
+.recursos__estado--en-mantenimiento {
+    background-color: var(--color-warning-100);
+    color: var(--color-warning);
+}
+
+/* Disponibilidad */
+.recursos__disp {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.recursos__disp--si {
+    color: var(--color-success);
+}
+
+.recursos__disp--no {
+    color: var(--color-danger);
+}
+
+.recursos__empty {
+    text-align: center;
+
+    color: var(--color-text-muted);
+    font-size: 15px;
+
+    padding: 40px 0;
+}
+
+/* Formulario */
+.recursos__form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.recursos__form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.recursos__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+@media (max-width: 768px) {
+    .recursos__row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .recursos__title {
+        font-size: 24px;
+    }
+}

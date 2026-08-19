@@ -1,44 +1,161 @@
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import notificaciones from "../../utils/notificaciones";
+import { getModuleName } from "../../utils/menu";
+import useAuth from "../../context/useAuth";
 import "./Navbar.css";
 
+const THEME_KEY = "uajs_theme";
+
+function getInitialTheme() {
+    try {
+        const guardado = localStorage.getItem(THEME_KEY);
+        if (guardado === "dark" || guardado === "light") {
+            return guardado;
+        }
+    } catch {
+        // si localStorage no está disponible se ignora
+    }
+
+    try {
+        if (
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches
+        ) {
+            return "dark";
+        }
+    } catch {
+        // si matchMedia no está disponible se ignora
+    }
+
+    return "light";
+}
+
 function Navbar({ onToggle }) {
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [theme, setTheme] = useState(getInitialTheme);
+    const dropdownRef = useRef(null);
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { user, logout } = useAuth();
+
+    const moduleName = getModuleName(location.pathname);
+    const noLeidas = notificaciones.filter((item) => !item.leida).length;
+
+    useEffect(() => {
+        document.documentElement.setAttribute("data-theme", theme);
+
+        try {
+            localStorage.setItem(THEME_KEY, theme);
+        } catch {
+            // si localStorage no está disponible se ignora
+        }
+    }, [theme]);
+
+    const toggleTheme = () => {
+        setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target)
+            ) {
+                setDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
+    const handleLogout = () => {
+        setDropdownOpen(false);
+        logout();
+        navigate("/login");
+    };
+
     return (
         <header className="navbar">
             <div className="navbar__left">
-                <button className="navbar__menu" onClick={onToggle}>
+                <button className="navbar__menu" onClick={onToggle} aria-label="Alternar menú">
                     ☰
                 </button>
 
-                <h1 className="navbar__title">
-                    UAJS Smart Campus
-                </h1>
+                <h1 className="navbar__title">{moduleName}</h1>
             </div>
 
             <div className="navbar__right">
-
-                <button className="navbar__notification">
-                    🔔
+                <button
+                    className="navbar__theme"
+                    onClick={toggleTheme}
+                    aria-label="Cambiar tema"
+                    title={theme === "dark" ? "Modo claro" : "Modo oscuro"}
+                >
+                    {theme === "dark" ? "☀️" : "🌙"}
                 </button>
 
-                <div className="navbar__profile">
+                <Link to="/notificaciones" className="navbar__notification">
+                    🔔
+                    {noLeidas > 0 && (
+                        <span className="navbar__badge">{noLeidas}</span>
+                    )}
+                </Link>
+
+                <div
+                    className="navbar__profile"
+                    ref={dropdownRef}
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                >
                     <div className="navbar__avatar">
-                        N
+                        {user?.nombre?.charAt(0) ?? "U"}
                     </div>
 
                     <div className="navbar__user">
-                        <span className="navbar__name">
-                            Natalia
-                        </span>
-
-                        <span className="navbar__role">
-                            Administrador
-                        </span>
+                        <span className="navbar__name">{user?.nombre}</span>
+                        <span className="navbar__role">{user?.rol}</span>
                     </div>
 
-                    <button className="navbar__dropdown">
+                    <button className="navbar__dropdown" aria-label="Opciones de perfil">
                         ▾
                     </button>
-                </div>
 
+                    {dropdownOpen && (
+                        <div className="navbar__menu-dropdown">
+                            <div className="navbar__dropdown-user">
+                                <strong>{user?.nombre}</strong>
+                                <span>{user?.correo}</span>
+                            </div>
+
+                            <Link
+                                to="/perfil"
+                                className="navbar__dropdown-item"
+                                onClick={() => setDropdownOpen(false)}
+                            >
+                                👤 Ver perfil
+                            </Link>
+
+                            <Link
+                                to="/configuracion"
+                                className="navbar__dropdown-item"
+                                onClick={() => setDropdownOpen(false)}
+                            >
+                                ⚙️ Configuración
+                            </Link>
+
+                            <button
+                                className="navbar__dropdown-item navbar__dropdown-item--logout"
+                                onClick={handleLogout}
+                            >
+                                🚪 Cerrar sesión
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
         </header>
     );

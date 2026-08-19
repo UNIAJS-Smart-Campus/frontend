@@ -1,0 +1,216 @@
+.solicitud-detalle {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.solicitud-detalle__back {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-primary-600);
+
+    text-decoration: none;
+}
+
+.solicitud-detalle__back:hover {
+    text-decoration: underline;
+}
+
+.solicitud-detalle__header {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+
+    padding: 28px;
+
+    box-shadow: var(--shadow-sm);
+}
+
+.solicitud-detalle__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.solicitud-detalle__numero {
+    margin: 0;
+
+    font-family: var(--font-heading);
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--color-primary-600);
+}
+
+.solicitud-detalle__tipo {
+    margin: 14px 0 8px;
+
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.solicitud-detalle__descripcion {
+    margin: 0 0 20px;
+
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+}
+
+.solicitud-detalle__meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+
+    padding-top: 20px;
+    border-top: 1px solid var(--color-border);
+}
+
+.solicitud-detalle__meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.solicitud-detalle__meta-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-text-faint);
+}
+
+.solicitud-detalle__meta-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+/* Timeline */
+.solicitud-detalle__timeline {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+
+    padding: 28px;
+
+    box-shadow: var(--shadow-sm);
+}
+
+.solicitud-detalle__timeline-title {
+    margin: 0 0 24px;
+
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.solicitud-detalle__steps {
+    list-style: none;
+
+    margin: 0;
+    padding: 0;
+
+    position: relative;
+}
+
+.solicitud-detalle__step {
+    display: flex;
+    gap: 16px;
+
+    padding-bottom: 24px;
+
+    position: relative;
+}
+
+.solicitud-detalle__step:not(:last-child)::before {
+    content: "";
+
+    position: absolute;
+    left: 15px;
+    top: 34px;
+    bottom: 0;
+
+    width: 2px;
+    background-color: var(--color-border);
+}
+
+.solicitud-detalle__step--done:not(:last-child)::before {
+    background-color: var(--color-success);
+}
+
+.solicitud-detalle__step-marker {
+    width: 32px;
+    height: 32px;
+
+    border-radius: 50%;
+
+    background-color: var(--color-hover);
+    border: 2px solid var(--color-border-strong);
+
+    color: var(--color-text);
+    font-size: 14px;
+    font-weight: 700;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+}
+
+.solicitud-detalle__step--done .solicitud-detalle__step-marker {
+    background-color: var(--color-success);
+    border-color: var(--color-success);
+    color: #ffffff;
+}
+
+.solicitud-detalle__step--current .solicitud-detalle__step-marker {
+    background-color: var(--color-primary-600);
+    border-color: var(--color-primary-600);
+    color: #ffffff;
+
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+}
+
+.solicitud-detalle__step-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    padding-top: 4px;
+}
+
+.solicitud-detalle__step-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.solicitud-detalle__step--current .solicitud-detalle__step-name {
+    color: var(--color-primary-600);
+}
+
+.solicitud-detalle__step--done .solicitud-detalle__step-name {
+    color: var(--color-success);
+}
+
+.solicitud-detalle__step-date {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-faint);
+}
+
+.solicitud-detalle__step-detail {
+    margin: 0;
+
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+}

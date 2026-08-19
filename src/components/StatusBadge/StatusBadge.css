@@ -1,0 +1,42 @@
+.status-badge {
+    display: inline-block;
+
+    padding: 4px 12px;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.status-badge--registrada {
+    background-color: var(--color-surface-alt);
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+}
+
+.status-badge--en-revision {
+    background-color: var(--color-primary-100);
+    color: var(--color-primary-600);
+}
+
+.status-badge--asignada {
+    background-color: var(--color-primary-100);
+    color: var(--color-primary-400);
+}
+
+.status-badge--en-proceso {
+    background-color: var(--color-warning-100);
+    color: var(--color-warning);
+}
+
+.status-badge--resuelta {
+    background-color: var(--color-success-100);
+    color: var(--color-success);
+}
+
+.status-badge--cerrada {
+    background-color: var(--color-surface-alt);
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+}

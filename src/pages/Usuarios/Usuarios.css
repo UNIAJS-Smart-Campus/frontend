@@ -1,0 +1,241 @@
+.usuarios {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.usuarios__header {
+    text-align: center;
+}
+
+.usuarios__title {
+    margin: 0 0 8px;
+
+    font-family: var(--font-heading);
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.usuarios__subtitle {
+    margin: 0;
+
+    font-size: 15px;
+    color: var(--color-text-muted);
+}
+
+/* Estadísticas */
+.usuarios__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.usuarios__stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+
+    padding: 18px;
+
+    box-shadow: var(--shadow-sm);
+}
+
+.usuarios__stat-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.usuarios__stat-label {
+    font-size: 13px;
+    color: var(--color-text-muted);
+}
+
+/* Toolbar */
+.usuarios__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.usuarios__count {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text-muted);
+}
+
+/* Tabla */
+.usuarios__table {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+
+    overflow: hidden;
+
+    box-shadow: var(--shadow-sm);
+}
+
+.usuarios__row {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr 1.8fr 1fr 1fr 1.4fr;
+    gap: 12px;
+
+    padding: 14px 20px;
+
+    align-items: center;
+}
+
+.usuarios__row:not(:last-child) {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.usuarios__row--header {
+    background-color: var(--color-surface-alt);
+}
+
+.usuarios__row--header .usuarios__cell {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-text-faint);
+}
+
+.usuarios__cell {
+    font-size: 14px;
+    color: var(--color-text);
+}
+
+.usuarios__cell--code {
+    font-weight: 700;
+    color: var(--color-primary-600);
+}
+
+.usuarios__cell--name {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.usuarios__actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Badges de rol */
+.usuarios__rol {
+    display: inline-block;
+
+    padding: 3px 10px;
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.usuarios__rol--administrador {
+    background-color: var(--color-primary-100);
+    color: var(--color-primary-600);
+}
+
+.usuarios__rol--funcionario {
+    background-color: var(--color-warning-100);
+    color: var(--color-warning);
+}
+
+.usuarios__rol--profesor {
+    background-color: var(--color-success-100);
+    color: var(--color-success);
+}
+
+.usuarios__rol--estudiante {
+    background-color: var(--color-hover);
+    color: var(--color-text-muted);
+}
+
+/* Badges de estado */
+.usuarios__estado {
+    display: inline-block;
+
+    padding: 3px 10px;
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.usuarios__estado--activo {
+    background-color: var(--color-success-100);
+    color: var(--color-success);
+}
+
+.usuarios__estado--inactivo {
+    background-color: var(--color-hover);
+    color: var(--color-text-muted);
+}
+
+/* Formulario */
+.usuarios__form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.usuarios__form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.usuarios__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.usuarios__select {
+    padding: 12px 16px;
+
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--color-text);
+
+    background-color: var(--color-input-bg);
+
+    cursor: pointer;
+}
+
+.usuarios__error {
+    margin: 0;
+
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-danger);
+
+    background-color: var(--color-danger-100);
+    border: 1px solid var(--color-danger);
+    border-radius: var(--radius-sm);
+
+    padding: 10px 14px;
+}
+
+@media (max-width: 768px) {
+    .usuarios__row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .usuarios__title {
+        font-size: 24px;
+    }
+}

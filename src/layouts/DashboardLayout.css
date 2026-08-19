@@ -1,6 +1,8 @@
 .app {
     min-height: 100vh;
-    background-color: #f5f6fa;
+    background-color: var(--color-bg);
+
+    transition: background-color 0.3s ease;
 }
 
 .app__main {
@@ -22,4 +24,14 @@
     padding: 24px;
 
     box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .app__main {
+        margin-left: 70px;
+    }
+
+    .app__content {
+        padding: 16px;
+    }
 }
