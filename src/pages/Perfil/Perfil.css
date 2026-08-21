@@ -1,8 +1,7 @@
 .perfil {
     display: flex;
     flex-direction: column;
-    gap: 24px;
-
+    gap: var(--space-6);
     max-width: 800px;
     margin: 0 auto;
 }
@@ -12,70 +11,63 @@
 }
 
 .perfil__title {
-    margin: 0 0 8px;
-
+    margin: 0 0 var(--space-2);
     font-family: var(--font-heading);
-    font-size: 28px;
+    font-size: clamp(24px, 4vw, 30px);
     font-weight: 800;
     color: var(--color-text);
+    line-height: 1.2;
 }
 
 .perfil__subtitle {
     margin: 0;
-
     font-size: 15px;
     color: var(--color-text-muted);
+    line-height: 1.6;
 }
 
 .perfil__card {
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: 14px;
-
-    padding: 28px;
-
+    border-radius: var(--radius);
+    padding: var(--space-6);
     box-shadow: var(--shadow-sm);
 }
 
 .perfil__identity {
     display: flex;
     align-items: center;
-    gap: 18px;
-
-    padding-bottom: 24px;
-    margin-bottom: 24px;
-
+    gap: var(--space-5);
+    padding-bottom: var(--space-5);
+    margin-bottom: var(--space-5);
     border-bottom: 1px solid var(--color-border);
 }
 
 .perfil__avatar {
     width: 72px;
     height: 72px;
-
     border-radius: 50%;
     background: linear-gradient(135deg, var(--color-primary), var(--color-primary-600));
     color: #ffffff;
-
     font-family: var(--font-heading);
     font-size: 30px;
     font-weight: 800;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
+    border: 3px solid var(--color-accent);
     box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
 }
 
 .perfil__identity-info {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--space-2);
 }
 
 .perfil__name {
     margin: 0;
-
     font-family: var(--font-heading);
     font-size: 22px;
     font-weight: 800;
@@ -83,35 +75,33 @@
 }
 
 .perfil__role {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--color-primary-600);
-
     background-color: var(--color-primary-100);
-
-    padding: 4px 12px;
-    border-radius: 999px;
-
+    padding: 3px 12px;
+    border-radius: var(--radius-full);
     align-self: flex-start;
 }
 
 .perfil__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
+    gap: var(--space-5);
 }
 
 .perfil__field {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--space-1);
 }
 
 .perfil__label {
     font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
-    color: var(--color-text-faint);
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
 }
 
 .perfil__value {
@@ -123,5 +113,14 @@
 @media (max-width: 768px) {
     .perfil__title {
         font-size: 24px;
+    }
+
+    .perfil__identity {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .perfil__role {
+        align-self: center;
     }
 }

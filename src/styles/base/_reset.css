@@ -1,0 +1,88 @@
+.reset-box-sizing,
+.reset-box-sizing *,
+.reset-box-sizing *::before,
+.reset-box-sizing *::after {
+    box-sizing: border-box;
+}
+
+.reset-margin,
+.reset-margin h1,
+.reset-margin h2,
+.reset-margin h3,
+.reset-margin h4,
+.reset-margin h5,
+.reset-margin h6,
+.reset-margin p,
+.reset-margin ul,
+.reset-margin ol,
+.reset-margin li,
+.reset-margin dl,
+.reset-margin dt,
+.reset-margin dd,
+.reset-margin blockquote,
+.reset-margin figure,
+.reset-margin fieldset,
+.reset-margin legend {
+    margin: 0;
+}
+
+.reset-padding,
+.reset-padding ul,
+.reset-padding ol,
+.reset-padding li {
+    padding: 0;
+}
+
+.reset-list {
+    list-style: none;
+}
+
+.reset-button {
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.reset-input {
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+}
+
+.reset-anchor {
+    text-decoration: none;
+    color: inherit;
+}
+
+.reset-image {
+    display: block;
+    max-width: 100%;
+}
+
+.reset-table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.reset-fieldset {
+    border: none;
+    min-width: 0;
+}
+
+.reset-textarea {
+    resize: vertical;
+    font: inherit;
+    color: inherit;
+}
+
+.reset-select {
+    appearance: none;
+    -webkit-appearance: none;
+    font: inherit;
+    color: inherit;
+}

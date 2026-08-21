@@ -1,0 +1,58 @@
+/* ==========================================
+   Page: Events
+   BEM: .events, .events--modifier, .events__element
+   ========================================== */
+
+.events {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.events__header {
+    text-align: center;
+    padding: var(--space-4) 0;
+}
+
+.events__title {
+    margin: 0 0 var(--space-2);
+    font-family: var(--font-heading);
+    font-size: clamp(24px, 4vw, 32px);
+    font-weight: 800;
+    color: var(--color-text);
+    line-height: 1.2;
+}
+
+.events__subtitle {
+    margin: 0;
+    font-size: 15px;
+    color: var(--color-text-muted);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+}
+
+.events__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-5);
+}
+
+.events__empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 15px;
+    padding: var(--space-12) 0;
+}
+
+@media (max-width: 768px) {
+    .events__title {
+        font-size: 24px;
+    }
+
+    .events__grid {
+        grid-template-columns: 1fr;
+    }
+}
