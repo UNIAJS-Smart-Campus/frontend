@@ -4,26 +4,6 @@
     gap: 24px;
 }
 
-.reservas__header {
-    text-align: center;
-}
-
-.reservas__title {
-    margin: 0 0 8px;
-
-    font-family: var(--font-heading);
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--color-text);
-}
-
-.reservas__subtitle {
-    margin: 0;
-
-    font-size: 15px;
-    color: var(--color-text-muted);
-}
-
 /* Búsqueda */
 .reservas__search {
     max-width: 560px;
@@ -69,52 +49,7 @@
     color: #ffffff;
 }
 
-/* Grid de recursos */
-.reservas__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 20px;
-}
-
-.reservas__card {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-
-    padding: 20px;
-
-    box-shadow: var(--shadow-sm);
-
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.reservas__card:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-4px);
-}
-
-.reservas__card-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.reservas__tipo {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--color-primary-600);
-
-    background-color: var(--color-primary-100);
-
-    padding: 4px 10px;
-    border-radius: 999px;
-}
-
+/* Disponibilidad (usado dentro de DataTable) */
 .reservas__disponible {
     font-size: 12px;
     font-weight: 700;
@@ -125,30 +60,6 @@
     font-size: 12px;
     font-weight: 700;
     color: var(--color-danger);
-}
-
-.reservas__nombre {
-    margin: 0;
-
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--color-text);
-}
-
-.reservas__capacidad {
-    margin: 0;
-
-    font-size: 14px;
-    color: var(--color-text-muted);
-}
-
-.reservas__empty {
-    text-align: center;
-
-    color: var(--color-text-muted);
-    font-size: 15px;
-
-    padding: 40px 0;
 }
 
 /* Mis reservas */
@@ -219,6 +130,16 @@
     gap: 12px;
 }
 
+.reservas__error {
+    display: block;
+
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-danger);
+
+    margin-top: 4px;
+}
+
 .reservas__confirm {
     display: flex;
     flex-direction: column;
@@ -239,6 +160,29 @@
     border-radius: var(--radius-sm);
 
     padding: 14px;
+}
+
+.reservas__alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 12px 14px;
+
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.reservas__alert--danger {
+    color: var(--color-danger);
+    background-color: var(--color-danger-100);
+    border: 1px solid var(--color-danger);
+}
+
+.reservas__alert-icon {
+    font-size: 16px;
+    line-height: 1;
 }
 
 @media (max-width: 768px) {

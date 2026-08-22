@@ -1,7 +1,7 @@
 const services = [
     {
         name: "Solicitudes",
-        icon: "📋",
+        icon: "solicitudes",
         category: "Académico",
         path: "/solicitudes",
         description: "Registra y da seguimiento a tus solicitudes de servicios académicos.",
@@ -19,7 +19,7 @@ const services = [
     },
     {
         name: "Reservas",
-        icon: "📅",
+        icon: "reservas",
         category: "Infraestructura",
         path: "/reservas",
         description: "Reserva salones, laboratorios, auditorios y equipos del campus.",
@@ -37,7 +37,7 @@ const services = [
     },
     {
         name: "Recursos",
-        icon: "🧪",
+        icon: "recursos",
         category: "Infraestructura",
         path: "/recursos",
         description: "Consulta los recursos disponibles de la universidad.",
@@ -55,7 +55,7 @@ const services = [
     },
     {
         name: "Eventos",
-        icon: "🎉",
+        icon: "eventos",
         category: "Cultura",
         path: "/eventos",
         description: "Descubre las actividades y eventos organizados por la comunidad.",
@@ -73,7 +73,7 @@ const services = [
     },
     {
         name: "Notificaciones",
-        icon: "🔔",
+        icon: "notificaciones",
         category: "Comunicación",
         path: "/notificaciones",
         description: "Recibe avisos de cambios de estado, reservas y eventos.",
@@ -91,7 +91,7 @@ const services = [
     },
     {
         name: "PQRS",
-        icon: "💬",
+        icon: "pqrs",
         category: "Atención",
         path: "/pqrs",
         description: "Presenta peticiones, quejas, reclamos y sugerencias.",

@@ -1,11 +1,8 @@
 .auth {
     min-height: 100vh;
 
-    background:
-        radial-gradient(1200px 500px at 50% -10%, rgba(199, 161, 31, 0.18), transparent 60%),
-        linear-gradient(165deg, #0c2238 0%, var(--color-primary) 55%, #1d4b77 100%);
-
-    color: #ffffff;
+    background-color: var(--color-bg);
+    color: var(--color-text);
 
     display: flex;
     flex-direction: column;
@@ -28,7 +25,7 @@
 
     height: 4px;
 
-    background: linear-gradient(90deg, var(--color-accent), #e0c04f);
+    background-color: var(--color-accent);
 }
 
 .auth__brand {
@@ -44,8 +41,8 @@
     height: 48px;
 
     border-radius: 14px;
-    background: linear-gradient(135deg, var(--color-accent), #e0c04f);
-    color: var(--color-primary);
+    background-color: var(--color-accent);
+    color: #ffffff;
 
     font-family: var(--font-heading);
     font-size: 26px;
@@ -54,8 +51,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-
-    box-shadow: 0 4px 14px rgba(199, 161, 31, 0.4);
 }
 
 .auth__name {
@@ -65,6 +60,8 @@
     font-size: 24px;
     font-weight: 700;
     letter-spacing: 0.02em;
+
+    color: var(--color-primary);
 }
 
 .auth__card {

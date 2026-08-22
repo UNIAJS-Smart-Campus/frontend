@@ -2,7 +2,11 @@ import { useState } from "react";
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import Modal from "../../components/Modal/Modal";
+import DataTable from "../../components/DataTable/DataTable";
+import Pagination from "../../components/Pagination/Pagination";
 import useSearch from "../../hooks/useSearch";
+import usePagination from "../../hooks/usePagination";
+import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
 import recursos, { TIPOS_RECURSO } from "../../utils/recursos";
 import "./Recursos.css";
@@ -48,6 +52,9 @@ function Recursos() {
         ? filtradosPorTexto
         : filtradosPorTexto.filter((recurso) => recurso.tipo === tipo);
 
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
+        usePagination(filtrados, 10);
+
     const disponibles = items.filter(
         (recurso) => recurso.disponibilidad === "Disponible"
     ).length;
@@ -72,13 +79,6 @@ function Recursos() {
 
     return (
         <div className="recursos">
-            <header className="recursos__header">
-                <h1 className="recursos__title">Recursos</h1>
-                <p className="recursos__subtitle">
-                    Catálogo de recursos disponibles de la universidad.
-                </p>
-            </header>
-
             <div className="recursos__stats">
                 <article className="recursos__stat">
                     <strong className="recursos__stat-value">{items.length}</strong>
@@ -100,11 +100,13 @@ function Recursos() {
 
             <div className="recursos__filters">
                 <div className="recursos__search">
-                    <Input
-                        type="search"
+                    <SearchBar
                         placeholder="Buscar por código, nombre o ubicación…"
                         value={query}
-                        onChange={(e) => setQuery(e.target.value)}
+                        onChange={(e) => {
+                            setQuery(e.target.value);
+                            setPagina(1);
+                        }}
                         id="recursos-search"
                     />
                 </div>
@@ -112,7 +114,10 @@ function Recursos() {
                 <select
                     className="recursos__select"
                     value={tipo}
-                    onChange={(e) => setTipo(e.target.value)}
+                    onChange={(e) => {
+                        setTipo(e.target.value);
+                        setPagina(1);
+                    }}
                 >
                     <option value="Todos">Todos los tipos</option>
                     {TIPOS_RECURSO.map((tipoItem) => (
@@ -133,34 +138,26 @@ function Recursos() {
                 )}
             </div>
 
-            <div className="recursos__table">
-                <div className="recursos__row recursos__row--header">
-                    <span className="recursos__cell">Código</span>
-                    <span className="recursos__cell">Nombre</span>
-                    <span className="recursos__cell">Tipo</span>
-                    <span className="recursos__cell">Ubicación</span>
-                    <span className="recursos__cell">Estado</span>
-                    <span className="recursos__cell">Disponibilidad</span>
-                </div>
-
-                {filtrados.map((recurso) => (
-                    <div className="recursos__row" key={recurso.id}>
-                        <span className="recursos__cell recursos__cell--code">
-                            {recurso.codigo}
-                        </span>
-                        <span className="recursos__cell recursos__cell--name">
-                            {recurso.nombre}
-                        </span>
-                        <span className="recursos__cell">{recurso.tipo}</span>
-                        <span className="recursos__cell">{recurso.ubicacion}</span>
-                        <span className="recursos__cell">
+            <DataTable
+                columns={[
+                    { label: "Código", key: "codigo", strong: true },
+                    { label: "Nombre", key: "nombre" },
+                    { label: "Tipo", key: "tipo" },
+                    { label: "Capacidad", key: "capacidad" },
+                    { label: "Ubicación", key: "ubicacion" },
+                    {
+                        label: "Estado",
+                        render: (recurso) => (
                             <span
                                 className={`recursos__estado recursos__estado--${estadoClase(recurso.estado)}`}
                             >
                                 {recurso.estado}
                             </span>
-                        </span>
-                        <span className="recursos__cell">
+                        )
+                    },
+                    {
+                        label: "Disponibilidad",
+                        render: (recurso) => (
                             <span
                                 className={
                                     recurso.disponibilidad === "Disponible"
@@ -170,16 +167,21 @@ function Recursos() {
                             >
                                 {recurso.disponibilidad}
                             </span>
-                        </span>
-                    </div>
-                ))}
-            </div>
+                        )
+                    }
+                ]}
+                rows={itemsPagina}
+                emptyMessage="No se encontraron recursos con los filtros aplicados."
+            />
 
-            {filtrados.length === 0 && (
-                <p className="recursos__empty">
-                    No se encontraron recursos con los filtros aplicados.
-                </p>
-            )}
+            <Pagination
+                pagina={pagina}
+                totalPaginas={totalPaginas}
+                onChange={setPagina}
+                desde={desde}
+                hasta={hasta}
+                total={filtrados.length}
+            />
 
             <Modal
                 isOpen={crearAbierto}

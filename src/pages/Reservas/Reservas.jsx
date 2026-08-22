@@ -2,7 +2,11 @@ import { useState } from "react";
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import Modal from "../../components/Modal/Modal";
+import DataTable from "../../components/DataTable/DataTable";
+import Pagination from "../../components/Pagination/Pagination";
 import useSearch from "../../hooks/useSearch";
+import usePagination from "../../hooks/usePagination";
+import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
 import recursos, { TIPOS_RECURSO } from "../../utils/recursos";
 import "./Reservas.css";
@@ -20,6 +24,7 @@ function Reservas() {
         proposito: ""
     });
 
+    const [errores, setErrores] = useState({});
     const [confirmacion, setConfirmacion] = useState("");
 
     const { puede } = useAuth();
@@ -35,18 +40,93 @@ function Reservas() {
         ? filtradosPorTexto
         : filtradosPorTexto.filter((recurso) => recurso.tipo === filtro);
 
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
+        usePagination(filtrados, 10);
+
+    const formatearHora = (hora24) => {
+        if (!hora24) return "";
+        const [hora, minuto] = hora24.split(":").map(Number);
+        const periodo = hora >= 12 ? "p.m." : "a.m.";
+        const hora12 = hora % 12 || 12;
+        return `${hora12}:${String(minuto).padStart(2, "0")} ${periodo}`;
+    };
+
+    const validarFormulario = () => {
+        const nuevosErrores = {};
+
+        if (!form.fecha) {
+            nuevosErrores.fecha = "La fecha es obligatoria.";
+        } else {
+            const hoy = new Date();
+            const fechaSeleccionada = new Date(form.fecha + "T00:00:00");
+            if (fechaSeleccionada < new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())) {
+                nuevosErrores.fecha = "No puedes reservar en una fecha pasada.";
+            }
+        }
+
+        if (!form.horaInicio) {
+            nuevosErrores.horaInicio = "La hora de inicio es obligatoria.";
+        } else if (form.horaInicio < "07:00" || form.horaInicio > "21:00") {
+            nuevosErrores.horaInicio = "El horario permitido es de 7:00 a.m. a 9:00 p.m.";
+        }
+
+        if (!form.horaFin) {
+            nuevosErrores.horaFin = "La hora de finalización es obligatoria.";
+        } else if (form.horaFin < "07:00" || form.horaFin > "21:00") {
+            nuevosErrores.horaFin = "El horario permitido es de 7:00 a.m. a 9:00 p.m.";
+        }
+
+        if (form.horaInicio && form.horaFin && form.horaInicio >= form.horaFin) {
+            nuevosErrores.horaFin = "La hora de fin debe ser posterior a la hora de inicio.";
+        }
+
+        if (Object.keys(nuevosErrores).length === 0 && recursoSeleccionado) {
+            const conflicto = misReservas.find((reserva) => {
+                if (reserva.recurso !== recursoSeleccionado.nombre) {
+                    return false;
+                }
+
+                if (reserva.fecha !== form.fecha) {
+                    return false;
+                }
+
+                const inicioNuevo = form.horaInicio;
+                const finNuevo = form.horaFin;
+                const inicioExistente = reserva.horaInicio;
+                const finExistente = reserva.horaFin;
+
+                return inicioNuevo < finExistente && inicioExistente < finNuevo;
+            });
+
+            if (conflicto) {
+                nuevosErrores.conflicto = `Este recurso ya está reservado en la fecha y horario seleccionados (${formatearHora(conflicto.horaInicio)} - ${formatearHora(conflicto.horaFin)}).`;
+            }
+        }
+
+        setErrores(nuevosErrores);
+        return Object.keys(nuevosErrores).length === 0;
+    };
+
     const openModal = (recurso) => {
         setRecursoSeleccionado(recurso);
         setConfirmacion("");
         setForm({ fecha: "", horaInicio: "", horaFin: "", proposito: "" });
+        setErrores({});
     };
+
+    const hoy = new Date().toISOString().split("T")[0];
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
+        setErrores((prev) => ({ ...prev, [e.target.name]: "", conflicto: "" }));
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        if (!validarFormulario()) {
+            return;
+        }
 
         const nueva = {
             id: `RES-${Date.now()}`,
@@ -58,6 +138,7 @@ function Reservas() {
         setConfirmacion(
             `Reserva de "${recursoSeleccionado.nombre}" registrada correctamente.`
         );
+        setErrores({});
     };
 
     const cancelarReserva = (id) => {
@@ -66,23 +147,17 @@ function Reservas() {
 
     return (
         <div className="reservas">
-            <header className="reservas__header">
-                <h1 className="reservas__title">Reservas</h1>
-                <p className="reservas__subtitle">
-                    Consulta la disponibilidad de los recursos y registra tu
-                    reserva.
-                </p>
-            </header>
-
-            <div className="reservas__search">
-                <Input
-                    type="search"
-                    placeholder="Buscar recurso por nombre, tipo o ubicación…"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    id="reservas-search"
-                />
-            </div>
+                <div className="reservas__search">
+                    <SearchBar
+                        placeholder="Buscar recurso por nombre, tipo o ubicación…"
+                        value={query}
+                        onChange={(e) => {
+                            setQuery(e.target.value);
+                            setPagina(1);
+                        }}
+                        id="reservas-search"
+                    />
+                </div>
 
             <div className="reservas__filters">
                 {["Todos", ...TIPOS_RECURSO].map((tipo) => (
@@ -93,55 +168,67 @@ function Reservas() {
                                 ? "reservas__filter reservas__filter--active"
                                 : "reservas__filter"
                         }
-                        onClick={() => setFiltro(tipo)}
+                        onClick={() => {
+                            setFiltro(tipo);
+                            setPagina(1);
+                        }}
                     >
                         {tipo}
                     </button>
                 ))}
             </div>
 
-            <section className="reservas__grid">
-                {filtrados.map((recurso) => {
-                    const disponible = recurso.disponibilidad === "Disponible";
-
-                    return (
-                        <article className="reservas__card" key={recurso.id}>
-                            <div className="reservas__card-top">
-                                <span className="reservas__tipo">{recurso.tipo}</span>
-                                <span
-                                    className={
-                                        disponible
-                                            ? "reservas__disponible"
-                                            : "reservas__ocupado"
-                                    }
-                                >
-                                    {recurso.disponibilidad}
-                                </span>
-                            </div>
-
-                            <h2 className="reservas__nombre">{recurso.nombre}</h2>
-
-                            <p className="reservas__capacidad">
-                                Capacidad: {recurso.capacidad}
-                            </p>
-
-                            <Button
-                                variant={disponible ? "primary" : "ghost"}
-                                disabled={!disponible}
-                                onClick={() => openModal(recurso)}
+            <DataTable
+                columns={[
+                    { label: "Recurso", key: "nombre", strong: true },
+                    { label: "Tipo", key: "tipo" },
+                    { label: "Capacidad", key: "capacidad" },
+                    { label: "Ubicación", key: "ubicacion" },
+                    {
+                        label: "Disponibilidad",
+                        render: (recurso) => (
+                            <span
+                                className={
+                                    recurso.disponibilidad === "Disponible"
+                                        ? "reservas__disponible"
+                                        : "reservas__ocupado"
+                                }
                             >
-                                {disponible ? "Reservar" : "No disponible"}
-                            </Button>
-                        </article>
-                    );
-                })}
-            </section>
+                                {recurso.disponibilidad}
+                            </span>
+                        )
+                    },
+                    {
+                        label: "Acciones",
+                        render: (recurso) => {
+                            const disponible =
+                                recurso.disponibilidad === "Disponible";
 
-            {filtrados.length === 0 && (
-                <p className="reservas__empty">
-                    No se encontraron recursos para «{query}».
-                </p>
-            )}
+                            return (
+                                <Button
+                                    variant={disponible ? "primary" : "ghost"}
+                                    size="sm"
+                                    disabled={!disponible}
+                                    onClick={() => openModal(recurso)}
+                                >
+                                    {disponible ? "Reservar" : "No disponible"}
+                                </Button>
+                            );
+                        }
+                    }
+                ]}
+                rows={itemsPagina}
+                emptyMessage="No se encontraron recursos para la búsqueda aplicada."
+            />
+
+            <Pagination
+                pagina={pagina}
+                totalPaginas={totalPaginas}
+                onChange={setPagina}
+                desde={desde}
+                hasta={hasta}
+                total={filtrados.length}
+            />
 
             {misReservas.length > 0 && (
                 <section className="reservas__mis">
@@ -167,8 +254,9 @@ function Reservas() {
                                 </div>
 
                                 <span>
-                                    {reserva.fecha} · {reserva.horaInicio} –{" "}
-                                    {reserva.horaFin}
+                                    {reserva.fecha} ·{" "}
+                                    {formatearHora(reserva.horaInicio)} –{" "}
+                                    {formatearHora(reserva.horaFin)}
                                 </span>
                                 <p>{reserva.proposito}</p>
                             </article>
@@ -201,26 +289,40 @@ function Reservas() {
                             value={form.fecha}
                             onChange={handleChange}
                             id="reserva-fecha"
+                            min={hoy}
                         />
+                        {errores.fecha && (
+                            <span className="reservas__error">{errores.fecha}</span>
+                        )}
 
                         <div className="reservas__form-row">
-                            <Input
-                                label="Hora inicio"
-                                type="time"
-                                name="horaInicio"
-                                value={form.horaInicio}
-                                onChange={handleChange}
-                                id="reserva-inicio"
-                            />
+                            <div>
+                                <Input
+                                    label="Hora inicio"
+                                    type="time"
+                                    name="horaInicio"
+                                    value={form.horaInicio}
+                                    onChange={handleChange}
+                                    id="reserva-inicio"
+                                />
+                                {errores.horaInicio && (
+                                    <span className="reservas__error">{errores.horaInicio}</span>
+                                )}
+                            </div>
 
-                            <Input
-                                label="Hora fin"
-                                type="time"
-                                name="horaFin"
-                                value={form.horaFin}
-                                onChange={handleChange}
-                                id="reserva-fin"
-                            />
+                            <div>
+                                <Input
+                                    label="Hora fin"
+                                    type="time"
+                                    name="horaFin"
+                                    value={form.horaFin}
+                                    onChange={handleChange}
+                                    id="reserva-fin"
+                                />
+                                {errores.horaFin && (
+                                    <span className="reservas__error">{errores.horaFin}</span>
+                                )}
+                            </div>
                         </div>
 
                         <Input
@@ -232,6 +334,13 @@ function Reservas() {
                             onChange={handleChange}
                             id="reserva-proposito"
                         />
+
+                        {errores.conflicto && (
+                            <div className="reservas__alert reservas__alert--danger">
+                                <span className="reservas__alert-icon">⚠️</span>
+                                <span>{errores.conflicto}</span>
+                            </div>
+                        )}
 
                         <Button
                             variant="primary"

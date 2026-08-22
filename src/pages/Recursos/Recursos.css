@@ -4,26 +4,6 @@
     gap: 24px;
 }
 
-.recursos__header {
-    text-align: center;
-}
-
-.recursos__title {
-    margin: 0 0 8px;
-
-    font-family: var(--font-heading);
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--color-text);
-}
-
-.recursos__subtitle {
-    margin: 0;
-
-    font-size: 15px;
-    color: var(--color-text-muted);
-}
-
 /* Estadísticas */
 .recursos__stats {
     display: grid;
@@ -88,57 +68,6 @@
     cursor: pointer;
 }
 
-/* Tabla */
-.recursos__table {
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-
-    overflow: hidden;
-
-    box-shadow: var(--shadow-sm);
-}
-
-.recursos__row {
-    display: grid;
-    grid-template-columns: 1fr 2fr 1fr 1.5fr 1fr 1fr;
-    gap: 12px;
-
-    padding: 14px 20px;
-
-    align-items: center;
-}
-
-.recursos__row:not(:last-child) {
-    border-bottom: 1px solid var(--color-border);
-}
-
-.recursos__row--header {
-    background-color: var(--color-surface-alt);
-}
-
-.recursos__row--header .recursos__cell {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--color-text-faint);
-}
-
-.recursos__cell {
-    font-size: 14px;
-    color: var(--color-text);
-}
-
-.recursos__cell--code {
-    font-weight: 700;
-    color: var(--color-primary-600);
-}
-
-.recursos__cell--name {
-    font-weight: 600;
-    color: var(--color-text);
-}
-
 /* Badges de estado */
 .recursos__estado {
     display: inline-block;
@@ -179,15 +108,6 @@
     color: var(--color-danger);
 }
 
-.recursos__empty {
-    text-align: center;
-
-    color: var(--color-text-muted);
-    font-size: 15px;
-
-    padding: 40px 0;
-}
-
 /* Formulario */
 .recursos__form {
     display: flex;
@@ -208,10 +128,6 @@
 }
 
 @media (max-width: 768px) {
-    .recursos__row {
-        grid-template-columns: 1fr 1fr;
-    }
-
     .recursos__title {
         font-size: 24px;
     }
