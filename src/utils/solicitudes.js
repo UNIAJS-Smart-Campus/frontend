@@ -11,7 +11,7 @@ const solicitudes = [
     {
         id: "SOL-2026-001",
         tipo: "Reserva de auditorio",
-        servicio: "Reservas",
+        dependencia: "Bienestar Universitario",
         fecha: "2026-08-10",
         estado: "En proceso",
         solicitante: "Natalia Rodríguez",
@@ -26,7 +26,7 @@ const solicitudes = [
     {
         id: "SOL-2026-002",
         tipo: "Constancia académica",
-        servicio: "Solicitudes",
+        dependencia: "Registro y Control Académico",
         fecha: "2026-08-12",
         estado: "Registrada",
         solicitante: "Carlos Méndez",

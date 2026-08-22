@@ -15,7 +15,7 @@ import "./Solicitudes.css";
 
 const formVacio = {
     tipo: "",
-    servicio: "",
+    dependencia: "",
     descripcion: "",
     prioridad: "Media"
 };
@@ -35,7 +35,7 @@ function Solicitudes() {
     const filtradasPorTexto = useSearch(
         items,
         query,
-        ["id", "tipo", "servicio", "descripcion", "solicitante"]
+        ["id", "tipo", "dependencia", "descripcion", "solicitante"]
     );
 
     const filtradas = estado
@@ -129,7 +129,7 @@ function Solicitudes() {
                 columns={[
                     { label: "Número", key: "id", strong: true },
                     { label: "Tipo", key: "tipo" },
-                    { label: "Servicio", key: "servicio" },
+                    { label: "Dependencia", key: "dependencia" },
                     { label: "Fecha", key: "fecha" },
                     {
                         label: "Estado",
@@ -192,15 +192,48 @@ function Solicitudes() {
                         id="solicitud-tipo"
                     />
 
-                    <Input
-                        label="Servicio"
-                        type="text"
-                        name="servicio"
-                        value={form.servicio}
+                  <div className="solicitudes__form-row">
+                    <label
+                        className="solicitudes__label"
+                        htmlFor="solicitud-dependencia"
+                    >
+                        Dependencia
+                    </label>
+
+                    <select
+                        className="solicitudes__select"
+                        name="dependencia"
+                        id="solicitud-dependencia"
+                        value={form.dependencia}
                         onChange={handleChange}
-                        placeholder="ej. Solicitudes"
-                        id="solicitud-servicio"
-                    />
+                    >
+                        <option value="">Seleccione una dependencia</option>
+                        <option value="Registro y Control Académico">
+                            Registro y Control Académico
+                        </option>
+                        <option value="Bienestar Universitario">
+                            Bienestar Universitario
+                        </option>
+                        <option value="Biblioteca">
+                            Biblioteca
+                        </option>
+                        <option value="Admisiones">
+                            Admisiones
+                        </option>
+                        <option value="Departamento de Sistemas">
+                            Departamento de Sistemas
+                        </option>
+                        <option value="Secretaría General">
+                            Secretaría General
+                        </option>
+                        <option value="Recursos Humanos">
+                            Recursos Humanos
+                        </option>
+                        <option value="Facultad de Ingeniería">
+                            Facultad de Ingeniería
+                        </option>
+                    </select>
+                </div>
 
                     <div className="solicitudes__form-row">
                         <label className="solicitudes__label" htmlFor="solicitud-prioridad">
@@ -232,7 +265,7 @@ function Solicitudes() {
                     <Button
                         variant="primary"
                         type="submit"
-                        disabled={!form.tipo || !form.servicio || !form.descripcion}
+                        disabled={!form.tipo || !form.dependencia || !form.descripcion}
                     >
                         Crear solicitud
                     </Button>
