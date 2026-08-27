@@ -24,7 +24,6 @@ export const ROLES = [
             "administrar_recursos",
             "publicar_eventos",
             "consultar_estadisticas",
-            "generar_reportes",
             "administrar_usuarios",
             "administrar_roles",
             "gestionar_servicios",
@@ -52,8 +51,7 @@ export const ROLES = [
             "administrar_recursos",
             "publicar_eventos",
             "atender_requerimientos",
-            "consultar_estadisticas",
-            "generar_reportes"
+            "consultar_estadisticas"
         ]
     },
     {

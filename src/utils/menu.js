@@ -42,7 +42,11 @@ const menuSections = [
                 path: "/usuarios",
                 icon: "👥",
                 permiso: "usuarios"
+<<<<<<< Updated upstream
             }
+=======
+            },
+>>>>>>> Stashed changes
         ]
     },
     {
