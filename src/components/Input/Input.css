@@ -34,7 +34,7 @@
 .input__field:focus {
     outline: none;
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(199, 161, 31, 0.15);
+    box-shadow: 0 0 0 3px rgba(46, 111, 183, 0.18);
 }
 
 .input__field::placeholder {

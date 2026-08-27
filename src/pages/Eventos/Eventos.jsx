@@ -2,7 +2,11 @@ import { useState } from "react";
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import Modal from "../../components/Modal/Modal";
+import DataTable from "../../components/DataTable/DataTable";
+import Pagination from "../../components/Pagination/Pagination";
 import useSearch from "../../hooks/useSearch";
+import usePagination from "../../hooks/usePagination";
+import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
 import eventos, { CATEGORIAS_EVENTO } from "../../utils/eventos";
 import "./Eventos.css";
@@ -31,6 +35,9 @@ function Eventos() {
         ["nombre", "lugar", "categoria", "descripcion"]
     );
 
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
+        usePagination(filtrados, 10);
+
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
@@ -50,21 +57,15 @@ function Eventos() {
 
     return (
         <div className="eventos">
-            <header className="eventos__header">
-                <h1 className="eventos__title">Eventos</h1>
-                <p className="eventos__subtitle">
-                    Actividades académicas y culturales de la comunidad
-                    universitaria.
-                </p>
-            </header>
-
             <div className="eventos__toolbar">
                 <div className="eventos__search">
-                    <Input
-                        type="search"
+                    <SearchBar
                         placeholder="Buscar evento por nombre, lugar o categoría…"
                         value={query}
-                        onChange={(e) => setQuery(e.target.value)}
+                        onChange={(e) => {
+                            setQuery(e.target.value);
+                            setPagina(1);
+                        }}
                         id="eventos-search"
                     />
                 </div>
@@ -80,40 +81,33 @@ function Eventos() {
                 )}
             </div>
 
-            <div className="eventos__grid">
-                {filtrados.map((evento) => (
-                    <article className="eventos__card" key={evento.id}>
-                        <div className="eventos__card-top">
+            <DataTable
+                columns={[
+                    { label: "Evento", key: "nombre", strong: true },
+                    {
+                        label: "Categoría",
+                        render: (evento) => (
                             <span className="eventos__categoria">
                                 {evento.categoria}
                             </span>
+                        )
+                    },
+                    { label: "Fecha", key: "fecha" },
+                    { label: "Hora", key: "hora" },
+                    { label: "Lugar", key: "lugar" }
+                ]}
+                rows={itemsPagina}
+                emptyMessage="No se encontraron eventos para la búsqueda aplicada."
+            />
 
-                            <span className="eventos__hora">{evento.hora}</span>
-                        </div>
-
-                        <h2 className="eventos__nombre">{evento.nombre}</h2>
-
-                        <p className="eventos__descripcion">
-                            {evento.descripcion}
-                        </p>
-
-                        <div className="eventos__meta">
-                            <span className="eventos__meta-item">
-                                📅 {evento.fecha}
-                            </span>
-                            <span className="eventos__meta-item">
-                                📍 {evento.lugar}
-                            </span>
-                        </div>
-                    </article>
-                ))}
-            </div>
-
-            {filtrados.length === 0 && (
-                <p className="eventos__empty">
-                    No se encontraron eventos para «{query}».
-                </p>
-            )}
+            <Pagination
+                pagina={pagina}
+                totalPaginas={totalPaginas}
+                onChange={setPagina}
+                desde={desde}
+                hasta={hasta}
+                total={filtrados.length}
+            />
 
             <Modal
                 isOpen={crearAbierto}

@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Button from "../../components/Button/Button";
-import Input from "../../components/Input/Input";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
+import DataTable from "../../components/DataTable/DataTable";
+import Pagination from "../../components/Pagination/Pagination";
 import useSearch from "../../hooks/useSearch";
+import usePagination from "../../hooks/usePagination";
+import SearchBar from "../../components/SearchBar/SearchBar";
 import pqrsBase, { TIPOS_PQRS } from "../../utils/pqrs";
 import "./PQRS.css";
 
@@ -31,19 +34,14 @@ function PQRS() {
         ? filtradasPorTexto
         : filtradasPorTexto.filter((item) => item.tipo === filtro);
 
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
+        usePagination(filtradas, 10);
+
     const contarTipo = (tipo) =>
         items.filter((item) => item.tipo === tipo).length;
 
     return (
         <div className="pqrs">
-            <header className="pqrs__header">
-                <h1 className="pqrs__title">PQRS</h1>
-                <p className="pqrs__subtitle">
-                    Peticiones, quejas, reclamos y sugerencias de la comunidad
-                    universitaria.
-                </p>
-            </header>
-
             <div className="pqrs__stats">
                 {TIPOS_PQRS.map((tipo) => (
                     <article className="pqrs__stat" key={tipo}>
@@ -57,11 +55,13 @@ function PQRS() {
 
             <div className="pqrs__toolbar">
                 <div className="pqrs__search">
-                    <Input
-                        type="search"
+                    <SearchBar
                         placeholder="Buscar por número, tipo o descripción…"
                         value={query}
-                        onChange={(e) => setQuery(e.target.value)}
+                        onChange={(e) => {
+                            setQuery(e.target.value);
+                            setPagina(1);
+                        }}
                         id="pqrs-search"
                     />
                 </div>
@@ -69,7 +69,10 @@ function PQRS() {
                 <select
                     className="pqrs__select"
                     value={filtro}
-                    onChange={(e) => setFiltro(e.target.value)}
+                    onChange={(e) => {
+                        setFiltro(e.target.value);
+                        setPagina(1);
+                    }}
                 >
                     <option value="Todos">Todos los tipos</option>
                     {TIPOS_PQRS.map((tipo) => (
@@ -84,28 +87,29 @@ function PQRS() {
                 </Link>
             </div>
 
-            <section className="pqrs__list">
-                {filtradas.map((item) => (
-                    <article className="pqrs__card" key={item.id}>
-                        <div className="pqrs__card-top">
-                            <strong className="pqrs__numero">{item.id}</strong>
-                            <StatusBadge estado={item.estado} />
-                        </div>
+            <DataTable
+                columns={[
+                    { label: "Número", key: "id", strong: true },
+                    { label: "Tipo", key: "tipo" },
+                    {
+                        label: "Estado",
+                        render: (item) => <StatusBadge estado={item.estado} />
+                    },
+                    { label: "Fecha", key: "fecha" },
+                    { label: "Descripción", key: "descripcion" }
+                ]}
+                rows={itemsPagina}
+                emptyMessage="No se encontraron PQRS con los filtros aplicados."
+            />
 
-                        <span className="pqrs__tipo">{item.tipo}</span>
-
-                        <p className="pqrs__descripcion">{item.descripcion}</p>
-
-                        <span className="pqrs__fecha">{item.fecha}</span>
-                    </article>
-                ))}
-            </section>
-
-            {filtradas.length === 0 && (
-                <p className="pqrs__empty">
-                    No se encontraron PQRS con los filtros aplicados.
-                </p>
-            )}
+            <Pagination
+                pagina={pagina}
+                totalPaginas={totalPaginas}
+                onChange={setPagina}
+                desde={desde}
+                hasta={hasta}
+                total={filtradas.length}
+            />
         </div>
     );
 }

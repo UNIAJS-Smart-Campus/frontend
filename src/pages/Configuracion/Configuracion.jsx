@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import services from "../../utils/services";
+import Icon from "../../components/Icon/Icon";
 import "./Configuracion.css";
 
 const STORAGE_KEY = "uajs_config";
@@ -55,13 +56,6 @@ function Configuracion() {
 
     return (
         <div className="configuracion">
-            <header className="configuracion__header">
-                <h1 className="configuracion__title">Configuración</h1>
-                <p className="configuracion__subtitle">
-                    Ajustes generales del sistema y de la plataforma.
-                </p>
-            </header>
-
             <section className="configuracion__card">
                 <h2 className="configuracion__card-title">Información general</h2>
 
@@ -97,7 +91,7 @@ function Configuracion() {
                             key={service.name}
                         >
                             <span className="configuracion__toggle-text">
-                                {service.icon} {service.name}
+                                <Icon name={service.icon} size={18} /> {service.name}
                             </span>
 
                             <button

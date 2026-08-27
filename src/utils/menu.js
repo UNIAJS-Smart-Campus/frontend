@@ -5,7 +5,7 @@ const menuSections = [
             {
                 name: "Dashboard",
                 path: "/dashboard",
-                icon: "📊",
+                icon: "dashboard",
                 permiso: "dashboard"
             }
         ]
@@ -16,32 +16,38 @@ const menuSections = [
             {
                 name: "Solicitudes",
                 path: "/solicitudes",
-                icon: "📋",
+                icon: "solicitudes",
                 permiso: "solicitudes"
             },
             {
                 name: "Reservas",
                 path: "/reservas",
-                icon: "📅",
+                icon: "reservas",
                 permiso: "reservas"
             },
             {
                 name: "Recursos",
                 path: "/recursos",
-                icon: "🧪",
+                icon: "recursos",
                 permiso: "recursos"
             },
             {
                 name: "Eventos",
                 path: "/eventos",
-                icon: "🎉",
+                icon: "eventos",
                 permiso: "eventos"
             },
             {
                 name: "Usuarios",
                 path: "/usuarios",
-                icon: "👥",
+                icon: "usuarios",
                 permiso: "usuarios"
+            },
+            {
+                name: "Reportes",
+                path: "/reportes",
+                icon: "reportes",
+                permiso: "reportes"
             }
         ]
     },
@@ -51,13 +57,13 @@ const menuSections = [
             {
                 name: "Notificaciones",
                 path: "/notificaciones",
-                icon: "🔔",
+                icon: "notificaciones",
                 permiso: "notificaciones"
             },
             {
                 name: "PQRS",
                 path: "/pqrs",
-                icon: "💬",
+                icon: "pqrs",
                 permiso: "pqrs"
             }
         ]
@@ -68,13 +74,13 @@ const menuSections = [
             {
                 name: "Perfil",
                 path: "/perfil",
-                icon: "👤",
+                icon: "perfil",
                 permiso: "perfil"
             },
             {
                 name: "Configuración",
                 path: "/configuracion",
-                icon: "⚙️",
+                icon: "configuracion",
                 permiso: "configuracion"
             }
         ]
@@ -102,7 +108,7 @@ export function getModuleName(pathname) {
 
     const match = flat.find((item) => item.path === pathname);
 
-    return match ? match.name : "UAJS Smart Campus";
+    return match ? match.name : "UniAJS";
 }
 
 export default menuSections;

@@ -1,16 +1,16 @@
 :root {
-    /* Tipografía */
-    --font-heading: "Playfair Display", Georgia, "Times New Roman", serif;
+    /* Tipografía (una sola familia, estilo sobrio) */
+    --font-heading: "Inter", "Segoe UI", Arial, sans-serif;
     --font-body: "Inter", "Segoe UI", Arial, sans-serif;
 
-    /* Paleta institucional (navy + dorado) */
+    /* Paleta institucional (tonos azules) */
     --color-primary: #14304d;
     --color-primary-600: #1d4b77;
     --color-primary-400: #3b6ea5;
     --color-primary-100: #e9eff7;
-    --color-accent: #c7a11f;
-    --color-accent-dark: #a8861a;
-    --color-accent-100: #faf3dd;
+    --color-accent: #2e6fb7;
+    --color-accent-dark: #245a96;
+    --color-accent-100: #e3edf8;
 
     /* Superficies */
     --color-bg: #f5f7fb;
@@ -34,12 +34,12 @@
     --color-warning: #b45309;
     --color-warning-100: #fff7e6;
 
-    /* Efectos */
-    --radius: 12px;
-    --radius-sm: 8px;
-    --shadow-sm: 0 1px 3px rgba(20, 48, 77, 0.08);
-    --shadow-md: 0 8px 20px rgba(20, 48, 77, 0.1);
-    --shadow-lg: 0 16px 32px rgba(20, 48, 77, 0.16);
+    /* Efectos (sencillos y discretos) */
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow-sm: 0 1px 2px rgba(20, 48, 77, 0.06);
+    --shadow-md: 0 2px 8px rgba(20, 48, 77, 0.08);
+    --shadow-lg: 0 4px 14px rgba(20, 48, 77, 0.12);
 }
 
 /* Modo oscuro (manual o por preferencia del sistema) */
@@ -48,9 +48,9 @@
     --color-primary-600: #7db1e8;
     --color-primary-400: #4b93d4;
     --color-primary-100: #1e3a5f;
-    --color-accent: #e0c04f;
-    --color-accent-dark: #c7a11f;
-    --color-accent-100: #3a2f0d;
+    --color-accent: #5aa2e0;
+    --color-accent-dark: #4b93d4;
+    --color-accent-100: #16324f;
 
     --color-bg: #0f172a;
     --color-surface: #1e293b;
@@ -71,9 +71,9 @@
     --color-warning: #e6a23c;
     --color-warning-100: #3a2e13;
 
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.45);
-    --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.55);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 4px 14px rgba(0, 0, 0, 0.5);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -82,9 +82,9 @@
         --color-primary-600: #7db1e8;
         --color-primary-400: #4b93d4;
         --color-primary-100: #1e3a5f;
-        --color-accent: #e0c04f;
-        --color-accent-dark: #c7a11f;
-        --color-accent-100: #3a2f0d;
+        --color-accent: #5aa2e0;
+        --color-accent-dark: #4b93d4;
+        --color-accent-100: #16324f;
 
         --color-bg: #0f172a;
         --color-surface: #1e293b;
@@ -105,10 +105,10 @@
         --color-warning: #e6a23c;
         --color-warning-100: #3a2e13;
 
-        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-        --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.45);
-        --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.55);
-    }
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
 }
 
 * {
@@ -157,4 +157,10 @@ input,
 select,
 textarea {
     font-family: inherit;
+}
+
+.icon {
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
 }

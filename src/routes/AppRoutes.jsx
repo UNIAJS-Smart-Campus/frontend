@@ -11,6 +11,7 @@ import Landing from "../pages/Landing/Landing";
 import Login from "../pages/Login/Login";
 import Recuperar from "../pages/Recuperar/Recuperar";
 import Servicio from "../pages/Servicio/Servicio";
+import NotFound from "../pages/NotFound/NotFound";
 
 import Dashboard from "../pages/Dashboard/Dashboard";
 import Solicitudes from "../pages/Solicitudes/Solicitudes";
@@ -24,6 +25,7 @@ import Configuracion from "../pages/Configuracion/Configuracion";
 import PQRS from "../pages/PQRS/PQRS";
 import NuevaPQRS from "../pages/PQRS/NuevaPQRS/NuevaPQRS";
 import Usuarios from "../pages/Usuarios/Usuarios";
+import Reportes from "../pages/Reportes/Reportes";
 
 function AppRoutes() {
   return (
@@ -138,7 +140,17 @@ function AppRoutes() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/reportes"
+            element={
+              <ProtectedRoute permiso="reportes">
+                <Reportes />
+              </ProtectedRoute>
+            }
+          />
         </Route>
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

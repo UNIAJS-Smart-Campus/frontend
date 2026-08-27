@@ -4,26 +4,6 @@
     gap: 24px;
 }
 
-.eventos__header {
-    text-align: center;
-}
-
-.eventos__title {
-    margin: 0 0 8px;
-
-    font-family: var(--font-heading);
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--color-text);
-}
-
-.eventos__subtitle {
-    margin: 0;
-
-    font-size: 15px;
-    color: var(--color-text-muted);
-}
-
 .eventos__toolbar {
     display: flex;
     align-items: center;
@@ -40,39 +20,7 @@
     width: 100%;
 }
 
-.eventos__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-}
-
-.eventos__card {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-
-    padding: 20px;
-
-    box-shadow: var(--shadow-sm);
-
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.eventos__card:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-4px);
-}
-
-.eventos__card-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
+/* Categoría (badge usado dentro de DataTable) */
 .eventos__categoria {
     font-size: 12px;
     font-weight: 700;
@@ -82,54 +30,8 @@
 
     padding: 4px 10px;
     border-radius: 999px;
-}
 
-.eventos__hora {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--color-primary-600);
-}
-
-.eventos__nombre {
-    margin: 0;
-
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--color-text);
-}
-
-.eventos__descripcion {
-    margin: 0;
-
-    font-size: 14px;
-    line-height: 1.6;
-    color: var(--color-text-muted);
-
-    flex: 1;
-}
-
-.eventos__meta {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-
-    padding-top: 14px;
-    border-top: 1px solid var(--color-border);
-}
-
-.eventos__meta-item {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--color-text);
-}
-
-.eventos__empty {
-    text-align: center;
-
-    color: var(--color-text-muted);
-    font-size: 15px;
-
-    padding: 40px 0;
+    white-space: nowrap;
 }
 
 /* Formulario */

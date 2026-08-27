@@ -51,10 +51,8 @@
 }
 
 .button--accent {
-    background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
+    background-color: var(--color-accent);
     color: #ffffff;
-
-    box-shadow: 0 4px 12px rgba(199, 161, 31, 0.3);
 }
 
 .button--accent:hover:not(:disabled) {
