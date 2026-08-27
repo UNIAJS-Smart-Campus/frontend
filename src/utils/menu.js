@@ -42,13 +42,11 @@ const menuSections = [
                 path: "/usuarios",
                 icon: "usuarios",
                 permiso: "usuarios"
-            },
-            {
-                name: "Reportes",
-                path: "/reportes",
-                icon: "reportes",
-                permiso: "reportes"
+<<<<<<< Updated upstream
             }
+=======
+            },
+>>>>>>> Stashed changes
         ]
     },
     {

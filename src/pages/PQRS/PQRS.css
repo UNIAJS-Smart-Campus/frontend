@@ -1,50 +1,70 @@
 .pqrs {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: var(--space-6);
 }
 
+<<<<<<< HEAD
+.pqrs__header {
+    text-align: center;
+}
+
+.pqrs__title {
+    margin: 0 0 var(--space-2);
+    font-family: var(--font-heading);
+    font-size: clamp(24px, 4vw, 30px);
+    font-weight: 800;
+    color: var(--color-text);
+    line-height: 1.2;
+}
+
+.pqrs__subtitle {
+    margin: 0;
+    font-size: 15px;
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
+=======
 /* Estadísticas por tipo */
+>>>>>>> main
 .pqrs__stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 16px;
+    gap: var(--space-4);
 }
 
 .pqrs__stat {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-
+    gap: var(--space-2);
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-
-    padding: 18px;
-
+    padding: var(--space-5);
     box-shadow: var(--shadow-sm);
 }
 
 .pqrs__stat-value {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 800;
     color: var(--color-text);
+    line-height: 1.1;
 }
 
 .pqrs__stat-label {
     font-size: 13px;
     color: var(--color-text-muted);
+    line-height: 1.4;
 }
 
-/* Toolbar */
 .pqrs__toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-
     flex-wrap: wrap;
-    gap: 12px;
+    gap: var(--space-3);
 }
 
 .pqrs__search {
@@ -53,27 +73,110 @@
     max-width: 480px;
 }
 
-.pqrs__toolbar a {
-    text-decoration: none;
-}
-
 .pqrs__select {
-    padding: 12px 16px;
-
-    border: 1px solid var(--color-border-strong);
+    padding: 10px 36px 10px 14px;
+    border: 1.5px solid var(--color-border-strong);
     border-radius: var(--radius-sm);
-
     font-family: inherit;
     font-size: 14px;
     color: var(--color-text);
-
     background-color: var(--color-input-bg);
-
     cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
+.pqrs__select:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(199, 161, 31, 0.15);
+}
+
+<<<<<<< HEAD
+.pqrs__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-5);
+}
+
+.pqrs__card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-5);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition-base), transform var(--transition-base), border-color var(--transition-base);
+}
+
+.pqrs__card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
+    border-color: var(--color-border-strong);
+}
+
+.pqrs__card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+
+.pqrs__numero {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-primary-600);
+    letter-spacing: 0.02em;
+}
+
+.pqrs__tipo {
+    align-self: flex-start;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-primary-600);
+    background-color: var(--color-primary-100);
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    white-space: nowrap;
+}
+
+.pqrs__descripcion {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--color-text);
+    flex: 1;
+}
+
+.pqrs__fecha {
+    font-size: 12px;
+    color: var(--color-text-faint);
+}
+
+.pqrs__empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 15px;
+    padding: var(--space-12) 0;
+}
+
+=======
+>>>>>>> main
 @media (max-width: 768px) {
     .pqrs__title {
         font-size: 24px;
+    }
+
+    .pqrs__list {
+        grid-template-columns: 1fr;
     }
 }

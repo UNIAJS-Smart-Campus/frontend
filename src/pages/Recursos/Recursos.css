@@ -1,50 +1,69 @@
 .recursos {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: var(--space-6);
 }
 
+<<<<<<< HEAD
+.recursos__header {
+    text-align: center;
+}
+
+.recursos__title {
+    margin: 0 0 var(--space-2);
+    font-family: var(--font-heading);
+    font-size: clamp(24px, 4vw, 30px);
+    font-weight: 800;
+    color: var(--color-text);
+    line-height: 1.2;
+}
+
+.recursos__subtitle {
+    margin: 0;
+    font-size: 15px;
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
+=======
 /* Estadísticas */
+>>>>>>> main
 .recursos__stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
+    gap: var(--space-4);
 }
 
 .recursos__stat {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-
+    gap: var(--space-2);
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-
-    padding: 18px;
-
+    padding: var(--space-5);
     box-shadow: var(--shadow-sm);
 }
 
 .recursos__stat-value {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 800;
     color: var(--color-text);
+    line-height: 1.1;
 }
 
 .recursos__stat-label {
     font-size: 13px;
     color: var(--color-text-muted);
+    line-height: 1.4;
 }
 
-/* Filtros */
 .recursos__filters {
     display: flex;
-    gap: 12px;
-
     align-items: center;
     justify-content: center;
-
+    gap: var(--space-3);
     flex-wrap: wrap;
 }
 
@@ -54,27 +73,82 @@
 }
 
 .recursos__select {
-    padding: 12px 16px;
-
-    border: 1px solid var(--color-border-strong);
+    padding: 10px 36px 10px 14px;
+    border: 1.5px solid var(--color-border-strong);
     border-radius: var(--radius-sm);
-
     font-family: inherit;
     font-size: 14px;
     color: var(--color-text);
-
     background-color: var(--color-input-bg);
-
     cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
+.recursos__select:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(199, 161, 31, 0.15);
+}
+
+<<<<<<< HEAD
+.recursos__table {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.recursos__row {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr 1.5fr 1fr 1fr;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    align-items: center;
+}
+
+.recursos__row:not(:last-child) {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.recursos__row--header {
+    background-color: var(--color-bg-alt);
+}
+
+.recursos__row--header .recursos__cell {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+}
+
+.recursos__cell {
+    font-size: 14px;
+    color: var(--color-text);
+}
+
+.recursos__cell--code {
+    font-weight: 700;
+    color: var(--color-primary-600);
+}
+
+.recursos__cell--name {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+=======
 /* Badges de estado */
+>>>>>>> main
 .recursos__estado {
     display: inline-block;
-
     padding: 3px 10px;
-    border-radius: 999px;
-
+    border-radius: var(--radius-full);
     font-size: 12px;
     font-weight: 700;
 }
@@ -94,7 +168,6 @@
     color: var(--color-warning);
 }
 
-/* Disponibilidad */
 .recursos__disp {
     font-size: 12px;
     font-weight: 700;
@@ -108,23 +181,33 @@
     color: var(--color-danger);
 }
 
+<<<<<<< HEAD
+.recursos__empty {
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 15px;
+    padding: var(--space-12) 0;
+}
+
+=======
 /* Formulario */
+>>>>>>> main
 .recursos__form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--space-5);
 }
 
 .recursos__form-row {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-2);
 }
 
 .recursos__label {
     font-size: 13px;
     font-weight: 600;
-    color: var(--color-text);
+    color: var(--color-text-secondary);
 }
 
 @media (max-width: 768px) {

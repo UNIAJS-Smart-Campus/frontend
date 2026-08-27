@@ -1,0 +1,120 @@
+/* ==========================================
+   Page: Profile
+   BEM: .profile, .profile--modifier, .profile__element
+   ========================================== */
+
+.profile {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.profile__header {
+    text-align: center;
+    padding: var(--space-4) 0;
+}
+
+.profile__title {
+    margin: 0 0 var(--space-2);
+    font-family: var(--font-heading);
+    font-size: clamp(24px, 4vw, 30px);
+    font-weight: 800;
+    color: var(--color-text);
+    line-height: 1.2;
+}
+
+.profile__subtitle {
+    margin: 0;
+    font-size: 15px;
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
+.profile__card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+}
+
+.profile__avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-600));
+    color: #ffffff;
+    border: 3px solid var(--color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 auto var(--space-4);
+}
+
+.profile__name {
+    margin: 0 0 var(--space-1);
+    font-family: var(--font-heading);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-text);
+    text-align: center;
+}
+
+.profile__role {
+    margin: 0 0 var(--space-6);
+    font-size: 14px;
+    color: var(--color-text-muted);
+    text-align: center;
+}
+
+.profile__info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.profile__info-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.profile__info-item:last-child {
+    border-bottom: none;
+}
+
+.profile__info-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    min-width: 140px;
+    flex-shrink: 0;
+}
+
+.profile__info-value {
+    font-size: 14px;
+    color: var(--color-text);
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .profile__title {
+        font-size: 24px;
+    }
+
+    .profile__info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-1);
+    }
+
+    .profile__info-label {
+        min-width: auto;
+    }
+}

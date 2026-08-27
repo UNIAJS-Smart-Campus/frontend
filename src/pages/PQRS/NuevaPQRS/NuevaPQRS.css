@@ -1,8 +1,7 @@
 .nueva-pqrs {
     display: flex;
     flex-direction: column;
-    gap: 24px;
-
+    gap: var(--space-6);
     max-width: 640px;
     margin: 0 auto;
 }
@@ -11,11 +10,15 @@
     font-size: 14px;
     font-weight: 600;
     color: var(--color-primary-600);
-
     text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    transition: color var(--transition-fast);
 }
 
 .nueva-pqrs__back:hover {
+    color: var(--color-primary);
     text-decoration: underline;
 }
 
@@ -24,76 +27,76 @@
 }
 
 .nueva-pqrs__title {
-    margin: 0 0 8px;
-
+    margin: 0 0 var(--space-2);
     font-family: var(--font-heading);
-    font-size: 28px;
+    font-size: clamp(24px, 4vw, 28px);
     font-weight: 800;
     color: var(--color-text);
+    line-height: 1.2;
 }
 
 .nueva-pqrs__subtitle {
     margin: 0;
-
     font-size: 15px;
     color: var(--color-text-muted);
+    line-height: 1.6;
 }
 
 .nueva-pqrs__form {
     display: flex;
     flex-direction: column;
-    gap: 18px;
-
+    gap: var(--space-5);
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: 14px;
-
-    padding: 28px;
-
+    border-radius: var(--radius);
+    padding: var(--space-6);
     box-shadow: var(--shadow-sm);
 }
 
 .nueva-pqrs__label {
     font-size: 13px;
     font-weight: 600;
-    color: var(--color-text);
+    color: var(--color-text-secondary);
 }
 
 .nueva-pqrs__select {
-    padding: 12px 16px;
-
-    border: 1px solid var(--color-border-strong);
+    padding: 10px 36px 10px 14px;
+    border: 1.5px solid var(--color-border-strong);
     border-radius: var(--radius-sm);
-
     font-family: inherit;
     font-size: 14px;
     color: var(--color-text);
-
     background-color: var(--color-input-bg);
-
     cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.nueva-pqrs__select:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(199, 161, 31, 0.15);
 }
 
 .nueva-pqrs__confirm {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-
+    gap: var(--space-4);
     align-items: flex-start;
 }
 
 .nueva-pqrs__confirm p {
     margin: 0;
-
     font-size: 14px;
     line-height: 1.6;
     color: var(--color-success);
-
     background-color: var(--color-success-100);
     border: 1px solid var(--color-success);
     border-radius: var(--radius-sm);
-
-    padding: 14px;
+    padding: var(--space-4);
 }
 
 .nueva-pqrs__confirm a {

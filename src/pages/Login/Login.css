@@ -1,145 +1,157 @@
 .auth {
     min-height: 100vh;
+<<<<<<< HEAD
+    background:
+        radial-gradient(800px 400px at 50% -5%, rgba(255, 255, 255, 0.08), transparent 60%),
+        radial-gradient(600px 300px at 80% 20%, rgba(45, 95, 138, 0.12), transparent 60%),
+        linear-gradient(170deg, #0a1e35 0%, var(--color-primary-700) 50%, var(--color-primary) 100%);
+    color: #ffffff;
+=======
 
     background-color: var(--color-bg);
     color: var(--color-text);
 
+>>>>>>> main
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-
-    padding: 40px 20px;
+    padding: var(--space-8) var(--space-5);
     box-sizing: border-box;
-
     position: relative;
+    overflow: hidden;
 }
 
 .auth::before {
     content: "";
-
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-
     height: 4px;
+<<<<<<< HEAD
+    background: linear-gradient(90deg, var(--color-accent), var(--color-accent-light), var(--color-accent));
+=======
 
     background-color: var(--color-accent);
+>>>>>>> main
 }
 
 .auth__brand {
     display: flex;
     align-items: center;
-    gap: 14px;
-
-    margin-bottom: 28px;
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+    position: relative;
+    z-index: 1;
 }
 
 .auth__logo {
     width: 48px;
     height: 48px;
+<<<<<<< HEAD
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light));
+    color: var(--color-primary-700);
+=======
 
     border-radius: 14px;
     background-color: var(--color-accent);
     color: #ffffff;
 
+>>>>>>> main
     font-family: var(--font-heading);
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 800;
-
     display: flex;
     align-items: center;
     justify-content: center;
+<<<<<<< HEAD
+    box-shadow: 0 4px 14px rgba(199, 161, 31, 0.35);
+=======
+>>>>>>> main
 }
 
 .auth__name {
     margin: 0;
-
     font-family: var(--font-heading);
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 700;
     letter-spacing: 0.02em;
+<<<<<<< HEAD
+    color: #ffffff;
+=======
 
     color: var(--color-primary);
+>>>>>>> main
 }
 
 .auth__card {
     width: 100%;
     max-width: 420px;
-
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: 16px;
-
-    padding: 32px;
-
-    box-shadow: var(--shadow-lg);
-
+    border-radius: var(--radius-lg);
+    padding: var(--space-8);
+    box-shadow: var(--shadow-xl);
     color: var(--color-text);
+    position: relative;
+    z-index: 1;
+    animation: fade-in-up var(--transition-slow);
 }
 
 .auth__title {
-    margin: 0 0 8px;
-
+    margin: 0 0 var(--space-2);
     font-family: var(--font-heading);
     font-size: 24px;
     font-weight: 800;
     color: var(--color-text);
+    line-height: 1.2;
 }
 
 .auth__subtitle {
-    margin: 0 0 24px;
-
+    margin: 0 0 var(--space-6);
     font-size: 14px;
     color: var(--color-text-muted);
+    line-height: 1.6;
 }
 
 .auth__form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--space-5);
 }
 
 .auth__submit {
     width: 100%;
-
-    margin-top: 4px;
+    margin-top: var(--space-2);
 }
 
 .auth__error {
     margin: 0;
-
     font-size: 13px;
     font-weight: 600;
     color: var(--color-danger);
-
     background-color: var(--color-danger-100);
     border: 1px solid var(--color-danger);
     border-radius: var(--radius-sm);
-
-    padding: 10px 14px;
+    padding: var(--space-3) var(--space-4);
 }
 
 .auth__success {
     margin: 0;
-
     font-size: 14px;
     line-height: 1.6;
     color: var(--color-success);
-
     background-color: var(--color-success-100);
     border: 1px solid var(--color-success);
     border-radius: var(--radius-sm);
-
-    padding: 14px;
+    padding: var(--space-4);
 }
 
 .auth__footer {
-    margin-top: 20px;
-
+    margin-top: var(--space-6);
     text-align: center;
-
     font-size: 13px;
     color: var(--color-text-muted);
 }
@@ -147,21 +159,19 @@
 .auth__link {
     font-weight: 600;
     color: var(--color-primary-600);
-
     text-decoration: none;
+    transition: color var(--transition-fast);
 }
 
 .auth__link:hover {
+    color: var(--color-primary);
     text-decoration: underline;
 }
 
 .auth__hint {
-    margin: 18px 0 0;
-
-    padding-top: 16px;
-
+    margin-top: var(--space-6);
+    padding-top: var(--space-5);
     border-top: 1px solid var(--color-border);
-
     font-size: 12px;
     line-height: 1.7;
     color: var(--color-text-faint);
@@ -169,4 +179,15 @@
 
 .auth__hint strong {
     color: var(--color-text-muted);
+    font-weight: 600;
+}
+
+@media (max-width: 480px) {
+    .auth__card {
+        padding: var(--space-6);
+    }
+
+    .auth__title {
+        font-size: 20px;
+    }
 }

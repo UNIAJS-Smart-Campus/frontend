@@ -1,10 +1,10 @@
 ﻿/* ============================================================
    UAJS SMART CAMPUS - CSS MAIN
-   Estilos principales que importan todos los módulos
+   Arquitectura: BEM + Design Tokens + Utilidades
    ============================================================ */
 
 /* ==========================================
-   Abstracts
+   Abstracts (design tokens, animaciones, patrones)
    ========================================== */
 @import 'abstracts/_variables.css';
 @import 'abstracts/_mixins.css';
@@ -12,63 +12,15 @@
 @import 'abstracts/_animations.css';
 
 /* ==========================================
-   Base
+   Base (reset, tipografía, estilos base)
    ========================================== */
 @import 'base/_reset.css';
 @import 'base/_typography.css';
 @import 'base/_base.css';
 
 /* ==========================================
-   Utils
+   Utils (utilidades atómicas reutilizables)
    ========================================== */
 @import 'utils/_helpers.css';
 @import 'utils/_spacing.css';
 @import 'utils/_layout.css';
-
-/* ==========================================
-   Blocks
-   ========================================== */
-@import 'blocks/_button.css';
-@import 'blocks/_card.css';
-@import 'blocks/_header.css';
-@import 'blocks/_footer.css';
-@import 'blocks/_nav.css';
-@import 'blocks/_form.css';
-@import 'blocks/_table.css';
-@import 'blocks/_modal.css';
-@import 'blocks/_alert.css';
-@import 'blocks/_badge.css';
-@import 'blocks/_breadcrumb.css';
-@import 'blocks/_pagination.css';
-@import 'blocks/_tabs.css';
-@import 'blocks/_accordion.css';
-@import 'blocks/_dropdown.css';
-
-/* ==========================================
-   Components
-   ========================================== */
-@import 'components/_service-card.css';
-@import 'components/_request-item.css';
-@import 'components/_reservation-card.css';
-@import 'components/_notification.css';
-@import 'components/_event-card.css';
-@import 'components/_dashboard-widget.css';
-@import 'components/_search-bar.css';
-@import 'components/_profile-card.css';
-@import 'components/_request-detail.css';
-@import 'components/_activity-item.css';
-@import 'components/_resource-item.css';
-
-/* ==========================================
-   Pages
-   ========================================== */
-@import 'pages/_landing.css';
-@import 'pages/_dashboard.css';
-@import 'pages/_services.css';
-@import 'pages/_requests.css';
-@import 'pages/_reservations.css';
-@import 'pages/_events.css';
-@import 'pages/_notifications.css';
-@import 'pages/_profile.css';
-@import 'pages/_login.css';
-@import 'pages/_register.css';

@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+@import './styles/main.css';
+=======
 :root {
     /* Tipografía (una sola familia, estilo sobrio) */
     --font-heading: "Inter", "Segoe UI", Arial, sans-serif;
@@ -164,3 +167,4 @@ textarea {
     vertical-align: middle;
     flex-shrink: 0;
 }
+>>>>>>> main
