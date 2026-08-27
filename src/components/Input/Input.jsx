@@ -48,7 +48,8 @@ function Input({
     label,
     id,
     rows = 4,
-    autoComplete
+    autoComplete,
+    ...rest
 }) {
     const [visible, setVisible] = useState(false);
 
@@ -74,6 +75,7 @@ function Input({
                     onChange={onChange}
                     rows={rows}
                     className={classes}
+                    {...rest}
                 />
             ) : (
                 <div className="input__wrap">
@@ -86,6 +88,7 @@ function Input({
                         onChange={onChange}
                         autoComplete={autoComplete}
                         className={classes}
+                        {...rest}
                     />
 
                     {esPassword && (

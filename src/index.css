@@ -1,1 +1,170 @@
+<<<<<<< HEAD
 @import './styles/main.css';
+=======
+:root {
+    /* Tipografía (una sola familia, estilo sobrio) */
+    --font-heading: "Inter", "Segoe UI", Arial, sans-serif;
+    --font-body: "Inter", "Segoe UI", Arial, sans-serif;
+
+    /* Paleta institucional (tonos azules) */
+    --color-primary: #14304d;
+    --color-primary-600: #1d4b77;
+    --color-primary-400: #3b6ea5;
+    --color-primary-100: #e9eff7;
+    --color-accent: #2e6fb7;
+    --color-accent-dark: #245a96;
+    --color-accent-100: #e3edf8;
+
+    /* Superficies */
+    --color-bg: #f5f7fb;
+    --color-surface: #ffffff;
+    --color-surface-alt: #f8fafc;
+    --color-hover: #f1f4f8;
+    --color-border: #e3e8ee;
+    --color-border-strong: #ccd4de;
+    --color-input-bg: #ffffff;
+
+    /* Texto */
+    --color-text: #16283a;
+    --color-text-muted: #5b6b7b;
+    --color-text-faint: #9aa7b6;
+
+    /* Estado */
+    --color-success: #0f8a5f;
+    --color-success-100: #e6f7f0;
+    --color-danger: #c0392b;
+    --color-danger-100: #fceae9;
+    --color-warning: #b45309;
+    --color-warning-100: #fff7e6;
+
+    /* Efectos (sencillos y discretos) */
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow-sm: 0 1px 2px rgba(20, 48, 77, 0.06);
+    --shadow-md: 0 2px 8px rgba(20, 48, 77, 0.08);
+    --shadow-lg: 0 4px 14px rgba(20, 48, 77, 0.12);
+}
+
+/* Modo oscuro (manual o por preferencia del sistema) */
+[data-theme="dark"] {
+    --color-primary: #1d4b77;
+    --color-primary-600: #7db1e8;
+    --color-primary-400: #4b93d4;
+    --color-primary-100: #1e3a5f;
+    --color-accent: #5aa2e0;
+    --color-accent-dark: #4b93d4;
+    --color-accent-100: #16324f;
+
+    --color-bg: #0f172a;
+    --color-surface: #1e293b;
+    --color-surface-alt: #273548;
+    --color-hover: #2f3e52;
+    --color-border: #334155;
+    --color-border-strong: #475569;
+    --color-input-bg: #0f172a;
+
+    --color-text: #e2e8f0;
+    --color-text-muted: #94a3b8;
+    --color-text-faint: #64748b;
+
+    --color-success: #2ecc8f;
+    --color-success-100: #12342a;
+    --color-danger: #e74c3c;
+    --color-danger-100: #3a1d1a;
+    --color-warning: #e6a23c;
+    --color-warning-100: #3a2e13;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --color-primary: #1d4b77;
+        --color-primary-600: #7db1e8;
+        --color-primary-400: #4b93d4;
+        --color-primary-100: #1e3a5f;
+        --color-accent: #5aa2e0;
+        --color-accent-dark: #4b93d4;
+        --color-accent-100: #16324f;
+
+        --color-bg: #0f172a;
+        --color-surface: #1e293b;
+        --color-surface-alt: #273548;
+        --color-hover: #2f3e52;
+        --color-border: #334155;
+        --color-border-strong: #475569;
+        --color-input-bg: #0f172a;
+
+        --color-text: #e2e8f0;
+        --color-text-muted: #94a3b8;
+        --color-text-faint: #64748b;
+
+        --color-success: #2ecc8f;
+        --color-success-100: #12342a;
+        --color-danger: #e74c3c;
+        --color-danger-100: #3a1d1a;
+        --color-warning: #e6a23c;
+        --color-warning-100: #3a2e13;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+}
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    line-height: 1.6;
+
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-heading);
+    color: var(--color-text);
+    line-height: 1.25;
+}
+
+a {
+    color: var(--color-primary-600);
+}
+
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
+}
+
+.icon {
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+>>>>>>> main

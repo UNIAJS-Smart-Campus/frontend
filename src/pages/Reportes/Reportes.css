@@ -1,0 +1,151 @@
+.reportes {
+    display: flex;
+    flex-direction: column;
+
+    gap: 24px;
+}
+
+/* Encabezado */
+.reportes__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.reportes__title {
+    margin: 0 0 6px;
+
+    font-size: 26px;
+}
+
+.reportes__subtitle {
+    margin: 0;
+
+    color: var(--color-text-muted);
+    font-size: 14px;
+}
+
+.reportes__fecha {
+    margin: -8px 0 0;
+
+    font-size: 13px;
+    color: var(--color-text-faint);
+}
+
+/* KPIs */
+.reportes__kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+
+    gap: 16px;
+}
+
+.reportes__kpi {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+
+    padding: 20px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+.reportes__kpi-icon {
+    font-size: 22px;
+}
+
+.reportes__kpi-value {
+    font-size: 30px;
+    line-height: 1.1;
+}
+
+.reportes__kpi-label {
+    font-size: 13px;
+    color: var(--color-text-muted);
+}
+
+/* Gráficas */
+.reportes__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+
+    gap: 16px;
+}
+
+.reportes__card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+
+    padding: 20px;
+}
+
+.reportes__card-title {
+    margin: 0 0 16px;
+
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.reportes__rows {
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+.reportes__row {
+    display: grid;
+    grid-template-columns: 120px 1fr 32px;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+.reportes__row-label {
+    font-size: 13px;
+    color: var(--color-text-muted);
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.reportes__bar-track {
+    height: 10px;
+
+    background-color: var(--color-primary-100);
+    border-radius: 999px;
+
+    overflow: hidden;
+}
+
+.reportes__bar {
+    height: 100%;
+
+    background-color: var(--color-accent);
+    border-radius: 999px;
+
+    transition: width 0.3s ease;
+}
+
+.reportes__row-value {
+    font-size: 13px;
+    font-weight: 700;
+
+    text-align: right;
+}
+
+@media (max-width: 768px) {
+    .reportes__header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

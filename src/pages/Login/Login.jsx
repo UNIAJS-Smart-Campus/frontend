@@ -33,7 +33,7 @@ function Login() {
         <main className="auth">
             <div className="auth__brand">
                 <span className="auth__logo">U</span>
-                <h1 className="auth__name">UAJS Smart Campus</h1>
+                <h1 className="auth__name">UniAJS</h1>
             </div>
 
             <div className="auth__card">

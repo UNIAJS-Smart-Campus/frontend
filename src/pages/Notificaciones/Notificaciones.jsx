@@ -1,7 +1,12 @@
 import { useState } from "react";
 import Button from "../../components/Button/Button";
-import Input from "../../components/Input/Input";
+import DataTable from "../../components/DataTable/DataTable";
+import Pagination from "../../components/Pagination/Pagination";
+import SearchBar from "../../components/SearchBar/SearchBar";
+import StatusBadge from "../../components/StatusBadge/StatusBadge";
+import Icon from "../../components/Icon/Icon";
 import useSearch from "../../hooks/useSearch";
+import usePagination from "../../hooks/usePagination";
 import notificaciones from "../../utils/notificaciones";
 import "./Notificaciones.css";
 
@@ -12,6 +17,9 @@ function Notificaciones() {
     const noLeidas = items.filter((item) => !item.leida).length;
 
     const filtradas = useSearch(items, query, ["tipo", "mensaje"]);
+
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
+        usePagination(filtradas, 10);
 
     const marcarLeida = (id) => {
         setItems((prev) =>
@@ -25,22 +33,67 @@ function Notificaciones() {
         setItems((prev) => prev.map((item) => ({ ...item, leida: true })));
     };
 
+    const columns = [
+        {
+            label: "Tipo",
+            key: "tipo",
+            width: "140px",
+            render: (item) => (
+                <span className="notificaciones__cell-tipo">
+                    <span className="notificaciones__cell-icon">
+                        <Icon name={item.icono} size={18} />
+                    </span>
+                    {item.tipo}
+                </span>
+            )
+        },
+        {
+            label: "Fecha",
+            key: "fecha",
+            width: "120px"
+        },
+        {
+            label: "Mensaje",
+            key: "mensaje",
+            render: (item) => (
+                <span className="notificaciones__cell-mensaje">
+                    {item.mensaje}
+                </span>
+            )
+        },
+        {
+            label: "Estado",
+            width: "120px",
+            render: (item) => (
+                <StatusBadge estado={item.leida ? "Leída" : "No leída"} />
+            )
+        },
+        {
+            label: "Acciones",
+            width: "140px",
+            render: (item) =>
+                !item.leida ? (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => marcarLeida(item.id)}
+                    >
+                        Marcar leída
+                    </Button>
+                ) : null
+        }
+    ];
+
     return (
         <div className="notificaciones">
-            <header className="notificaciones__header">
-                <h1 className="notificaciones__title">Notificaciones</h1>
-                <p className="notificaciones__subtitle">
-                    Comunicaciones de la plataforma: cambios de estado,
-                    confirmaciones de reserva y nuevos eventos.
-                </p>
-            </header>
-
             <div className="notificaciones__search">
-                <Input
-                    type="search"
+                <SearchBar
                     placeholder="Buscar por tipo o mensaje…"
                     value={query}
-                    onChange={(e) => setQuery(e.target.value)}
+                    onChange={(e) => {
+                        setQuery(e.target.value);
+                        setPagina(1);
+                    }}
                     id="notificaciones-search"
                 />
             </div>
@@ -60,45 +113,20 @@ function Notificaciones() {
                 </Button>
             </div>
 
-            <div className="notificaciones__list">
-                {filtradas.map((item) => (
-                    <article
-                        className={
-                            item.leida
-                                ? "notificaciones__item"
-                                : "notificaciones__item notificaciones__item--unread"
-                        }
-                        key={item.id}
-                    >
-                        <span className="notificaciones__icon">{item.icono}</span>
+            <DataTable
+                columns={columns}
+                rows={itemsPagina}
+                emptyMessage="No se encontraron notificaciones para la búsqueda aplicada."
+            />
 
-                        <div className="notificaciones__body">
-                            <div className="notificaciones__top">
-                                <span className="notificaciones__tipo">
-                                    {item.tipo}
-                                </span>
-                                <span className="notificaciones__fecha">
-                                    {item.fecha}
-                                </span>
-                            </div>
-
-                            <p className="notificaciones__mensaje">
-                                {item.mensaje}
-                            </p>
-                        </div>
-
-                        {!item.leida && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => marcarLeida(item.id)}
-                            >
-                                Marcar leída
-                            </Button>
-                        )}
-                    </article>
-                ))}
-            </div>
+            <Pagination
+                pagina={pagina}
+                totalPaginas={totalPaginas}
+                onChange={setPagina}
+                desde={desde}
+                hasta={hasta}
+                total={filtradas.length}
+            />
 
             {filtradas.length === 0 && (
                 <p className="notificaciones__empty">

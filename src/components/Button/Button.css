@@ -78,9 +78,12 @@
 }
 
 .button--accent {
-    background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
+    background-color: var(--color-accent);
     color: #ffffff;
+<<<<<<< HEAD
     box-shadow: var(--shadow-sm);
+=======
+>>>>>>> main
 }
 
 .button--accent:hover:not(:disabled) {

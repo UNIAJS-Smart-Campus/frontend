@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import Button from "../../components/Button/Button";
+import Icon from "../../components/Icon/Icon";
 import services from "../../utils/services";
 import "./Servicio.css";
 
@@ -32,7 +33,9 @@ function Servicio() {
                 </Link>
 
                 <div className="servicio__brand">
-                    <span className="servicio__icon">{service.icon}</span>
+                    <span className="servicio__icon">
+                        <Icon name={service.icon} />
+                    </span>
                     <div>
                         <span className="servicio__category">{service.category}</span>
                         <h1 className="servicio__title">{service.name}</h1>

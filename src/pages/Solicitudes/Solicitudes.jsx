@@ -4,7 +4,11 @@ import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import Modal from "../../components/Modal/Modal";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
+import DataTable from "../../components/DataTable/DataTable";
+import Pagination from "../../components/Pagination/Pagination";
 import useSearch from "../../hooks/useSearch";
+import usePagination from "../../hooks/usePagination";
+import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
 import solicitudes, { ESTADOS_SOLICITUD } from "../../utils/solicitudes";
 import "./Solicitudes.css";
@@ -37,6 +41,9 @@ function Solicitudes() {
     const filtradas = estado
         ? filtradasPorTexto.filter((item) => item.estado === estado)
         : filtradasPorTexto;
+
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
+        usePagination(filtradas, 10);
 
     const avanzarEstado = (id) => {
         setItems((prev) =>
@@ -78,20 +85,15 @@ function Solicitudes() {
 
     return (
         <div className="solicitudes">
-            <header className="solicitudes__header">
-                <h1 className="solicitudes__title">Solicitudes</h1>
-                <p className="solicitudes__subtitle">
-                    Consulta y da seguimiento a las solicitudes de servicios.
-                </p>
-            </header>
-
             <div className="solicitudes__filters">
                 <div className="solicitudes__search">
-                    <Input
-                        type="search"
+                    <SearchBar
                         placeholder="Buscar por número, tipo o descripción…"
                         value={query}
-                        onChange={(e) => setQuery(e.target.value)}
+                        onChange={(e) => {
+                            setQuery(e.target.value);
+                            setPagina(1);
+                        }}
                         id="solicitudes-search"
                     />
                 </div>
@@ -99,7 +101,10 @@ function Solicitudes() {
                 <select
                     className="solicitudes__select"
                     value={estado}
-                    onChange={(e) => setEstado(e.target.value)}
+                    onChange={(e) => {
+                        setEstado(e.target.value);
+                        setPagina(1);
+                    }}
                 >
                     <option value="">Todos los estados</option>
                     {ESTADOS_SOLICITUD.map((estadoItem) => (
@@ -120,60 +125,56 @@ function Solicitudes() {
                 )}
             </div>
 
-            {filtradas.length > 0 ? (
-                <div className="solicitudes__list">
-                    {filtradas.map((solicitud) => (
-                        <article className="solicitudes__card" key={solicitud.id}>
-                            <div className="solicitudes__card-top">
-                                <strong className="solicitudes__numero">
-                                    {solicitud.id}
-                                </strong>
-                                <StatusBadge estado={solicitud.estado} />
-                            </div>
-
-                            <h2 className="solicitudes__tipo">{solicitud.tipo}</h2>
-
-                            <p className="solicitudes__descripcion">
-                                {solicitud.descripcion}
-                            </p>
-
-                            <div className="solicitudes__meta">
-                                <span>Servicio: {solicitud.servicio}</span>
-                                <span>Fecha: {solicitud.fecha}</span>
-                                {solicitud.prioridad && (
-                                    <span>Prioridad: {solicitud.prioridad}</span>
-                                )}
-                            </div>
-
-                            <div className="solicitudes__actions">
+            <DataTable
+                columns={[
+                    { label: "Número", key: "id", strong: true },
+                    { label: "Tipo", key: "tipo" },
+                    { label: "Servicio", key: "servicio" },
+                    { label: "Fecha", key: "fecha" },
+                    {
+                        label: "Estado",
+                        render: (item) => <StatusBadge estado={item.estado} />
+                    },
+                    { label: "Solicitante", key: "solicitante" },
+                    {
+                        label: "Acciones",
+                        render: (item) => (
+                            <div className="dtable__actions">
                                 <Link
-                                    to={`/solicitudes/${solicitud.id}`}
+                                    to={`/solicitudes/${item.id}`}
                                     className="solicitudes__link"
                                 >
-                                    Ver detalle y seguimiento →
+                                    Ver detalle
                                 </Link>
 
                                 {puedeAvanzar &&
-                                    solicitud.estado !== "Cerrada" && (
+                                    item.estado !== "Cerrada" && (
                                         <Button
                                             variant="outline"
                                             size="sm"
                                             onClick={() =>
-                                                avanzarEstado(solicitud.id)
+                                                avanzarEstado(item.id)
                                             }
                                         >
-                                            Avanzar estado
+                                            Avanzar
                                         </Button>
                                     )}
                             </div>
-                        </article>
-                    ))}
-                </div>
-            ) : (
-                <p className="solicitudes__empty">
-                    No se encontraron solicitudes con los filtros aplicados.
-                </p>
-            )}
+                        )
+                    }
+                ]}
+                rows={itemsPagina}
+                emptyMessage="No se encontraron solicitudes con los filtros aplicados."
+            />
+
+            <Pagination
+                pagina={pagina}
+                totalPaginas={totalPaginas}
+                onChange={setPagina}
+                desde={desde}
+                hasta={hasta}
+                total={filtradas.length}
+            />
 
             <Modal
                 isOpen={crearAbierto}

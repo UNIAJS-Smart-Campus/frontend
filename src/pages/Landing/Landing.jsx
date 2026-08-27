@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/Button/Button";
+import Icon from "../../components/Icon/Icon";
 import useAuth from "../../context/useAuth";
 import services from "../../utils/services";
 import "./Landing.css";
@@ -10,17 +11,17 @@ const REDIRECT_SECONDS = 5;
 const profiles = [
     {
         name: "Estudiantes",
-        icon: "🎓",
+        icon: "estudiante",
         description: "Solicitan servicios, reservan espacios y consultan eventos académicos."
     },
     {
         name: "Docentes",
-        icon: "👨‍🏫",
+        icon: "docente",
         description: "Gestionan salones, laboratorios y actividades de sus asignaturas."
     },
     {
         name: "Administradores",
-        icon: "🛠️",
+        icon: "admin",
         description: "Administran recursos, usuarios, reservas y la configuración del campus."
     }
 ];
@@ -53,7 +54,7 @@ function Landing() {
             <header className="landing__header">
                 <div className="landing__brand">
                     <span className="landing__logo">U</span>
-                    <h1 className="landing__name">UAJS Smart Campus</h1>
+                    <h1 className="landing__name">UniAJS</h1>
                 </div>
             </header>
 
@@ -87,7 +88,9 @@ function Landing() {
                 <div className="landing__grid">
                     {services.map((service) => (
                         <article className="landing__card" key={service.name}>
-                            <span className="landing__card-icon">{service.icon}</span>
+                            <span className="landing__card-icon">
+                                <Icon name={service.icon} size={32} />
+                            </span>
                             <h4 className="landing__card-title">{service.name}</h4>
                             <p className="landing__card-text">{service.description}</p>
                         </article>
@@ -101,7 +104,9 @@ function Landing() {
                 <div className="landing__grid">
                     {profiles.map((profile) => (
                         <article className="landing__card landing__card--profile" key={profile.name}>
-                            <span className="landing__card-icon">{profile.icon}</span>
+                            <span className="landing__card-icon">
+                                <Icon name={profile.icon} size={32} />
+                            </span>
                             <h4 className="landing__card-title">{profile.name}</h4>
                             <p className="landing__card-text">{profile.description}</p>
                         </article>
@@ -110,7 +115,7 @@ function Landing() {
             </section>
 
             <footer className="landing__footer">
-                <p>Universidad Antonio José de Sucre © 2026 — UAJS Smart Campus</p>
+                <p>Universidad Antonio José de Sucre © 2026 — UniAJS</p>
             </footer>
         </div>
     );

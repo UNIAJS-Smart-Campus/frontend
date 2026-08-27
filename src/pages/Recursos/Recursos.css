@@ -4,6 +4,7 @@
     gap: var(--space-6);
 }
 
+<<<<<<< HEAD
 .recursos__header {
     text-align: center;
 }
@@ -24,6 +25,9 @@
     line-height: 1.6;
 }
 
+=======
+/* Estadísticas */
+>>>>>>> main
 .recursos__stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -90,6 +94,7 @@
     box-shadow: 0 0 0 3px rgba(199, 161, 31, 0.15);
 }
 
+<<<<<<< HEAD
 .recursos__table {
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -137,6 +142,9 @@
     color: var(--color-text);
 }
 
+=======
+/* Badges de estado */
+>>>>>>> main
 .recursos__estado {
     display: inline-block;
     padding: 3px 10px;
@@ -173,6 +181,7 @@
     color: var(--color-danger);
 }
 
+<<<<<<< HEAD
 .recursos__empty {
     text-align: center;
     color: var(--color-text-muted);
@@ -180,6 +189,9 @@
     padding: var(--space-12) 0;
 }
 
+=======
+/* Formulario */
+>>>>>>> main
 .recursos__form {
     display: flex;
     flex-direction: column;
@@ -199,10 +211,6 @@
 }
 
 @media (max-width: 768px) {
-    .recursos__row {
-        grid-template-columns: 1fr 1fr;
-    }
-
     .recursos__title {
         font-size: 24px;
     }

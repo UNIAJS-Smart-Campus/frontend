@@ -1,10 +1,17 @@
 .auth {
     min-height: 100vh;
+<<<<<<< HEAD
     background:
         radial-gradient(800px 400px at 50% -5%, rgba(255, 255, 255, 0.08), transparent 60%),
         radial-gradient(600px 300px at 80% 20%, rgba(45, 95, 138, 0.12), transparent 60%),
         linear-gradient(170deg, #0a1e35 0%, var(--color-primary-700) 50%, var(--color-primary) 100%);
     color: #ffffff;
+=======
+
+    background-color: var(--color-bg);
+    color: var(--color-text);
+
+>>>>>>> main
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -22,7 +29,12 @@
     left: 0;
     right: 0;
     height: 4px;
+<<<<<<< HEAD
     background: linear-gradient(90deg, var(--color-accent), var(--color-accent-light), var(--color-accent));
+=======
+
+    background-color: var(--color-accent);
+>>>>>>> main
 }
 
 .auth__brand {
@@ -37,16 +49,27 @@
 .auth__logo {
     width: 48px;
     height: 48px;
+<<<<<<< HEAD
     border-radius: var(--radius);
     background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light));
     color: var(--color-primary-700);
+=======
+
+    border-radius: 14px;
+    background-color: var(--color-accent);
+    color: #ffffff;
+
+>>>>>>> main
     font-family: var(--font-heading);
     font-size: 24px;
     font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
+<<<<<<< HEAD
     box-shadow: 0 4px 14px rgba(199, 161, 31, 0.35);
+=======
+>>>>>>> main
 }
 
 .auth__name {
@@ -55,7 +78,12 @@
     font-size: 22px;
     font-weight: 700;
     letter-spacing: 0.02em;
+<<<<<<< HEAD
     color: #ffffff;
+=======
+
+    color: var(--color-primary);
+>>>>>>> main
 }
 
 .auth__card {

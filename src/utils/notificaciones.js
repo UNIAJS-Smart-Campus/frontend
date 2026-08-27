@@ -2,7 +2,7 @@ const notificaciones = [
     {
         id: 1,
         tipo: "Solicitud",
-        icono: "📋",
+        icono: "solicitudes",
         mensaje: "Tu solicitud SOL-2026-001 cambió al estado 'En proceso'.",
         fecha: "2026-08-14",
         leida: false
@@ -10,7 +10,7 @@ const notificaciones = [
     {
         id: 2,
         tipo: "Reserva",
-        icono: "📅",
+        icono: "reservas",
         mensaje: "Reserva del auditorio principal confirmada para el 18 de agosto.",
         fecha: "2026-08-13",
         leida: false
@@ -18,7 +18,7 @@ const notificaciones = [
     {
         id: 3,
         tipo: "Evento",
-        icono: "🎉",
+        icono: "eventos",
         mensaje: "Nuevo evento: Seminario de investigación aplicada.",
         fecha: "2026-08-12",
         leida: true
@@ -26,7 +26,7 @@ const notificaciones = [
     {
         id: 4,
         tipo: "Solicitud",
-        icono: "📋",
+        icono: "solicitudes",
         mensaje: "Tu PQRS SOL-2026-005 fue asignada al técnico responsable.",
         fecha: "2026-08-11",
         leida: false
@@ -34,7 +34,7 @@ const notificaciones = [
     {
         id: 5,
         tipo: "Reserva",
-        icono: "📅",
+        icono: "reservas",
         mensaje: "Recordatorio: tu reserva del laboratorio de química vence mañana.",
         fecha: "2026-08-10",
         leida: true
@@ -42,7 +42,7 @@ const notificaciones = [
     {
         id: 6,
         tipo: "Evento",
-        icono: "🎉",
+        icono: "eventos",
         mensaje: "Publicación: Convocatoria a la feria universitaria 2026.",
         fecha: "2026-08-08",
         leida: true

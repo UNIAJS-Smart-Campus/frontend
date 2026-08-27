@@ -58,8 +58,13 @@
     position: relative;
 }
 
+<<<<<<< HEAD
 .navbar__notification,
 .navbar__theme {
+=======
+/* Notificaciones */
+.navbar__notification {
+>>>>>>> main
     position: relative;
     width: 40px;
     height: 40px;
@@ -76,8 +81,7 @@
     color: var(--color-text-muted);
 }
 
-.navbar__notification:hover,
-.navbar__theme:hover {
+.navbar__notification:hover {
     background-color: var(--color-hover);
     color: var(--color-text);
 }
@@ -120,7 +124,7 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-600));
+    background-color: var(--color-primary);
     color: #ffffff;
     border: 2px solid var(--color-accent);
     display: flex;

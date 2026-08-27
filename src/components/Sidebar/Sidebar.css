@@ -4,7 +4,12 @@
     position: fixed;
     top: 0;
     left: 0;
+<<<<<<< HEAD
     background: linear-gradient(180deg, #0a1e35 0%, var(--color-primary-700) 55%, var(--color-primary) 100%);
+=======
+
+    background-color: #0f2740;
+>>>>>>> main
     color: #e2e8f0;
     display: flex;
     flex-direction: column;
@@ -32,16 +37,27 @@
     width: 38px;
     height: 38px;
     flex-shrink: 0;
+<<<<<<< HEAD
     border-radius: var(--radius-sm);
     background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light));
     color: var(--color-primary-700);
+=======
+
+    border-radius: 10px;
+    background-color: var(--color-accent);
+    color: #ffffff;
+
+>>>>>>> main
     font-family: var(--font-heading);
     font-size: 20px;
     font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
+<<<<<<< HEAD
     box-shadow: 0 4px 12px rgba(199, 161, 31, 0.35);
+=======
+>>>>>>> main
 }
 
 .sidebar__title {
@@ -100,19 +116,31 @@
 }
 
 .sidebar__item--active {
+<<<<<<< HEAD
     background: linear-gradient(90deg, rgba(199, 161, 31, 0.2), transparent);
+=======
+    background-color: rgba(122, 177, 232, 0.16);
+>>>>>>> main
     color: #ffffff;
     border-left: 3px solid var(--color-accent);
     font-weight: 600;
 }
 
 .sidebar__item--active:hover {
+<<<<<<< HEAD
     background: linear-gradient(90deg, rgba(199, 161, 31, 0.26), transparent);
+=======
+    background-color: rgba(122, 177, 232, 0.26);
+>>>>>>> main
     color: #ffffff;
 }
 
 .sidebar__icon {
     width: 22px;
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
     display: flex;
     align-items: center;
     justify-content: center;

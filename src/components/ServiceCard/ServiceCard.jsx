@@ -1,11 +1,14 @@
 import { Link } from "react-router-dom";
+import Icon from "../Icon/Icon";
 import "./ServiceCard.css";
 
 function ServiceCard({ service }) {
     return (
         <article className="service-card">
             <div className="service-card__header">
-                <span className="service-card__icon">{service.icon}</span>
+                <span className="service-card__icon">
+                    <Icon name={service.icon} />
+                </span>
 
                 <span className="service-card__category">{service.category}</span>
             </div>

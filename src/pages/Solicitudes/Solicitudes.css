@@ -4,6 +4,7 @@
     gap: var(--space-6);
 }
 
+<<<<<<< HEAD
 .solicitudes__header {
     text-align: center;
 }
@@ -24,6 +25,9 @@
     line-height: 1.6;
 }
 
+=======
+/* Filtros */
+>>>>>>> main
 .solicitudes__filters {
     display: flex;
     align-items: center;
@@ -59,6 +63,7 @@
     box-shadow: 0 0 0 3px rgba(199, 161, 31, 0.15);
 }
 
+<<<<<<< HEAD
 .solicitudes__list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -130,6 +135,22 @@
     flex-wrap: wrap;
     padding-top: var(--space-3);
     border-top: 1px solid var(--color-border);
+=======
+/* Enlace de detalle (usado dentro de DataTable) */
+.solicitudes__link {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-primary-600);
+
+    text-decoration: none;
+
+    transition: color 0.2s ease;
+}
+
+.solicitudes__link:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+>>>>>>> main
 }
 
 .solicitudes__form {
@@ -150,6 +171,7 @@
     color: var(--color-text-secondary);
 }
 
+<<<<<<< HEAD
 .solicitudes__empty {
     grid-column: 1 / -1;
     text-align: center;
@@ -158,6 +180,8 @@
     padding: var(--space-12) 0;
 }
 
+=======
+>>>>>>> main
 @media (max-width: 768px) {
     .solicitudes__title {
         font-size: 24px;

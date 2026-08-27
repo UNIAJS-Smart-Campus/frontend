@@ -16,13 +16,6 @@ function Perfil() {
 
     return (
         <div className="perfil">
-            <header className="perfil__header">
-                <h1 className="perfil__title">Mi perfil</h1>
-                <p className="perfil__subtitle">
-                    Información del usuario registrado en la plataforma.
-                </p>
-            </header>
-
             <div className="perfil__card">
                 <div className="perfil__identity">
                     <div className="perfil__avatar">{inicial}</div>

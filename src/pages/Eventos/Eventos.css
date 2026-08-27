@@ -4,6 +4,7 @@
     gap: var(--space-6);
 }
 
+<<<<<<< HEAD
 .eventos__header {
     text-align: center;
 }
@@ -24,6 +25,8 @@
     line-height: 1.6;
 }
 
+=======
+>>>>>>> main
 .eventos__toolbar {
     display: flex;
     align-items: center;
@@ -38,6 +41,7 @@
     width: 100%;
 }
 
+<<<<<<< HEAD
 .eventos__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -69,6 +73,9 @@
     gap: var(--space-3);
 }
 
+=======
+/* Categoría (badge usado dentro de DataTable) */
+>>>>>>> main
 .eventos__categoria {
     font-size: 11px;
     font-weight: 700;
@@ -76,6 +83,7 @@
     letter-spacing: 0.08em;
     color: var(--color-primary-600);
     background-color: var(--color-primary-100);
+<<<<<<< HEAD
     padding: 3px 10px;
     border-radius: var(--radius-full);
     white-space: nowrap;
@@ -124,6 +132,13 @@
     color: var(--color-text-muted);
     font-size: 15px;
     padding: var(--space-12) 0;
+=======
+
+    padding: 4px 10px;
+    border-radius: 999px;
+
+    white-space: nowrap;
+>>>>>>> main
 }
 
 .eventos__form {

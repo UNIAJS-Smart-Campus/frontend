@@ -2,6 +2,11 @@ import { useState } from "react";
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import Modal from "../../components/Modal/Modal";
+import DataTable from "../../components/DataTable/DataTable";
+import Pagination from "../../components/Pagination/Pagination";
+import useSearch from "../../hooks/useSearch";
+import usePagination from "../../hooks/usePagination";
+import SearchBar from "../../components/SearchBar/SearchBar";
 import {
     ROLES,
     obtenerUsuarios,
@@ -24,6 +29,18 @@ function Usuarios() {
     const [editandoId, setEditandoId] = useState(null);
     const [form, setForm] = useState(vacio);
     const [error, setError] = useState("");
+    const [query, setQuery] = useState("");
+
+    const filtrados = useSearch(items, query, [
+        "usuario",
+        "nombre",
+        "correo",
+        "rol",
+        "programa"
+    ]);
+
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
+        usePagination(filtrados, 10);
 
     const abrirNuevo = () => {
         setEditandoId(null);
@@ -106,14 +123,6 @@ function Usuarios() {
 
     return (
         <div className="usuarios">
-            <header className="usuarios__header">
-                <h1 className="usuarios__title">Gestión de usuarios</h1>
-                <p className="usuarios__subtitle">
-                    Administra los usuarios de la plataforma, sus roles y
-                    permisos de acceso.
-                </p>
-            </header>
-
             <div className="usuarios__stats">
                 <article className="usuarios__stat">
                     <strong className="usuarios__stat-value">{items.length}</strong>
@@ -132,6 +141,18 @@ function Usuarios() {
             </div>
 
             <div className="usuarios__toolbar">
+                <div className="usuarios__search">
+                    <SearchBar
+                        placeholder="Buscar por usuario, nombre, correo o rol…"
+                        value={query}
+                        onChange={(e) => {
+                            setQuery(e.target.value);
+                            setPagina(1);
+                        }}
+                        id="usuarios-search"
+                    />
+                </div>
+
                 <span className="usuarios__count">
                     {activos} activos de {items.length}
                 </span>
@@ -141,33 +162,24 @@ function Usuarios() {
                 </Button>
             </div>
 
-            <div className="usuarios__table">
-                <div className="usuarios__row usuarios__row--header">
-                    <span className="usuarios__cell">Usuario</span>
-                    <span className="usuarios__cell">Nombre</span>
-                    <span className="usuarios__cell">Correo</span>
-                    <span className="usuarios__cell">Rol</span>
-                    <span className="usuarios__cell">Estado</span>
-                    <span className="usuarios__cell">Acciones</span>
-                </div>
-
-                {items.map((item) => (
-                    <div className="usuarios__row" key={item.id}>
-                        <span className="usuarios__cell usuarios__cell--code">
-                            {item.usuario}
-                        </span>
-                        <span className="usuarios__cell usuarios__cell--name">
-                            {item.nombre}
-                        </span>
-                        <span className="usuarios__cell">{item.correo}</span>
-                        <span className="usuarios__cell">
+            <DataTable
+                columns={[
+                    { label: "Usuario", key: "usuario", strong: true },
+                    { label: "Nombre", key: "nombre" },
+                    { label: "Correo", key: "correo" },
+                    {
+                        label: "Rol",
+                        render: (item) => (
                             <span
                                 className={`usuarios__rol usuarios__rol--${item.rol.toLowerCase()}`}
                             >
                                 {item.rol}
                             </span>
-                        </span>
-                        <span className="usuarios__cell">
+                        )
+                    },
+                    {
+                        label: "Estado",
+                        render: (item) => (
                             <span
                                 className={
                                     item.estado === "Activo"
@@ -177,33 +189,49 @@ function Usuarios() {
                             >
                                 {item.estado}
                             </span>
-                        </span>
-                        <span className="usuarios__cell usuarios__actions">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => abrirEditar(item)}
-                            >
-                                Editar
-                            </Button>
+                        )
+                    },
+                    {
+                        label: "Acciones",
+                        render: (item) => (
+                            <div className="dtable__actions">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => abrirEditar(item)}
+                                >
+                                    Editar
+                                </Button>
 
-                            <Button
-                                variant={
-                                    item.estado === "Activo"
-                                        ? "outline"
-                                        : "primary"
-                                }
-                                size="sm"
-                                onClick={() => alternarEstado(item)}
-                            >
-                                {item.estado === "Activo"
-                                    ? "Desactivar"
-                                    : "Activar"}
-                            </Button>
-                        </span>
-                    </div>
-                ))}
-            </div>
+                                <Button
+                                    variant={
+                                        item.estado === "Activo"
+                                            ? "outline"
+                                            : "primary"
+                                    }
+                                    size="sm"
+                                    onClick={() => alternarEstado(item)}
+                                >
+                                    {item.estado === "Activo"
+                                        ? "Desactivar"
+                                        : "Activar"}
+                                </Button>
+                            </div>
+                        )
+                    }
+                ]}
+                rows={itemsPagina}
+                emptyMessage="No se encontraron usuarios con la búsqueda aplicada."
+            />
+
+            <Pagination
+                pagina={pagina}
+                totalPaginas={totalPaginas}
+                onChange={setPagina}
+                desde={desde}
+                hasta={hasta}
+                total={filtrados.length}
+            />
 
             <Modal
                 isOpen={modalAbierto}

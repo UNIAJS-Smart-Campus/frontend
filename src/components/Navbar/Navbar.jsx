@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import notificaciones from "../../utils/notificaciones";
 import { getModuleName } from "../../utils/menu";
 import useAuth from "../../context/useAuth";
+import Icon from "../Icon/Icon";
 import "./Navbar.css";
 
 const THEME_KEY = "uajs_theme";
@@ -90,17 +91,8 @@ function Navbar({ onToggle }) {
             </div>
 
             <div className="navbar__right">
-                <button
-                    className="navbar__theme"
-                    onClick={toggleTheme}
-                    aria-label="Cambiar tema"
-                    title={theme === "dark" ? "Modo claro" : "Modo oscuro"}
-                >
-                    {theme === "dark" ? "☀️" : "🌙"}
-                </button>
-
                 <Link to="/notificaciones" className="navbar__notification">
-                    🔔
+                    <Icon name="notificaciones" size={20} />
                     {noLeidas > 0 && (
                         <span className="navbar__badge">{noLeidas}</span>
                     )}
@@ -136,7 +128,7 @@ function Navbar({ onToggle }) {
                                 className="navbar__dropdown-item"
                                 onClick={() => setDropdownOpen(false)}
                             >
-                                👤 Ver perfil
+                                 <Icon name="perfil" size={16} /> Ver perfil
                             </Link>
 
                             <Link
@@ -144,8 +136,15 @@ function Navbar({ onToggle }) {
                                 className="navbar__dropdown-item"
                                 onClick={() => setDropdownOpen(false)}
                             >
-                                ⚙️ Configuración
+                                 <Icon name="configuracion" size={16} /> Configuración
                             </Link>
+
+                            <button
+                                className="navbar__dropdown-item"
+                                onClick={toggleTheme}
+                            >
+                                {theme === "dark" ? "☀️ Modo claro" : "🌙 Modo oscuro"}
+                            </button>
 
                             <button
                                 className="navbar__dropdown-item navbar__dropdown-item--logout"

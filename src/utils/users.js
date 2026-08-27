@@ -10,6 +10,7 @@ export const ROLES = [
             "eventos",
             "notificaciones",
             "pqrs",
+            "reportes",
             "perfil",
             "configuracion"
         ],
@@ -84,9 +85,10 @@ export const ROLES = [
             "solicitudes",
             "reservas",
             "recursos",
-            "notificaciones",
             "eventos",
+            "notificaciones",
             "pqrs",
+            "reportes",
             "perfil"
         ],
         acciones: [

@@ -4,6 +4,7 @@
     gap: var(--space-6);
 }
 
+<<<<<<< HEAD
 .pqrs__header {
     text-align: center;
 }
@@ -24,6 +25,9 @@
     line-height: 1.6;
 }
 
+=======
+/* Estadísticas por tipo */
+>>>>>>> main
 .pqrs__stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -91,6 +95,7 @@
     box-shadow: 0 0 0 3px rgba(199, 161, 31, 0.15);
 }
 
+<<<<<<< HEAD
 .pqrs__list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -164,6 +169,8 @@
     padding: var(--space-12) 0;
 }
 
+=======
+>>>>>>> main
 @media (max-width: 768px) {
     .pqrs__title {
         font-size: 24px;
