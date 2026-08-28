@@ -26,6 +26,8 @@ import PQRS from "../pages/PQRS/PQRS";
 import NuevaPQRS from "../pages/PQRS/NuevaPQRS/NuevaPQRS";
 import Usuarios from "../pages/Usuarios/Usuarios";
 import Reportes from "../pages/Reportes/Reportes";
+import InfoAcademica from "../pages/InfoAcademica/InfoAcademica";
+import Servicios from "../pages/Servicios/Servicios";
 
 function AppRoutes() {
   return (
@@ -49,6 +51,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute>
                 <Servicio />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/servicios"
+            element={
+              <ProtectedRoute>
+                <Servicios />
               </ProtectedRoute>
             }
           />
@@ -145,6 +155,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute permiso="reportes">
                 <Reportes />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/info-academica"
+            element={
+              <ProtectedRoute permiso="info_academica">
+                <InfoAcademica />
               </ProtectedRoute>
             }
           />

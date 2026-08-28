@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/Button/Button";
 import Icon from "../../components/Icon/Icon";
+import ServiceCard from "../../components/ServiceCard/ServiceCard";
 import useAuth from "../../context/useAuth";
 import services from "../../utils/services";
 import "./Landing.css";
@@ -68,13 +69,23 @@ function Landing() {
                     un solo lugar para toda la comunidad académica.
                 </p>
 
-                <Button
-                    variant="primary"
-                    size="lg"
-                    onClick={handleEnter}
-                >
-                    Entrar ahora
-                </Button>
+                <div className="landing__actions">
+                    <Button
+                        variant="primary"
+                        size="lg"
+                        onClick={handleEnter}
+                    >
+                        Entrar ahora
+                    </Button>
+
+                    <button
+                        type="button"
+                        className="landing__secondary"
+                        onClick={() => navigate("/servicios")}
+                    >
+                        Explorar servicios
+                    </button>
+                </div>
 
                 <p className="landing__countdown">
                     Acceso automático al panel en{" "}
@@ -85,15 +96,9 @@ function Landing() {
             <section className="landing__section">
                 <h3 className="landing__section-title">Nuestros servicios</h3>
 
-                <div className="landing__grid">
+                <div className="landing__grid landing__grid--services">
                     {services.map((service) => (
-                        <article className="landing__card" key={service.name}>
-                            <span className="landing__card-icon">
-                                <Icon name={service.icon} size={32} />
-                            </span>
-                            <h4 className="landing__card-title">{service.name}</h4>
-                            <p className="landing__card-text">{service.description}</p>
-                        </article>
+                        <ServiceCard service={service} key={service.name} />
                     ))}
                 </div>
             </section>

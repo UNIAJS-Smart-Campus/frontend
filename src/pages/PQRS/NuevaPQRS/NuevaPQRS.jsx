@@ -1,11 +1,17 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import Button from "../../../components/Button/Button";
-import Input from "../../../components/Input/Input";
+import Icon from "../../../components/Icon/Icon";
 import { TIPOS_PQRS } from "../../../utils/pqrs";
 import "./NuevaPQRS.css";
 
 const STORAGE_KEY = "uajs_pqrs";
+
+const TIPO_ICONO = {
+    Petición: "solicitudes",
+    Queja: "pqrs",
+    Reclamo: "info",
+    Sugerencia: "eventos"
+};
 
 function NuevaPQRS() {
     const [form, setForm] = useState({
@@ -50,57 +56,64 @@ function NuevaPQRS() {
                 ← Volver a PQRS
             </Link>
 
-            <header className="nueva-pqrs__header">
-                <h1 className="nueva-pqrs__title">Nueva PQRS</h1>
-                <p className="nueva-pqrs__subtitle">
-                    Registra una petición, queja, reclamo o sugerencia.
-                </p>
-            </header>
+            <div className="nueva-pqrs__page-header">
+                <div className="nueva-pqrs__page-title">
+                    <h1>Nueva PQRS</h1>
+                    <p>
+                        Registra una petición, queja, reclamo o sugerencia.
+                    </p>
+                </div>
+            </div>
 
             {confirmacion ? (
                 <div className="nueva-pqrs__confirm">
                     <p>{confirmacion}</p>
-                    <Link to="/pqrs">
-                        <Button variant="primary">Ver mis PQRS</Button>
+                    <Link to="/pqrs" className="nueva-pqrs__submit">
+                        Ver mis PQRS
                     </Link>
                 </div>
             ) : (
                 <form className="nueva-pqrs__form" onSubmit={handleSubmit}>
-                    <label className="nueva-pqrs__label" htmlFor="pqrs-tipo">
-                        Tipo de PQRS
-                    </label>
+                    <div className="nueva-pqrs__form-group">
+                        <label htmlFor="pqrs-tipo">Tipo de PQRS</label>
+                        <select
+                            id="pqrs-tipo"
+                            className="nueva-pqrs__select"
+                            name="tipo"
+                            value={form.tipo}
+                            onChange={handleChange}
+                        >
+                            {TIPOS_PQRS.map((tipo) => (
+                                <option key={tipo} value={tipo}>
+                                    {tipo}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
-                    <select
-                        id="pqrs-tipo"
-                        className="nueva-pqrs__select"
-                        name="tipo"
-                        value={form.tipo}
-                        onChange={handleChange}
-                    >
-                        {TIPOS_PQRS.map((tipo) => (
-                            <option key={tipo} value={tipo}>
-                                {tipo}
-                            </option>
-                        ))}
-                    </select>
+                    <div className="nueva-pqrs__form-group">
+                        <label htmlFor="pqrs-descripcion">Descripción</label>
+                        <textarea
+                            id="pqrs-descripcion"
+                            className="nueva-pqrs__textarea"
+                            name="descripcion"
+                            placeholder="Describe tu petición, queja, reclamo o sugerencia…"
+                            value={form.descripcion}
+                            onChange={handleChange}
+                            rows="5"
+                        />
+                    </div>
 
-                    <Input
-                        label="Descripción"
-                        type="textarea"
-                        name="descripcion"
-                        placeholder="Describe tu petición, queja, reclamo o sugerencia…"
-                        value={form.descripcion}
-                        onChange={handleChange}
-                        id="pqrs-descripcion"
-                    />
-
-                    <Button
-                        variant="primary"
-                        type="submit"
-                        disabled={!form.descripcion.trim()}
-                    >
-                        Enviar PQRS
-                    </Button>
+                    <div className="nueva-pqrs__actions">
+                        <button
+                            type="submit"
+                            className="nueva-pqrs__submit"
+                            disabled={!form.descripcion.trim()}
+                        >
+                            <Icon name="pqrs" size={15} />
+                            Enviar PQRS
+                        </button>
+                    </div>
                 </form>
             )}
         </div>

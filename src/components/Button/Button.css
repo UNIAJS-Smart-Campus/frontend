@@ -80,10 +80,7 @@
 .button--accent {
     background-color: var(--color-accent);
     color: #ffffff;
-<<<<<<< HEAD
     box-shadow: var(--shadow-sm);
-=======
->>>>>>> main
 }
 
 .button--accent:hover:not(:disabled) {

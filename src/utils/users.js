@@ -12,7 +12,8 @@ export const ROLES = [
             "pqrs",
             "reportes",
             "perfil",
-            "configuracion"
+            "configuracion",
+            "info_academica"
         ],
         acciones: [
             "registrar_solicitudes",
@@ -29,7 +30,8 @@ export const ROLES = [
             "administrar_roles",
             "gestionar_servicios",
             "gestionar_configuracion",
-            "supervisar"
+            "supervisar",
+            "publicar_info_academica"
         ]
     },
     {
@@ -42,7 +44,9 @@ export const ROLES = [
             "eventos",
             "notificaciones",
             "pqrs",
-            "perfil"
+            "perfil",
+            "reportes",
+            "configuracion"
         ],
         acciones: [
             "consultar_solicitudes",
@@ -50,9 +54,8 @@ export const ROLES = [
             "actualizar_estados",
             "gestionar_reservas",
             "administrar_recursos",
-            "publicar_eventos",
             "atender_requerimientos",
-            "consultar_estadisticas"
+            "generar_reportes"
         ]
     },
     {
@@ -65,15 +68,17 @@ export const ROLES = [
             "eventos",
             "notificaciones",
             "pqrs",
-            "perfil"
+            "perfil",
+            "info_academica",
+            "configuracion"
         ],
         acciones: [
             "consultar_solicitudes",
             "realizar_reservas",
             "gestionar_reservas",
             "solicitar_recursos",
-            "publicar_eventos",
-            "consultar_estadisticas"
+            "publicar_info_academica",
+            "consultar_info_academica"
         ]
     },
     {
@@ -86,15 +91,16 @@ export const ROLES = [
             "eventos",
             "notificaciones",
             "pqrs",
-            "reportes",
-            "perfil"
+            "perfil",
+            "info_academica",
+            "configuracion"
         ],
         acciones: [
             "registrar_solicitudes",
             "consultar_solicitudes",
             "realizar_reservas",
             "solicitar_recursos",
-            "consultar_estadisticas"
+            "consultar_info_academica"
         ]
     }
 ];

@@ -18,8 +18,8 @@ function Servicio() {
                 <p className="servicio__subtitle">
                     El servicio que buscas no existe.
                 </p>
-                <Link to="/dashboard">
-                    <Button variant="primary">Volver al Dashboard</Button>
+                <Link to="/servicios">
+                    <Button variant="primary">Volver a servicios</Button>
                 </Link>
             </div>
         );
@@ -28,7 +28,7 @@ function Servicio() {
     return (
         <div className="servicio">
             <header className="servicio__header">
-                <Link to="/dashboard" className="servicio__back">
+                <Link to="/servicios" className="servicio__back">
                     ← Volver a servicios
                 </Link>
 

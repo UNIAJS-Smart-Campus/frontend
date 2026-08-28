@@ -1,16 +1,32 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import Button from "../../components/Button/Button";
-import StatusBadge from "../../components/StatusBadge/StatusBadge";
-import DataTable from "../../components/DataTable/DataTable";
-import Pagination from "../../components/Pagination/Pagination";
-import useSearch from "../../hooks/useSearch";
-import usePagination from "../../hooks/usePagination";
-import SearchBar from "../../components/SearchBar/SearchBar";
+import Icon from "../../components/Icon/Icon";
 import pqrsBase, { TIPOS_PQRS } from "../../utils/pqrs";
 import "./PQRS.css";
 
 const STORAGE_KEY = "uajs_pqrs";
+
+const TIPO_ICONO = {
+    Petición: "solicitudes",
+    Queja: "pqrs",
+    Reclamo: "info",
+    Sugerencia: "eventos"
+};
+
+const TIPO_CLASE = {
+    Petición: "blue",
+    Queja: "red",
+    Reclamo: "orange",
+    Sugerencia: "green"
+};
+
+const ESTADO_CLASE = {
+    "En revisión": "review",
+    Asignada: "assigned",
+    Resuelta: "resolved",
+    Cerrada: "closed",
+    Registrada: "registered"
+};
 
 function PQRS() {
     const [items] = useState(() => {
@@ -21,95 +37,178 @@ function PQRS() {
             return pqrsBase;
         }
     });
+
     const [filtro, setFiltro] = useState("Todos");
     const [query, setQuery] = useState("");
 
-    const filtradasPorTexto = useSearch(
-        items,
-        query,
-        ["id", "tipo", "descripcion"]
-    );
+    const normalizar = (texto) =>
+        texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-    const filtradas = filtro === "Todos"
-        ? filtradasPorTexto
-        : filtradasPorTexto.filter((item) => item.tipo === filtro);
+    const filtradas =
+        filtro === "Todos"
+            ? items
+            : items.filter((item) => item.tipo === filtro);
 
-    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
-        usePagination(filtradas, 10);
+    const encontradas = query.trim()
+        ? filtradas.filter((item) =>
+              [item.id, item.tipo, item.descripcion, item.estado]
+                  .join(" ")
+                  .toLowerCase()
+                  .includes(normalizar(query))
+          )
+        : filtradas;
 
     const contarTipo = (tipo) =>
-        items.filter((item) => item.tipo === tipo).length;
+        tipo === "Todos"
+            ? items.length
+            : items.filter((item) => item.tipo === tipo).length;
+
+    const fechaLegible = (fecha) => {
+        const partes = String(fecha).split("-");
+        if (partes.length !== 3) return fecha;
+        const meses = [
+            "ene", "feb", "mar", "abr", "may", "jun",
+            "jul", "ago", "sep", "oct", "nov", "dic"
+        ];
+        return `${partes[2]} ${meses[Number(partes[1]) - 1]} ${partes[0]}`;
+    };
 
     return (
         <div className="pqrs">
-            <div className="pqrs__stats">
-                {TIPOS_PQRS.map((tipo) => (
-                    <article className="pqrs__stat" key={tipo}>
-                        <strong className="pqrs__stat-value">
-                            {contarTipo(tipo)}
-                        </strong>
-                        <span className="pqrs__stat-label">{tipo}s</span>
-                    </article>
-                ))}
-            </div>
-
-            <div className="pqrs__toolbar">
-                <div className="pqrs__search">
-                    <SearchBar
-                        placeholder="Buscar por número, tipo o descripción…"
-                        value={query}
-                        onChange={(e) => {
-                            setQuery(e.target.value);
-                            setPagina(1);
-                        }}
-                        id="pqrs-search"
-                    />
+            <div className="pqrs__page-header">
+                <div className="pqrs__page-title">
+                    <h1>PQRS</h1>
+                    <p>
+                        Gestiona tus peticiones, quejas, reclamos y sugerencias.
+                    </p>
                 </div>
 
-                <select
-                    className="pqrs__select"
-                    value={filtro}
-                    onChange={(e) => {
-                        setFiltro(e.target.value);
-                        setPagina(1);
-                    }}
-                >
-                    <option value="Todos">Todos los tipos</option>
-                    {TIPOS_PQRS.map((tipo) => (
-                        <option key={tipo} value={tipo}>
-                            {tipo}
-                        </option>
-                    ))}
-                </select>
-
-                <Link to="/pqrs/nueva">
-                    <Button variant="primary">Nueva PQRS</Button>
+                <Link to="/pqrs/nueva" className="pqrs__new-button">
+                    <Icon name="solicitudes" size={15} />
+                    Nueva PQRS
                 </Link>
             </div>
 
-            <DataTable
-                columns={[
-                    { label: "Número", key: "id", strong: true },
-                    { label: "Tipo", key: "tipo" },
-                    {
-                        label: "Estado",
-                        render: (item) => <StatusBadge estado={item.estado} />
-                    },
-                    { label: "Fecha", key: "fecha" },
-                    { label: "Descripción", key: "descripcion" }
-                ]}
-                rows={itemsPagina}
-                emptyMessage="No se encontraron PQRS con los filtros aplicados."
-            />
+            <div className="pqrs__summary">
+                <button
+                    className={
+                        filtro === "Todos"
+                            ? "pqrs__summary-card pqrs__summary-card--active"
+                            : "pqrs__summary-card"
+                    }
+                    onClick={() => setFiltro("Todos")}
+                >
+                    <div className="pqrs__summary-icon pqrs__summary-icon--all">
+                        <Icon name="pqrs" size={19} />
+                    </div>
+                    <div>
+                        <div className="pqrs__summary-label">Todos</div>
+                        <div className="pqrs__summary-number">
+                            {contarTipo("Todos")}
+                        </div>
+                    </div>
+                </button>
 
-            <Pagination
-                pagina={pagina}
-                totalPaginas={totalPaginas}
-                onChange={setPagina}
-                desde={desde}
-                hasta={hasta}
-                total={filtradas.length}
-            />
+                {TIPOS_PQRS.map((tipo) => (
+                    <button
+                        key={tipo}
+                        className={
+                            filtro === tipo
+                                ? `pqrs__summary-card pqrs__summary-card--active`
+                                : "pqrs__summary-card"
+                        }
+                        onClick={() => setFiltro(tipo)}
+                    >
+                        <div
+                            className={`pqrs__summary-icon pqrs__summary-icon--${TIPO_CLASE[tipo]}`}
+                        >
+                            <Icon name={TIPO_ICONO[tipo]} size={19} />
+                        </div>
+                        <div>
+                            <div className="pqrs__summary-label">{tipo}</div>
+                            <div className="pqrs__summary-number">
+                                {contarTipo(tipo)}
+                            </div>
+                        </div>
+                    </button>
+                ))}
+            </div>
+
+            <div className="pqrs__filter-card">
+                <div className="pqrs__filters">
+                    <div className="pqrs__filter-group pqrs__filter-group--search">
+                        <label htmlFor="pqrs-search">Buscar</label>
+                        <input
+                            id="pqrs-search"
+                            type="text"
+                            placeholder="Número, tipo, estado o descripción…"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            className="pqrs__filter-input"
+                        />
+                    </div>
+
+                    <div className="pqrs__filter-group">
+                        <label htmlFor="pqrs-tipo">Tipo</label>
+                        <select
+                            id="pqrs-tipo"
+                            className="pqrs__filter-select"
+                            value={filtro}
+                            onChange={(e) => setFiltro(e.target.value)}
+                        >
+                            <option value="Todos">Todos</option>
+                            {TIPOS_PQRS.map((tipo) => (
+                                <option key={tipo} value={tipo}>
+                                    {tipo}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div className="pqrs__list-header">
+                <h2>Mis PQRS</h2>
+                <span>{encontradas.length} registros</span>
+            </div>
+
+            {encontradas.length === 0 ? (
+                <div className="pqrs__empty">
+                    No se encontraron PQRS con los filtros aplicados.
+                </div>
+            ) : (
+                <div className="pqrs__list">
+                    {encontradas.map((item) => (
+                        <article className="pqrs__item" key={item.id}>
+                            <div
+                                className={`pqrs__item-icon pqrs__item-icon--${TIPO_CLASE[item.tipo]}`}
+                            >
+                                <Icon name={TIPO_ICONO[item.tipo]} size={20} />
+                            </div>
+
+                            <div className="pqrs__item-body">
+                                <div className="pqrs__item-meta">
+                                    <span className="pqrs__item-id">
+                                        {item.id}
+                                    </span>
+                                    <span
+                                        className={`pqrs__item-status ${ESTADO_CLASE[item.estado] || "closed"}`}
+                                    >
+                                        {item.estado}
+                                    </span>
+                                </div>
+                                <h3>{item.tipo}</h3>
+                                <p className="pqrs__item-desc">
+                                    {item.descripcion}
+                                </p>
+                                <span className="pqrs__item-date">
+                                    {fechaLegible(item.fecha)}
+                                </span>
+                            </div>
+                        </article>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

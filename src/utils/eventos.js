@@ -1,5 +1,7 @@
 export const CATEGORIAS_EVENTO = ["Académico", "Cultural", "Formación", "Institucional"];
 
+export const ESTADOS_EVENTO = ["Activo", "Finalizado", "Cancelado"];
+
 const eventos = [
     {
         id: 1,
@@ -8,7 +10,10 @@ const eventos = [
         hora: "09:00",
         lugar: "Auditorio principal",
         categoria: "Académico",
-        descripcion: "Jornada de conferencias y talleres con invitados del sector productivo."
+        descripcion: "Jornada de conferencias y talleres con invitados del sector productivo.",
+        estado: "Finalizado",
+        cupo: 120,
+        inscritos: 104
     },
     {
         id: 2,
@@ -17,7 +22,10 @@ const eventos = [
         hora: "14:00",
         lugar: "Salón 205",
         categoria: "Académico",
-        descripcion: "Presentación de proyectos de investigación de estudiantes y docentes."
+        descripcion: "Presentación de proyectos de investigación de estudiantes y docentes.",
+        estado: "Finalizado",
+        cupo: 40,
+        inscritos: 38
     },
     {
         id: 3,
@@ -26,7 +34,10 @@ const eventos = [
         hora: "10:00",
         lugar: "Auditorio B",
         categoria: "Cultural",
-        descripcion: "Espacio de diálogo sobre la vida universitaria y bienestar estudiantil."
+        descripcion: "Espacio de diálogo sobre la vida universitaria y bienestar estudiantil.",
+        estado: "Activo",
+        cupo: 80,
+        inscritos: 52
     },
     {
         id: 4,
@@ -35,7 +46,10 @@ const eventos = [
         hora: "08:00",
         lugar: "Patio central",
         categoria: "Cultural",
-        descripcion: "Exposición de programas académicos, servicios y emprendimientos estudiantiles."
+        descripcion: "Exposición de programas académicos, servicios y emprendimientos estudiantiles.",
+        estado: "Activo",
+        cupo: 200,
+        inscritos: 176
     },
     {
         id: 5,
@@ -44,7 +58,10 @@ const eventos = [
         hora: "15:00",
         lugar: "Laboratorio de informática 1",
         categoria: "Formación",
-        descripcion: "Taller práctico para la creación de planes de negocio."
+        descripcion: "Taller práctico para la creación de planes de negocio.",
+        estado: "Activo",
+        cupo: 30,
+        inscritos: 12
     }
 ];
 

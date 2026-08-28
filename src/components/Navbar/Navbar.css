@@ -58,13 +58,7 @@
     position: relative;
 }
 
-<<<<<<< HEAD
-.navbar__notification,
-.navbar__theme {
-=======
-/* Notificaciones */
 .navbar__notification {
->>>>>>> main
     position: relative;
     width: 40px;
     height: 40px;
@@ -124,7 +118,7 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: var(--color-primary);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-600));
     color: #ffffff;
     border: 2px solid var(--color-accent);
     display: flex;

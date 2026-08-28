@@ -43,7 +43,7 @@
 .search-bar__field:focus {
     outline: none;
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(199, 161, 31, 0.12);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
 .search-bar__clear {

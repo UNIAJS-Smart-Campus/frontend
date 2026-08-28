@@ -38,14 +38,62 @@
     gap: var(--space-3);
 }
 
+.solicitud-detalle__numero-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.solicitud-detalle__servicio-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.solicitud-detalle__servicio-icon .icon {
+    display: block;
+}
+
+.solicitud-detalle__servicio-icon--blue { background: #e8f3ff; color: var(--color-primary-600); }
+.solicitud-detalle__servicio-icon--green { background: #e7f8ee; color: #199b5b; }
+.solicitud-detalle__servicio-icon--purple { background: #eee8ff; color: #7547d6; }
+.solicitud-detalle__servicio-icon--red { background: #fff0f0; color: #d84b4b; }
+.solicitud-detalle__servicio-icon--orange { background: #fff4df; color: #d99000; }
+
 .solicitud-detalle__numero {
     margin: 0;
     font-family: var(--font-heading);
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 800;
     color: var(--color-primary-600);
     line-height: 1.2;
 }
+
+.solicitud-detalle__servicio {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
+
+.solicitud-detalle__status {
+    padding: 6px 11px;
+    border-radius: 6px;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.solicitud-detalle__status.blue { background: #e8f3ff; color: var(--color-primary-600); }
+.solicitud-detalle__status.yellow { background: #fff4df; color: #d99000; }
+.solicitud-detalle__status.purple { background: #eee8ff; color: #7547d6; }
+.solicitud-detalle__status.green { background: #e3f8ec; color: #199b5b; }
+.solicitud-detalle__status.gray { background: var(--color-hover); color: var(--color-text-muted); }
 
 .solicitud-detalle__tipo {
     margin: var(--space-3) 0 var(--space-2);
@@ -157,10 +205,10 @@
 }
 
 .solicitud-detalle__step--current .solicitud-detalle__step-marker {
-    background-color: var(--color-primary-600);
-    border-color: var(--color-primary-600);
-    color: #ffffff;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+    background-color: var(--color-accent-dark);
+    border-color: var(--color-accent-dark);
+    color: #1e3a5f;
+    box-shadow: 0 0 0 4px rgba(247, 208, 0, 0.25);
 }
 
 .solicitud-detalle__step-body {
@@ -178,6 +226,10 @@
 
 .solicitud-detalle__step--current .solicitud-detalle__step-name {
     color: var(--color-primary-600);
+}
+
+.solicitud-detalle__step--current .solicitud-detalle__step-detail {
+    color: var(--color-text);
 }
 
 .solicitud-detalle__step--done .solicitud-detalle__step-name {

@@ -1,17 +1,10 @@
 .landing {
     min-height: 100vh;
-<<<<<<< HEAD
     background:
-        radial-gradient(800px 400px at 50% -5%, rgba(255, 255, 255, 0.08), transparent 60%),
-        radial-gradient(600px 300px at 80% 20%, rgba(45, 95, 138, 0.12), transparent 60%),
-        linear-gradient(170deg, #0a1e35 0%, var(--color-primary-700) 50%, var(--color-primary) 100%);
+        radial-gradient(800px 400px at 50% -5%, rgba(59, 130, 246, 0.06), transparent 60%),
+        radial-gradient(600px 300px at 80% 20%, rgba(19, 64, 116, 0.08), transparent 60%),
+        linear-gradient(170deg, #091c30 0%, var(--color-primary-700) 50%, var(--color-primary) 100%);
     color: #ffffff;
-=======
-
-    background-color: var(--color-bg);
-    color: var(--color-text);
-
->>>>>>> main
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -27,12 +20,7 @@
     left: 0;
     right: 0;
     height: 4px;
-<<<<<<< HEAD
     background: linear-gradient(90deg, var(--color-accent), var(--color-accent-light), var(--color-accent));
-=======
-
-    background-color: var(--color-accent);
->>>>>>> main
 }
 
 .landing__header {
@@ -56,27 +44,16 @@
 .landing__logo {
     width: 44px;
     height: 44px;
-<<<<<<< HEAD
     border-radius: var(--radius);
     background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light));
-    color: var(--color-primary-700);
-=======
-
-    border-radius: 12px;
-    background-color: var(--color-accent);
     color: #ffffff;
-
->>>>>>> main
     font-family: var(--font-heading);
     font-size: 22px;
     font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
-<<<<<<< HEAD
-    box-shadow: 0 4px 14px rgba(199, 161, 31, 0.35);
-=======
->>>>>>> main
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
 }
 
 .landing__name {
@@ -85,12 +62,7 @@
     font-size: 22px;
     font-weight: 700;
     letter-spacing: 0.02em;
-<<<<<<< HEAD
     color: #ffffff;
-=======
-
-    color: var(--color-primary);
->>>>>>> main
 }
 
 .landing__hero {
@@ -122,24 +94,34 @@
     margin-right: auto;
 }
 
-<<<<<<< HEAD
 .landing__actions {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: var(--space-4);
     flex-wrap: wrap;
-=======
-    font-size: 18px;
-    line-height: 1.6;
-    color: var(--color-text-muted);
->>>>>>> main
+}
+
+.landing__secondary {
+    padding: 14px 24px;
+    border-radius: var(--radius-full, 50px);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: transparent;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--transition-base), border-color var(--transition-base);
+}
+
+.landing__secondary:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.6);
 }
 
 .landing__countdown {
     margin-top: var(--space-6);
     font-size: 14px;
-<<<<<<< HEAD
     color: rgba(255, 255, 255, 0.55);
 }
 
@@ -147,14 +129,6 @@
     color: var(--color-accent-light);
     font-size: 15px;
     font-weight: 700;
-=======
-    color: var(--color-text-muted);
-}
-
-.landing__countdown strong {
-    color: var(--color-primary-600);
-    font-size: 16px;
->>>>>>> main
 }
 
 .landing__section {
@@ -183,17 +157,9 @@
     display: block;
     width: 56px;
     height: 3px;
-<<<<<<< HEAD
     margin: var(--space-3) auto 0;
     background: linear-gradient(90deg, var(--color-accent), var(--color-accent-light));
     border-radius: var(--radius-full);
-=======
-
-    margin: 12px auto 0;
-
-    background-color: var(--color-accent);
-    border-radius: 999px;
->>>>>>> main
 }
 
 .landing__grid {
@@ -203,7 +169,6 @@
 }
 
 .landing__card {
-<<<<<<< HEAD
     background-color: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: var(--radius-lg);
@@ -216,23 +181,6 @@
     background-color: rgba(255, 255, 255, 0.1);
     transform: translateY(-4px);
     border-color: rgba(255, 255, 255, 0.2);
-=======
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-
-    border-radius: var(--radius);
-
-    padding: 28px;
-
-    box-shadow: var(--shadow-sm);
-
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.landing__card:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
->>>>>>> main
 }
 
 .landing__card--profile {
@@ -256,32 +204,19 @@
 .landing__card-text {
     margin: 0;
     font-size: 14px;
-<<<<<<< HEAD
     line-height: 1.7;
     color: rgba(255, 255, 255, 0.7);
-=======
-    line-height: 1.6;
-    color: var(--color-text-muted);
->>>>>>> main
 }
 
 .landing__footer {
     width: 100%;
     padding: var(--space-6);
     text-align: center;
-<<<<<<< HEAD
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     font-size: 13px;
     color: rgba(255, 255, 255, 0.5);
     position: relative;
     z-index: 1;
-=======
-
-    border-top: 1px solid var(--color-border);
-
-    font-size: 13px;
-    color: var(--color-text-muted);
->>>>>>> main
 }
 
 @media (max-width: 768px) {

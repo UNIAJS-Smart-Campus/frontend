@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="200" height="100">
+  <text x="100" y="48" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="bold" fill="#ffffff" letter-spacing="2">
+    U<tspan fill="#f7d000">N</tspan>iAJS
+  </text>
+  <text x="100" y="70" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#ccd9e6" letter-spacing="1">Corporación Universitaria</text>
+  <text x="100" y="85" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#ccd9e6" font-style="italic" letter-spacing="1">Antonio José de Sucre</text>
+</svg>

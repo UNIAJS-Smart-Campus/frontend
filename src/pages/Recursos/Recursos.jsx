@@ -1,298 +1,753 @@
-import { useState } from "react";
-import Button from "../../components/Button/Button";
-import Input from "../../components/Input/Input";
+import { useState, useMemo } from "react";
+import Icon from "../../components/Icon/Icon";
 import Modal from "../../components/Modal/Modal";
-import DataTable from "../../components/DataTable/DataTable";
-import Pagination from "../../components/Pagination/Pagination";
-import useSearch from "../../hooks/useSearch";
-import usePagination from "../../hooks/usePagination";
-import SearchBar from "../../components/SearchBar/SearchBar";
+import Input from "../../components/Input/Input";
 import useAuth from "../../context/useAuth";
-import recursos, { TIPOS_RECURSO } from "../../utils/recursos";
+import { TIPOS_RECURSO, obtenerRecursos, guardarRecursos } from "../../utils/recursos";
 import "./Recursos.css";
 
-function estadoClase(estado) {
-    return estado
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/\s+/g, "-");
-}
-
-const ESTADOS_RECURSO = ["Activo", "Inactivo", "En mantenimiento"];
-const DISPONIBILIDADES = ["Disponible", "Ocupado"];
-
-const formVacio = {
-    codigo: "",
-    nombre: "",
-    tipo: "Salas",
-    ubicacion: "",
-    capacidad: "",
-    estado: "Activo",
-    disponibilidad: "Disponible"
+const CATEGORIA_VARIANT = {
+    Salas: { icono: "reservas", clase: "blue", etiqueta: "Espacio" },
+    Laboratorios: { icono: "recursos", clase: "green", etiqueta: "Laboratorio" },
+    Auditorios: { icono: "eventos", clase: "purple", etiqueta: "Espacio" },
+    Equipos: { icono: "recursos", clase: "orange", etiqueta: "Equipo" }
 };
 
-function Recursos() {
-    const [query, setQuery] = useState("");
-    const [tipo, setTipo] = useState("Todos");
-    const [items, setItems] = useState(recursos);
-    const [crearAbierto, setCrearAbierto] = useState(false);
-    const [form, setForm] = useState(formVacio);
+const ESTADO_VARIANT = {
+    Disponible: { etiqueta: "DISPONIBLE", clase: "available", bg: "blue" },
+    "En mantenimiento": { etiqueta: "MANTENIMIENTO", clase: "maintenance", bg: "orange" },
+    Ocupado: { etiqueta: "OCUPADO", clase: "unavailable", bg: "red" },
+    Inactivo: { etiqueta: "NO DISPONIBLE", clase: "unavailable", bg: "red" }
+};
 
-    const { puede } = useAuth();
-    const puedeAdministrar = puede("administrar_recursos");
+function estadoVisual(recurso) {
+    if (recurso.estado === "En mantenimiento") {
+        return ESTADO_VARIANT["En mantenimiento"];
+    }
+    if (recurso.estado === "Inactivo") {
+        return ESTADO_VARIANT.Inactivo;
+    }
+    if (recurso.disponibilidad === "Disponible") {
+        return ESTADO_VARIANT.Disponible;
+    }
+    return ESTADO_VARIANT.Ocupado;
+}
 
-    const filtradosPorTexto = useSearch(
-        items,
-        query,
-        ["codigo", "nombre", "tipo", "ubicacion", "estado"]
+function esReservable(recurso) {
+    return (
+        recurso.estado === "Activo" &&
+        recurso.disponibilidad === "Disponible"
     );
+}
 
-    const filtrados = tipo === "Todos"
-        ? filtradosPorTexto
-        : filtradosPorTexto.filter((recurso) => recurso.tipo === tipo);
+const CATEGORIAS = [
+    { valor: "all", etiqueta: "Todas" },
+    { valor: "Salas", etiqueta: "Espacios" },
+    { valor: "Equipos", etiqueta: "Equipos" },
+    { valor: "Laboratorios", etiqueta: "Laboratorios" },
+    { valor: "Auditorios", etiqueta: "Auditorios" }
+];
 
-    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
-        usePagination(filtrados, 10);
+const EDIFICIOS = ["Todos", "Bloque A", "Bloque B", "Bloque C"];
 
-    const disponibles = items.filter(
-        (recurso) => recurso.disponibilidad === "Disponible"
-    ).length;
+function obtenerEdificio(ubicacion) {
+    const bloque = (ubicacion || "").split("·")[0].trim();
+    return bloque || "Otro";
+}
+
+function Recursos() {
+    const { puede } = useAuth();
+    const puedeAdmin = puede("administrar_recursos");
+
+    const [items, setItems] = useState(obtenerRecursos);
+    const [query, setQuery] = useState("");
+    const [categoria, setCategoria] = useState("all");
+    const [edificio, setEdificio] = useState("Todos");
+    const [estado, setEstado] = useState("Todos");
+    const [recursoSeleccionado, setRecursoSeleccionado] = useState(null);
+    const [modalAbierto, setModalAbierto] = useState(false);
+    const [detalleRecurso, setDetalleRecurso] = useState(null);
+    const [form, setForm] = useState({
+        fecha: "",
+        horaInicio: "10:00",
+        horaFin: "12:00",
+        motivo: ""
+    });
+    const [errores, setErrores] = useState({});
+    const [confirmacion, setConfirmacion] = useState("");
+
+    const [crudAbierto, setCrudAbierto] = useState(false);
+    const [editandoId, setEditandoId] = useState(null);
+    const [formRecurso, setFormRecurso] = useState({
+        nombre: "",
+        codigo: "",
+        tipo: "Salas",
+        capacidad: "",
+        ubicacion: "",
+        estado: "Activo",
+        disponibilidad: "Disponible"
+    });
+    const [errorRecurso, setErrorRecurso] = useState("");
+    const [aviso, setAviso] = useState("");
+
+    const hoyStr = new Date().toISOString().split("T")[0];
+
+    const mostrarAviso = (mensaje) => {
+        setAviso(mensaje);
+        setTimeout(() => setAviso(""), 2500);
+    };
+
+    const stats = useMemo(() => {
+        const disponibles = items.filter(
+            (r) => r.disponibilidad === "Disponible"
+        ).length;
+        const mantenimiento = items.filter(
+            (r) => r.estado === "En mantenimiento"
+        ).length;
+        return {
+            total: items.length,
+            disponibles,
+            mantenimiento,
+            reservados: items.length - disponibles - mantenimiento
+        };
+    }, [items]);
+
+    const filtrados = useMemo(() => {
+        const texto = query.toLowerCase().trim();
+        return items.filter((recurso) => {
+            if (
+                texto &&
+                !`${recurso.nombre} ${recurso.tipo} ${recurso.ubicacion}`
+                    .toLowerCase()
+                    .includes(texto)
+            ) {
+                return false;
+            }
+            if (categoria !== "all" && recurso.tipo !== categoria) {
+                return false;
+            }
+            if (
+                edificio !== "Todos" &&
+                obtenerEdificio(recurso.ubicacion) !== edificio
+            ) {
+                return false;
+            }
+            if (estado !== "Todos") {
+                if (estado === "Disponible" && !esReservable(recurso)) {
+                    return false;
+                }
+                if (estado === "Mantenimiento" && recurso.estado !== "En mantenimiento") {
+                    return false;
+                }
+                if (estado === "Reservado" && esReservable(recurso)) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }, [query, categoria, edificio, estado, items]);
+
+    const abrirReserva = (recurso) => {
+        if (!esReservable(recurso)) return;
+        setRecursoSeleccionado(recurso);
+        setConfirmacion("");
+        setErrores({});
+        setForm({ fecha: "", horaInicio: "10:00", horaFin: "12:00", motivo: "" });
+        setModalAbierto(true);
+    };
+
+    const cerrarModal = () => {
+        setModalAbierto(false);
+        setRecursoSeleccionado(null);
+    };
+
+    const validarFormulario = () => {
+        const nuevos = {};
+        if (!form.fecha) {
+            nuevos.fecha = "La fecha es obligatoria.";
+        } else if (form.fecha < hoyStr) {
+            nuevos.fecha = "No puedes reservar en una fecha pasada.";
+        }
+        if (form.horaInicio >= form.horaFin) {
+            nuevos.horaFin = "La hora de fin debe ser posterior a la de inicio.";
+        }
+        setErrores(nuevos);
+        return Object.keys(nuevos).length === 0;
+    };
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
+        setErrores((prev) => ({ ...prev, [e.target.name]: "" }));
     };
 
-    const handleCrear = (e) => {
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!validarFormulario()) return;
+        setConfirmacion(
+            `La solicitud de reserva de "${recursoSeleccionado.nombre}" fue registrada correctamente.`
+        );
+        setErrores({});
+    };
+
+    const abrirNuevoRecurso = () => {
+        setEditandoId(null);
+        setFormRecurso({
+            nombre: "",
+            codigo: "",
+            tipo: "Salas",
+            capacidad: "",
+            ubicacion: "",
+            estado: "Activo",
+            disponibilidad: "Disponible"
+        });
+        setErrorRecurso("");
+        setCrudAbierto(true);
+    };
+
+    const abrirEditarRecurso = (recurso) => {
+        setEditandoId(recurso.id);
+        setFormRecurso({
+            nombre: recurso.nombre,
+            codigo: recurso.codigo,
+            tipo: recurso.tipo,
+            capacidad: String(recurso.capacidad),
+            ubicacion: recurso.ubicacion,
+            estado: recurso.estado,
+            disponibilidad: recurso.disponibilidad
+        });
+        setErrorRecurso("");
+        setCrudAbierto(true);
+    };
+
+    const cerrarCrud = () => {
+        setCrudAbierto(false);
+        setErrorRecurso("");
+    };
+
+    const handleRecursoChange = (e) => {
+        setFormRecurso({ ...formRecurso, [e.target.name]: e.target.value });
+    };
+
+    const handleRecursoSubmit = (e) => {
         e.preventDefault();
 
-        const nuevo = {
-            id: `R-${String(items.length + 1).padStart(3, "0")}`,
-            ...form,
-            capacidad: Number(form.capacidad) || 1
+        if (!formRecurso.nombre.trim() || !formRecurso.codigo.trim()) {
+            setErrorRecurso("El nombre y el código son obligatorios.");
+            return;
+        }
+
+        const duplicado = items.some(
+            (item) =>
+                item.codigo.toLowerCase() === formRecurso.codigo.trim().toLowerCase() &&
+                item.id !== editandoId
+        );
+        if (duplicado) {
+            setErrorRecurso("Ya existe un recurso con ese código.");
+            return;
+        }
+
+        const nuevoId =
+            editandoId ||
+            `R-${String(Date.now()).slice(-6)}-${Math.floor(Math.random() * 90 + 10)}`;
+
+        const datos = {
+            id: nuevoId,
+            nombre: formRecurso.nombre.trim(),
+            codigo: formRecurso.codigo.trim(),
+            tipo: formRecurso.tipo,
+            capacidad: Number(formRecurso.capacidad) || 1,
+            ubicacion: formRecurso.ubicacion.trim() || "Bloque A",
+            estado: formRecurso.estado,
+            disponibilidad: formRecurso.disponibilidad
         };
 
-        setItems([nuevo, ...items]);
-        setCrearAbierto(false);
-        setForm(formVacio);
+        if (editandoId === null) {
+            const lista = [...items, datos];
+            setItems(lista);
+            guardarRecursos(lista);
+            mostrarAviso("Recurso creado correctamente.");
+        } else {
+            const lista = items.map((item) => (item.id === editandoId ? datos : item));
+            setItems(lista);
+            guardarRecursos(lista);
+            mostrarAviso("Recurso actualizado correctamente.");
+        }
+
+        setCrudAbierto(false);
+    };
+
+    const eliminarRecurso = (recurso) => {
+        const confirma = window.confirm(
+            `¿Eliminar el recurso "${recurso.nombre}"?`
+        );
+        if (!confirma) return;
+        const lista = items.filter((item) => item.id !== recurso.id);
+        setItems(lista);
+        guardarRecursos(lista);
+        mostrarAviso(`Recurso "${recurso.nombre}" eliminado.`);
     };
 
     return (
         <div className="recursos">
-            <div className="recursos__stats">
-                <article className="recursos__stat">
-                    <strong className="recursos__stat-value">{items.length}</strong>
-                    <span className="recursos__stat-label">Total de recursos</span>
-                </article>
-
-                <article className="recursos__stat">
-                    <strong className="recursos__stat-value">{disponibles}</strong>
-                    <span className="recursos__stat-label">Disponibles</span>
-                </article>
-
-                <article className="recursos__stat">
-                    <strong className="recursos__stat-value">
-                        {items.length - disponibles}
-                    </strong>
-                    <span className="recursos__stat-label">No disponibles</span>
-                </article>
-            </div>
-
-            <div className="recursos__filters">
-                <div className="recursos__search">
-                    <SearchBar
-                        placeholder="Buscar por código, nombre o ubicación…"
-                        value={query}
-                        onChange={(e) => {
-                            setQuery(e.target.value);
-                            setPagina(1);
-                        }}
-                        id="recursos-search"
-                    />
+            <div className="recursos__page-header">
+                <div className="recursos__page-title">
+                    <h1>Recursos</h1>
+                    <p>Consulta los espacios, equipos y recursos disponibles del campus.</p>
                 </div>
 
-                <select
-                    className="recursos__select"
-                    value={tipo}
-                    onChange={(e) => {
-                        setTipo(e.target.value);
-                        setPagina(1);
-                    }}
-                >
-                    <option value="Todos">Todos los tipos</option>
-                    {TIPOS_RECURSO.map((tipoItem) => (
-                        <option key={tipoItem} value={tipoItem}>
-                            {tipoItem}
-                        </option>
-                    ))}
-                </select>
-
-                {puedeAdministrar && (
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => setCrearAbierto(true)}
-                    >
-                        + Nuevo recurso
-                    </Button>
+                {puedeAdmin && (
+                    <button className="recursos__new-button" onClick={abrirNuevoRecurso}>
+                        <Icon name="recursos" size={15} />
+                        Nuevo recurso
+                    </button>
                 )}
             </div>
 
-            <DataTable
-                columns={[
-                    { label: "Código", key: "codigo", strong: true },
-                    { label: "Nombre", key: "nombre" },
-                    { label: "Tipo", key: "tipo" },
-                    { label: "Capacidad", key: "capacidad" },
-                    { label: "Ubicación", key: "ubicacion" },
-                    {
-                        label: "Estado",
-                        render: (recurso) => (
-                            <span
-                                className={`recursos__estado recursos__estado--${estadoClase(recurso.estado)}`}
-                            >
-                                {recurso.estado}
-                            </span>
-                        )
-                    },
-                    {
-                        label: "Disponibilidad",
-                        render: (recurso) => (
-                            <span
-                                className={
-                                    recurso.disponibilidad === "Disponible"
-                                        ? "recursos__disp recursos__disp--si"
-                                        : "recursos__disp recursos__disp--no"
-                                }
-                            >
-                                {recurso.disponibilidad}
-                            </span>
-                        )
-                    }
-                ]}
-                rows={itemsPagina}
-                emptyMessage="No se encontraron recursos con los filtros aplicados."
-            />
+            {aviso && (
+                <div className="recursos__toast">
+                    <Icon name="info" size={14} />
+                    {aviso}
+                </div>
+            )}
 
-            <Pagination
-                pagina={pagina}
-                totalPaginas={totalPaginas}
-                onChange={setPagina}
-                desde={desde}
-                hasta={hasta}
-                total={filtrados.length}
-            />
+            <div className="recursos__summary">
+                <div className="recursos__summary-card">
+                    <div className="recursos__summary-icon blue">
+                        <Icon name="recursos" size={18} />
+                    </div>
+                    <div className="recursos__summary-info">
+                        <span className="recursos__summary-number">{stats.total}</span>
+                        <span className="recursos__summary-label">Recursos totales</span>
+                    </div>
+                </div>
+
+                <div className="recursos__summary-card">
+                    <div className="recursos__summary-icon green">
+                        <Icon name="estudiante" size={18} />
+                    </div>
+                    <div className="recursos__summary-info">
+                        <span className="recursos__summary-number">{stats.disponibles}</span>
+                        <span className="recursos__summary-label">Disponibles</span>
+                    </div>
+                </div>
+
+                <div className="recursos__summary-card">
+                    <div className="recursos__summary-icon orange">
+                        <Icon name="configuracion" size={18} />
+                    </div>
+                    <div className="recursos__summary-info">
+                        <span className="recursos__summary-number">{stats.mantenimiento}</span>
+                        <span className="recursos__summary-label">En mantenimiento</span>
+                    </div>
+                </div>
+
+                <div className="recursos__summary-card">
+                    <div className="recursos__summary-icon purple">
+                        <Icon name="reservas" size={18} />
+                    </div>
+                    <div className="recursos__summary-info">
+                        <span className="recursos__summary-number">{stats.reservados}</span>
+                        <span className="recursos__summary-label">Reservados</span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="recursos__filter-card">
+                <div className="recursos__filter-title">Filtrar recursos</div>
+
+                <div className="recursos__filters">
+                    <div className="recursos__filter-group">
+                        <label>Buscar</label>
+                        <input
+                            className="recursos__filter-input"
+                            type="text"
+                            placeholder="Nombre del recurso..."
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="recursos__filter-group">
+                        <label>Categoría</label>
+                        <select
+                            className="recursos__filter-select"
+                            value={categoria}
+                            onChange={(e) => setCategoria(e.target.value)}
+                        >
+                            {CATEGORIAS.map((c) => (
+                                <option key={c.valor} value={c.valor}>
+                                    {c.etiqueta}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="recursos__filter-group">
+                        <label>Edificio</label>
+                        <select
+                            className="recursos__filter-select"
+                            value={edificio}
+                            onChange={(e) => setEdificio(e.target.value)}
+                        >
+                            {EDIFICIOS.map((ed) => (
+                                <option key={ed}>{ed}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="recursos__filter-group">
+                        <label>Estado</label>
+                        <select
+                            className="recursos__filter-select"
+                            value={estado}
+                            onChange={(e) => setEstado(e.target.value)}
+                        >
+                            <option>Todos</option>
+                            <option>Disponible</option>
+                            <option>Reservado</option>
+                            <option>Mantenimiento</option>
+                        </select>
+                    </div>
+
+                    <button
+                        className="recursos__filter-button"
+                        onClick={() => setQuery("")}
+                    >
+                        <Icon name="solicitudes" size={12} />
+                        Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <div className="recursos__resources-header">
+                <h2>Recursos</h2>
+                <span>Mostrando {filtrados.length} recursos</span>
+            </div>
+
+            <div className="recursos__resources">
+                {filtrados.length > 0 ? (
+                    filtrados.map((recurso) => {
+                        const categoriaVar =
+                            CATEGORIA_VARIANT[recurso.tipo] || CATEGORIA_VARIANT.Salas;
+                        const estadoVar = estadoVisual(recurso);
+                        const reservable = esReservable(recurso);
+
+                        return (
+                            <div className="recursos__resource-card" key={recurso.id}>
+                                <div className={`recursos__resource-image ${estadoVar.bg}-bg`}>
+                                    <Icon name={categoriaVar.icono} size={44} />
+                                    <span className={`status ${estadoVar.clase}`}>
+                                        {estadoVar.etiqueta}
+                                    </span>
+                                </div>
+
+                                <div className="recursos__resource-content">
+                                    <div className="recursos__resource-type">
+                                        {categoriaVar.etiqueta}
+                                    </div>
+                                    <h3>{recurso.nombre}</h3>
+                                    <p className="recursos__resource-description">
+                                        Recurso {recurso.tipo.toLowerCase()} con capacidad para
+                                        {" "}{recurso.capacidad} persona(s), ubicado en {recurso.ubicacion}.
+                                    </p>
+
+                                    <div className="recursos__resource-details">
+                                        <span className="detail">
+                                            <Icon name="estudiante" size={11} />
+                                            {recurso.capacidad} personas
+                                        </span>
+                                        <span className="detail">
+                                            <Icon name="recursos" size={11} />
+                                            {recurso.tipo}
+                                        </span>
+                                        <span className="detail">
+                                            <Icon name="eventos" size={11} />
+                                            {obtenerEdificio(recurso.ubicacion)}
+                                        </span>
+                                    </div>
+
+                                    <div className="recursos__resource-actions">
+                                        <button
+                                            className="recursos__details-button"
+                                            onClick={() => setDetalleRecurso(recurso)}
+                                        >
+                                            Ver detalles
+                                        </button>
+                                        <button
+                                            className="recursos__reserve-button"
+                                            disabled={!reservable}
+                                            onClick={() => abrirReserva(recurso)}
+                                        >
+                                            {reservable ? "Reservar" : "No disponible"}
+                                        </button>
+                                        {puedeAdmin && (
+                                            <>
+                                                <button
+                                                    className="recursos__edit-button"
+                                                    onClick={() => abrirEditarRecurso(recurso)}
+                                                >
+                                                    <Icon name="usuarios" size={12} />
+                                                    Editar
+                                                </button>
+                                                <button
+                                                    className="recursos__delete-button"
+                                                    onClick={() => eliminarRecurso(recurso)}
+                                                >
+                                                    <Icon name="configuracion" size={12} />
+                                                    Eliminar
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <p className="recursos__empty">
+                        No se encontraron recursos con los filtros aplicados.
+                    </p>
+                )}
+            </div>
 
             <Modal
-                isOpen={crearAbierto}
-                title="Nuevo recurso"
-                onClose={() => setCrearAbierto(false)}
+                isOpen={modalAbierto}
+                title="Reservar recurso"
+                onClose={cerrarModal}
             >
-                <form className="recursos__form" onSubmit={handleCrear}>
+                {confirmacion ? (
+                    <div className="recursos__confirm">
+                        <p>{confirmacion}</p>
+                        <button className="recursos__confirm-button" onClick={cerrarModal}>
+                            Cerrar
+                        </button>
+                    </div>
+                ) : (
+                    <form className="recursos__form" onSubmit={handleSubmit}>
+                        <div className="recursos__modal-info">
+                            <strong>{recursoSeleccionado?.nombre}</strong>
+                            <span>Selecciona la fecha y horario de la reserva.</span>
+                        </div>
+
+                        <Input
+                            label="Fecha"
+                            type="date"
+                            name="fecha"
+                            value={form.fecha}
+                            onChange={handleChange}
+                            id="recurso-fecha"
+                            min={hoyStr}
+                        />
+                        {errores.fecha && (
+                            <span className="recursos__error">{errores.fecha}</span>
+                        )}
+
+                        <div className="recursos__form-row">
+                            <div>
+                                <Input
+                                    label="Hora de inicio"
+                                    type="time"
+                                    name="horaInicio"
+                                    value={form.horaInicio}
+                                    onChange={handleChange}
+                                    id="recurso-inicio"
+                                />
+                            </div>
+                            <div>
+                                <Input
+                                    label="Hora de finalización"
+                                    type="time"
+                                    name="horaFin"
+                                    value={form.horaFin}
+                                    onChange={handleChange}
+                                    id="recurso-fin"
+                                />
+                                {errores.horaFin && (
+                                    <span className="recursos__error">{errores.horaFin}</span>
+                                )}
+                            </div>
+                        </div>
+
+                        <Input
+                            label="Motivo de la reserva"
+                            type="text"
+                            name="motivo"
+                            placeholder="Ej. Trabajo grupal"
+                            value={form.motivo}
+                            onChange={handleChange}
+                            id="recurso-motivo"
+                        />
+
+                        <div className="recursos__modal-footer">
+                            <button
+                                className="recursos__cancel-button"
+                                type="button"
+                                onClick={cerrarModal}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                className="recursos__confirm-button recursos__confirm-button--primary"
+                                type="submit"
+                                disabled={!form.fecha}
+                            >
+                                Confirmar reserva
+                            </button>
+                        </div>
+                    </form>
+                )}
+            </Modal>
+
+            <Modal
+                isOpen={detalleRecurso !== null}
+                title="Detalles del recurso"
+                onClose={() => setDetalleRecurso(null)}
+            >
+                {detalleRecurso && (
+                    <div className="recursos__detalle">
+                        <div className="recursos__detalle-name">{detalleRecurso.nombre}</div>
+                        <div className="recursos__detalle-grid">
+                            <div className="recursos__detalle-item">
+                                <span className="recursos__detalle-label">Código</span>
+                                <span className="recursos__detalle-value">{detalleRecurso.codigo}</span>
+                            </div>
+                            <div className="recursos__detalle-item">
+                                <span className="recursos__detalle-label">Tipo</span>
+                                <span className="recursos__detalle-value">{detalleRecurso.tipo}</span>
+                            </div>
+                            <div className="recursos__detalle-item">
+                                <span className="recursos__detalle-label">Capacidad</span>
+                                <span className="recursos__detalle-value">{detalleRecurso.capacidad} personas</span>
+                            </div>
+                            <div className="recursos__detalle-item">
+                                <span className="recursos__detalle-label">Ubicación</span>
+                                <span className="recursos__detalle-value">{detalleRecurso.ubicacion}</span>
+                            </div>
+                            <div className="recursos__detalle-item">
+                                <span className="recursos__detalle-label">Estado</span>
+                                <span className="recursos__detalle-value">{detalleRecurso.estado}</span>
+                            </div>
+                            <div className="recursos__detalle-item">
+                                <span className="recursos__detalle-label">Disponibilidad</span>
+                                <span className="recursos__detalle-value">{detalleRecurso.disponibilidad}</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
+            <Modal
+                isOpen={crudAbierto}
+                title={editandoId === null ? "Nuevo recurso" : "Editar recurso"}
+                onClose={cerrarCrud}
+            >
+                <form className="recursos__form" onSubmit={handleRecursoSubmit}>
+                    {errorRecurso && <p className="recursos__error">{errorRecurso}</p>}
+
+                    <Input
+                        label="Nombre del recurso"
+                        type="text"
+                        name="nombre"
+                        value={formRecurso.nombre}
+                        onChange={handleRecursoChange}
+                        id="recurso-crud-nombre"
+                        placeholder="Ej. Salón 102"
+                    />
+
                     <Input
                         label="Código"
                         type="text"
                         name="codigo"
-                        value={form.codigo}
-                        onChange={handleChange}
-                        placeholder="ej. REC-301"
-                        id="recurso-codigo"
-                    />
-
-                    <Input
-                        label="Nombre"
-                        type="text"
-                        name="nombre"
-                        value={form.nombre}
-                        onChange={handleChange}
-                        placeholder="ej. Salón 301"
-                        id="recurso-nombre"
+                        value={formRecurso.codigo}
+                        onChange={handleRecursoChange}
+                        id="recurso-crud-codigo"
+                        placeholder="Ej. REC-102"
                     />
 
                     <div className="recursos__form-row">
-                        <label className="recursos__label" htmlFor="recurso-tipo">
-                            Tipo
-                        </label>
-                        <select
-                            className="recursos__select"
-                            name="tipo"
-                            id="recurso-tipo"
-                            value={form.tipo}
-                            onChange={handleChange}
-                        >
-                            {TIPOS_RECURSO.map((tipoItem) => (
-                                <option key={tipoItem} value={tipoItem}>
-                                    {tipoItem}
-                                </option>
-                            ))}
-                        </select>
+                        <div>
+                            <label className="recursos__field-label">Tipo</label>
+                            <select
+                                className="recursos__filter-select"
+                                name="tipo"
+                                value={formRecurso.tipo}
+                                onChange={handleRecursoChange}
+                            >
+                                {TIPOS_RECURSO.map((tipo) => (
+                                    <option key={tipo} value={tipo}>
+                                        {tipo}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="recursos__field-label">Capacidad</label>
+                            <input
+                                className="recursos__filter-input"
+                                type="number"
+                                min="1"
+                                name="capacidad"
+                                value={formRecurso.capacidad}
+                                onChange={handleRecursoChange}
+                                placeholder="Ej. 40"
+                            />
+                        </div>
                     </div>
 
                     <Input
                         label="Ubicación"
                         type="text"
                         name="ubicacion"
-                        value={form.ubicacion}
-                        onChange={handleChange}
-                        placeholder="ej. Bloque A · Piso 2"
-                        id="recurso-ubicacion"
-                    />
-
-                    <Input
-                        label="Capacidad"
-                        type="number"
-                        name="capacidad"
-                        value={form.capacidad}
-                        onChange={handleChange}
-                        placeholder="ej. 40"
-                        id="recurso-capacidad"
+                        value={formRecurso.ubicacion}
+                        onChange={handleRecursoChange}
+                        id="recurso-crud-ubicacion"
+                        placeholder="Ej. Bloque A · Piso 1"
                     />
 
                     <div className="recursos__form-row">
-                        <label className="recursos__label" htmlFor="recurso-estado">
-                            Estado
-                        </label>
-                        <select
-                            className="recursos__select"
-                            name="estado"
-                            id="recurso-estado"
-                            value={form.estado}
-                            onChange={handleChange}
-                        >
-                            {ESTADOS_RECURSO.map((estadoItem) => (
-                                <option key={estadoItem} value={estadoItem}>
-                                    {estadoItem}
-                                </option>
-                            ))}
-                        </select>
+                        <div>
+                            <label className="recursos__field-label">Estado</label>
+                            <select
+                                className="recursos__filter-select"
+                                name="estado"
+                                value={formRecurso.estado}
+                                onChange={handleRecursoChange}
+                            >
+                                <option value="Activo">Activo</option>
+                                <option value="En mantenimiento">En mantenimiento</option>
+                                <option value="Inactivo">Inactivo</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="recursos__field-label">Disponibilidad</label>
+                            <select
+                                className="recursos__filter-select"
+                                name="disponibilidad"
+                                value={formRecurso.disponibilidad}
+                                onChange={handleRecursoChange}
+                            >
+                                <option value="Disponible">Disponible</option>
+                                <option value="Ocupado">Ocupado</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div className="recursos__form-row">
-                        <label className="recursos__label" htmlFor="recurso-disp">
-                            Disponibilidad
-                        </label>
-                        <select
-                            className="recursos__select"
-                            name="disponibilidad"
-                            id="recurso-disp"
-                            value={form.disponibilidad}
-                            onChange={handleChange}
+                    <div className="recursos__modal-footer">
+                        <button
+                            className="recursos__cancel-button"
+                            type="button"
+                            onClick={cerrarCrud}
                         >
-                            {DISPONIBILIDADES.map((disp) => (
-                                <option key={disp} value={disp}>
-                                    {disp}
-                                </option>
-                            ))}
-                        </select>
+                            Cancelar
+                        </button>
+                        <button
+                            className="recursos__confirm-button recursos__confirm-button--primary"
+                            type="submit"
+                            disabled={!formRecurso.nombre.trim() || !formRecurso.codigo.trim()}
+                        >
+                            {editandoId === null ? "Crear recurso" : "Guardar cambios"}
+                        </button>
                     </div>
-
-                    <Button
-                        variant="primary"
-                        type="submit"
-                        disabled={!form.codigo || !form.nombre || !form.ubicacion}
-                    >
-                        Crear recurso
-                    </Button>
                 </form>
             </Modal>
         </div>

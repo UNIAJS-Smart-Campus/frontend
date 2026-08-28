@@ -83,4 +83,23 @@ const recursos = [
     }
 ];
 
+export const STORAGE_KEY = "uajs_recursos";
+
+export function obtenerRecursos() {
+    try {
+        const guardados = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        return guardados.length > 0 ? guardados : recursos;
+    } catch {
+        return recursos;
+    }
+}
+
+export function guardarRecursos(lista) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+    } catch {
+        // si localStorage no está disponible se ignora
+    }
+}
+
 export default recursos;

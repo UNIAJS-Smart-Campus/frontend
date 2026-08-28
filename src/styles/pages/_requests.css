@@ -61,7 +61,7 @@
 .requests__select:focus {
     outline: none;
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(199, 161, 31, 0.15);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
 .requests__list {
