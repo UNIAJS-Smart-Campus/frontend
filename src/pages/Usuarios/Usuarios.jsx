@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Icon from "../../components/Icon/Icon";
+import SearchBar from "../../components/SearchBar/SearchBar";
 import { ROLES, obtenerUsuarios, guardarUsuarios } from "../../utils/users";
 import "./Usuarios.css";
 
@@ -39,6 +40,7 @@ function Usuarios() {
     const [form, setForm] = useState(vacio);
     const [error, setError] = useState("");
     const [query, setQuery] = useState("");
+    const [busqueda, setBusqueda] = useState("");
     const [filtroRol, setFiltroRol] = useState("");
     const [filtroEstado, setFiltroEstado] = useState("");
     const [aviso, setAviso] = useState("");
@@ -55,17 +57,25 @@ function Usuarios() {
         ? porRol.filter((item) => item.estado === filtroEstado)
         : porRol;
 
-    const encontrados = query.trim()
+    const encontrados = busqueda.trim()
         ? porEstado.filter((item) =>
               [item.usuario, item.nombre, item.correo, item.rol, item.programa]
                   .join(" ")
                   .toLowerCase()
-                  .includes(normalizar(query))
+                  .includes(normalizar(busqueda))
           )
         : porEstado;
 
     const activos = items.filter((item) => item.estado === "Activo").length;
     const contarRol = (rol) => items.filter((item) => item.rol === rol).length;
+
+    const sugerencias = [
+        ...new Set(
+            items
+                .flatMap((item) => [item.usuario, item.nombre, item.correo, item.rol, item.programa])
+                .filter(Boolean)
+        )
+    ];
 
     const iniciales = (nombre) =>
         (nombre || "?")
@@ -287,13 +297,13 @@ function Usuarios() {
                 <div className="users__filters">
                     <div className="users__filter-group users__filter-group--search">
                         <label htmlFor="users-search">Buscar</label>
-                        <input
+                        <SearchBar
                             id="users-search"
-                            type="text"
                             placeholder="Buscar usuario…"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            className="users__filter-input"
+                            onSearch={() => setBusqueda(query)}
+                            suggestions={sugerencias}
                         />
                     </div>
 

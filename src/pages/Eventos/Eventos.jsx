@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Icon from "../../components/Icon/Icon";
+import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
 import eventos, { CATEGORIAS_EVENTO, ESTADOS_EVENTO } from "../../utils/eventos";
 import "./Eventos.css";
@@ -56,6 +57,7 @@ function Eventos() {
 
     const [items, setItems] = useState(eventos);
     const [query, setQuery] = useState("");
+    const [busqueda, setBusqueda] = useState("");
     const [categoria, setCategoria] = useState("");
     const [estado, setEstado] = useState("");
     const [orden, setOrden] = useState("fecha");
@@ -80,12 +82,12 @@ function Eventos() {
         ? porCategoria.filter((e) => e.estado === estado)
         : porCategoria;
 
-    const porBusqueda = query.trim()
+    const porBusqueda = busqueda.trim()
         ? porEstado.filter((e) =>
               [e.nombre, e.lugar, e.categoria, e.descripcion]
                   .join(" ")
                   .toLowerCase()
-                  .includes(normalizar(query))
+                  .includes(normalizar(busqueda))
           )
         : porEstado;
 
@@ -101,6 +103,14 @@ function Eventos() {
 
     const contarCategoria = (cat) =>
         items.filter((e) => e.categoria === cat).length;
+
+    const sugerencias = [
+        ...new Set(
+            items
+                .flatMap((e) => [e.nombre, e.lugar, e.categoria])
+                .filter(Boolean)
+        )
+    ];
 
     const mostrarAviso = (mensaje) => {
         setAviso(mensaje);
@@ -285,13 +295,13 @@ function Eventos() {
                 <div className="eventos__filters">
                     <div className="eventos__filter-group eventos__filter-group--search">
                         <label htmlFor="eventos-search">Buscar</label>
-                        <input
+                        <SearchBar
                             id="eventos-search"
-                            type="text"
                             placeholder="Buscar evento…"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            className="eventos__filter-input"
+                            onSearch={() => setBusqueda(query)}
+                            suggestions={sugerencias}
                         />
                     </div>
 

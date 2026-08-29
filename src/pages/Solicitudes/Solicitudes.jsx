@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import useAuth from "../../context/useAuth";
 import Icon from "../../components/Icon/Icon";
+import SearchBar from "../../components/SearchBar/SearchBar";
 import solicitudes, { ESTADOS_SOLICITUD } from "../../utils/solicitudes";
 import "./Solicitudes.css";
 
@@ -45,6 +46,7 @@ const formVacio = {
 
 function Solicitudes() {
     const [query, setQuery] = useState("");
+    const [busqueda, setBusqueda] = useState("");
     const [estado, setEstado] = useState("");
     const [items, setItems] = useState(solicitudes);
     const [crearAbierto, setCrearAbierto] = useState(false);
@@ -63,17 +65,25 @@ function Solicitudes() {
         ? items.filter((item) => item.estado === estado)
         : items;
 
-    const encontradas = query.trim()
+    const encontradas = busqueda.trim()
         ? filtradasPorEstado.filter((item) =>
               [item.id, item.tipo, item.servicio, item.descripcion, item.solicitante, item.estado]
                   .join(" ")
                   .toLowerCase()
-                  .includes(normalizar(query))
+                  .includes(normalizar(busqueda))
           )
         : filtradasPorEstado;
 
     const contarPorEstado = (estadoItem) =>
         items.filter((item) => item.estado === estadoItem).length;
+
+    const sugerencias = [
+        ...new Set(
+            items
+                .flatMap((item) => [String(item.id), item.tipo, item.servicio, item.solicitante])
+                .filter(Boolean)
+        )
+    ];
 
     const fechasLegibles = (fecha) => {
         const partes = String(fecha).split("-");
@@ -201,13 +211,13 @@ function Solicitudes() {
                 <div className="sols__filters">
                     <div className="sols__filter-group sols__filter-group--search">
                         <label htmlFor="sols-search">Buscar</label>
-                        <input
+                        <SearchBar
                             id="sols-search"
-                            type="text"
                             placeholder="Número, tipo, servicio, solicitante…"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            className="sols__filter-input"
+                            onSearch={() => setBusqueda(query)}
+                            suggestions={sugerencias}
                         />
                     </div>
 

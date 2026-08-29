@@ -67,6 +67,7 @@ function formatearHora(hora24) {
 
 function Reservas() {
     const [query, setQuery] = useState("");
+    const [busqueda, setBusqueda] = useState("");
     const [tipo, setTipo] = useState("Todos");
     const [fecha, setFecha] = useState("");
     const [hora, setHora] = useState("Cualquier hora");
@@ -90,7 +91,7 @@ function Reservas() {
         return recursos
             .filter(esReservable)
             .filter((recurso) => {
-                const texto = query.toLowerCase().trim();
+                const texto = busqueda.toLowerCase().trim();
                 if (
                     texto &&
                     !`${recurso.nombre} ${recurso.tipo} ${recurso.ubicacion}`
@@ -104,7 +105,7 @@ function Reservas() {
                 }
                 return true;
             });
-    }, [query, tipo]);
+    }, [busqueda, tipo]);
 
     const refrescar = () => {
         if (busquedaAlerta) {
@@ -203,6 +204,7 @@ function Reservas() {
     };
 
     const buscarRecursos = () => {
+        setBusqueda(query);
         setBusquedaAlerta(true);
     };
 

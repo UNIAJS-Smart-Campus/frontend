@@ -1,6 +1,7 @@
 import { useState } from "react";
 import useAuth from "../../context/useAuth";
 import Icon from "../../components/Icon/Icon";
+import SearchBar from "../../components/SearchBar/SearchBar";
 import "./InfoAcademica.css";
 
 const CATEGORIAS = [
@@ -62,6 +63,7 @@ const formVacio = {
 
 function InfoAcademica() {
     const [query, setQuery] = useState("");
+    const [busqueda, setBusqueda] = useState("");
     const [categoria, setCategoria] = useState("");
     const [items, setItems] = useState(publicacionesIniciales);
     const [crearAbierto, setCrearAbierto] = useState(false);
@@ -78,12 +80,12 @@ function InfoAcademica() {
         ? items.filter((item) => item.categoria === categoria)
         : items;
 
-    const encontradas = query.trim()
+    const encontradas = busqueda.trim()
         ? filtradasPorCategoria.filter((item) =>
               [item.titulo, item.categoria, item.contenido, item.autor]
                   .join(" ")
                   .toLowerCase()
-                  .includes(normalizar(query))
+                  .includes(normalizar(busqueda))
           )
         : filtradasPorCategoria;
 
@@ -91,6 +93,14 @@ function InfoAcademica() {
         cat === ""
             ? items.length
             : items.filter((item) => item.categoria === cat).length;
+
+    const sugerencias = [
+        ...new Set(
+            items
+                .flatMap((item) => [item.titulo, item.categoria, item.autor])
+                .filter(Boolean)
+        )
+    ];
 
     const fechaLegible = (fecha) => {
         const partes = String(fecha).split("-");
@@ -201,13 +211,13 @@ function InfoAcademica() {
                 <div className="info-ac__filters">
                     <div className="info-ac__filter-group info-ac__filter-group--search">
                         <label htmlFor="info-search">Buscar</label>
-                        <input
+                        <SearchBar
                             id="info-search"
-                            type="text"
                             placeholder="Título, categoría, contenido o autor…"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            className="info-ac__filter-input"
+                            onSearch={() => setBusqueda(query)}
+                            suggestions={sugerencias}
                         />
                     </div>
 

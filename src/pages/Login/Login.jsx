@@ -11,7 +11,7 @@ const CREDENCIALES = [
 ];
 
 function Login() {
-    const [usuario, setUsuario] = useState("");
+    const [identificacion, setIdentificacion] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
@@ -22,28 +22,39 @@ function Login() {
     const location = useLocation();
     const desde = location.state?.from?.pathname || "/dashboard";
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError("");
+const handleLogin = async () => {
+    try {
+        const resultado = await login(identificacion, password);
+        if (!resultado?.ok) {
+            setError(resultado?.mensaje || "Credenciales inválidas");
+            return;
+        }
+        navigate(desde, { replace: true });
+    }catch (err) {
+    console.error("Error en login:", err);
+    setError(
+        err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError")
+            ? "No se pudo conectar con el servidor. Verifica tu conexión."
+            : "Error inesperado. Inténtalo de nuevo."
+    );
+    setLoading(false);
+} finally {
+        setLoading(false);  // ✅ Un solo lugar
+    }
+};
 
-        setTimeout(() => {
-            const resultado = login(usuario, password);
-            if (!resultado.ok) {
-                setError(resultado.mensaje);
-                setLoading(false);
-                return;
-            }
-            setLoading(false);
-            navigate(desde, { replace: true });
-        }, 600);
-    };
+const handleSubmit = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    handleLogin();  // ✅ se encarga de setLoading(false)
+};
 
-    const fillCredentials = (user, pass) => {
-        setUsuario(user);
-        setPassword(pass);
-        setError("");
-    };
+const fillCredentials = (identificacion, pass) => {
+    setIdentificacion(identificacion);
+    setPassword(pass);
+    setError("");
+};
 
     return (
         <div className="login">
@@ -119,7 +130,7 @@ function Login() {
 
                         <form onSubmit={handleSubmit} className="login__form" autoComplete="off">
                             <div className="login__field">
-                                <label htmlFor="login-usuario">Usuario</label>
+                                <label htmlFor="login-identificacion">Identificación</label>
                                 <div className="login__input-wrap">
                                     <svg className="login__input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -127,10 +138,10 @@ function Login() {
                                     </svg>
                                     <input
                                         type="text"
-                                        id="login-usuario"
+                                        id="login-identificacion"
                                         placeholder="ej. admin"
-                                        value={usuario}
-                                        onChange={(e) => setUsuario(e.target.value)}
+                                        value={identificacion}
+                                        onChange={(e) => setIdentificacion(e.target.value)}
                                         autoComplete="username"
                                         disabled={loading}
                                         required
@@ -193,7 +204,7 @@ function Login() {
                             <button
                                 type="submit"
                                 className="login__submit"
-                                disabled={!usuario || !password || loading}
+                                disabled={!identificacion || !password || loading}
                             >
                                 {loading ? (
                                     <span className="login__spinner" />

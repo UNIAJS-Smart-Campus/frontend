@@ -1,0 +1,18 @@
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copiar package.json y package-lock.json
+COPY package*.json ./
+
+# Instalar dependencias (reproducible con lockfile)
+RUN npm ci
+
+# Copiar el resto del código
+COPY . .
+
+# Exponer el puerto de desarrollo
+EXPOSE 5173
+
+# Comando para desarrollo con hot-reload
+CMD ["npm", "run", "dev"]

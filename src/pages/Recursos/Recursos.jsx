@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import Icon from "../../components/Icon/Icon";
 import Modal from "../../components/Modal/Modal";
 import Input from "../../components/Input/Input";
+import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
 import { TIPOS_RECURSO, obtenerRecursos, guardarRecursos } from "../../utils/recursos";
 import "./Recursos.css";
@@ -61,6 +62,7 @@ function Recursos() {
 
     const [items, setItems] = useState(obtenerRecursos);
     const [query, setQuery] = useState("");
+    const [busqueda, setBusqueda] = useState("");
     const [categoria, setCategoria] = useState("all");
     const [edificio, setEdificio] = useState("Todos");
     const [estado, setEstado] = useState("Todos");
@@ -113,7 +115,7 @@ function Recursos() {
     }, [items]);
 
     const filtrados = useMemo(() => {
-        const texto = query.toLowerCase().trim();
+        const texto = busqueda.toLowerCase().trim();
         return items.filter((recurso) => {
             if (
                 texto &&
@@ -145,7 +147,15 @@ function Recursos() {
             }
             return true;
         });
-    }, [query, categoria, edificio, estado, items]);
+    }, [busqueda, categoria, edificio, estado, items]);
+
+    const sugerencias = [
+        ...new Set(
+            items
+                .flatMap((recurso) => [recurso.nombre, recurso.tipo, recurso.ubicacion])
+                .filter(Boolean)
+        )
+    ];
 
     const abrirReserva = (recurso) => {
         if (!esReservable(recurso)) return;
@@ -358,12 +368,12 @@ function Recursos() {
                 <div className="recursos__filters">
                     <div className="recursos__filter-group">
                         <label>Buscar</label>
-                        <input
-                            className="recursos__filter-input"
-                            type="text"
+                        <SearchBar
                             placeholder="Nombre del recurso..."
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
+                            onSearch={() => setBusqueda(query)}
+                            suggestions={sugerencias}
                         />
                     </div>
 
@@ -411,7 +421,10 @@ function Recursos() {
 
                     <button
                         className="recursos__filter-button"
-                        onClick={() => setQuery("")}
+                        onClick={() => {
+                            setQuery("");
+                            setBusqueda("");
+                        }}
                     >
                         <Icon name="solicitudes" size={12} />
                         Limpiar

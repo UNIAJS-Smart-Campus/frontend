@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ServiceCard from "../../components/ServiceCard/ServiceCard";
+import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
 import services from "../../utils/services";
 import "./Servicios.css";
@@ -16,6 +17,7 @@ const PATH_PERMISO = {
 function Servicios() {
     const { tienePermiso } = useAuth();
     const [query, setQuery] = useState("");
+    const [busqueda, setBusqueda] = useState("");
     const [categoria, setCategoria] = useState("");
 
     const visibles = services.filter((service) => {
@@ -30,16 +32,22 @@ function Servicios() {
         ? visibles.filter((s) => s.category === categoria)
         : visibles;
 
-    const encontrados = query.trim()
+    const encontrados = busqueda.trim()
         ? porCategoria.filter((s) =>
               [s.name, s.category, s.description]
                   .join(" ")
                   .toLowerCase()
-                  .includes(normalizar(query))
+                  .includes(normalizar(busqueda))
           )
         : porCategoria;
 
     const categorias = [...new Set(visibles.map((s) => s.category))];
+
+    const sugerencias = [
+        ...new Set(
+            visibles.flatMap((s) => [s.name, s.category]).filter(Boolean)
+        )
+    ];
 
     return (
         <div className="servicios">
@@ -55,13 +63,12 @@ function Servicios() {
 
             <div className="servicios__filter-card">
                 <div className="servicios__search">
-                    <input
-                        type="search"
-                        className="servicios__search-input"
+                    <SearchBar
                         placeholder="Buscar servicio por nombre o categoría…"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        aria-label="Buscar servicio"
+                        onSearch={() => setBusqueda(query)}
+                        suggestions={sugerencias}
                     />
                 </div>
 

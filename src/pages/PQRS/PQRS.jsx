@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../../components/Icon/Icon";
+import SearchBar from "../../components/SearchBar/SearchBar";
 import pqrsBase, { TIPOS_PQRS } from "../../utils/pqrs";
 import "./PQRS.css";
 
@@ -40,6 +41,7 @@ function PQRS() {
 
     const [filtro, setFiltro] = useState("Todos");
     const [query, setQuery] = useState("");
+    const [busqueda, setBusqueda] = useState("");
 
     const normalizar = (texto) =>
         texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -49,12 +51,12 @@ function PQRS() {
             ? items
             : items.filter((item) => item.tipo === filtro);
 
-    const encontradas = query.trim()
+    const encontradas = busqueda.trim()
         ? filtradas.filter((item) =>
               [item.id, item.tipo, item.descripcion, item.estado]
                   .join(" ")
                   .toLowerCase()
-                  .includes(normalizar(query))
+                  .includes(normalizar(busqueda))
           )
         : filtradas;
 
@@ -62,6 +64,14 @@ function PQRS() {
         tipo === "Todos"
             ? items.length
             : items.filter((item) => item.tipo === tipo).length;
+
+    const sugerencias = [
+        ...new Set(
+            items
+                .flatMap((item) => [String(item.id), item.tipo, item.estado])
+                .filter(Boolean)
+        )
+    ];
 
     const fechaLegible = (fecha) => {
         const partes = String(fecha).split("-");
@@ -138,13 +148,13 @@ function PQRS() {
                 <div className="pqrs__filters">
                     <div className="pqrs__filter-group pqrs__filter-group--search">
                         <label htmlFor="pqrs-search">Buscar</label>
-                        <input
+                        <SearchBar
                             id="pqrs-search"
-                            type="text"
                             placeholder="Número, tipo, estado o descripción…"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            className="pqrs__filter-input"
+                            onSearch={() => setBusqueda(query)}
+                            suggestions={sugerencias}
                         />
                     </div>
 

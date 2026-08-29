@@ -1,18 +1,42 @@
 import { useState } from "react";
 import { AuthContext } from "./auth-context";
-import {
-    obtenerUsuarios,
-    permisosDeRol,
-    accionesDeRol
-} from "../utils/users";
+import { authApi } from "../utils/api";
+import { permisosDeRol, accionesDeRol } from "../utils/users";
 
 const SESSION_KEY = "uajs_session";
 
+const ROL_POR_ID = {
+    1: "Administrador",
+    2: "Estudiante",
+    3: "Docente",
+    4: "Administrativo",
+};
+
+function mapearRol(idRol) {
+    // Validar que el rol exista
+    const rol = ROL_POR_ID[idRol];
+    if (!rol) {
+        console.warn(`Rol no reconocido: ${idRol}, asignando "Estudiante" por defecto`);
+        return "Estudiante";
+    }
+    return rol;
+}
+
 function getSession() {
     try {
-        const guardada = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
-        return guardada && guardada.usuario ? guardada : null;
-    } catch {
+        const guardada = localStorage.getItem(SESSION_KEY);
+        if (!guardada) return null;
+        
+        const parsed = JSON.parse(guardada);
+        return parsed && parsed.usuario ? parsed : null;
+    } catch (error) {
+        console.error("Error al leer sesión:", error);
+        // Si hay datos corruptos, limpiarlos
+        try {
+            localStorage.removeItem(SESSION_KEY);
+        } catch {
+            // Ignorar errores al limpiar
+        }
         return null;
     }
 }
@@ -20,67 +44,89 @@ function getSession() {
 function AuthProvider({ children }) {
     const [user, setUser] = useState(getSession);
 
-    const login = (usuario, password) => {
-        const lista = obtenerUsuarios();
-        const encontrado = lista.find(
-            (item) =>
-                item.usuario === usuario &&
-                item.password === password &&
-                item.estado === "Activo"
-        );
-
-        if (!encontrado) {
-            return { ok: false, mensaje: "Usuario o contraseña incorrectos." };
-        }
-
-        const sesion = {
-            id: encontrado.id,
-            usuario: encontrado.usuario,
-            nombre: encontrado.nombre,
-            correo: encontrado.correo,
-            rol: encontrado.rol,
-            programa: encontrado.programa
-        };
-
-        setUser(sesion);
-
+    const login = async (identificacion, password) => {
         try {
-            localStorage.setItem(SESSION_KEY, JSON.stringify(sesion));
-        } catch {
-            // si localStorage no está disponible se ignora
-        }
+            const data = await authApi.login(identificacion, password);
 
-        return { ok: true };
+            // Validar respuesta de la API
+            if (!data || !data.id_usuario || !data.identificacion) {
+                throw new Error("Respuesta inválida del servidor");
+            }
+
+            const sesion = {
+                id: data.id_usuario,
+                usuario: data.identificacion,
+                nombre: `${data.nombre || ""} ${data.apellido || ""}`.trim() || "Usuario",
+                correo: data.correo || "",
+                rol: mapearRol(data.rol),
+                programa: data.programa || "No especificado",
+                token: data.token || "",
+            };
+
+            setUser(sesion);
+
+            try {
+                localStorage.setItem(SESSION_KEY, JSON.stringify(sesion));
+            } catch (storageError) {
+                console.warn("No se pudo guardar en localStorage:", storageError);
+            }
+
+            return { ok: true, user: sesion };
+        } catch (err) {
+            console.error("Error en login:", err);
+            return {
+                ok: false,
+                mensaje: err.message || "No se pudo iniciar sesión.",
+            };
+        }
     };
 
     const logout = () => {
         setUser(null);
-
         try {
             localStorage.removeItem(SESSION_KEY);
         } catch {
-            // si localStorage no está disponible se ignora
+            // Si localStorage no está disponible se ignora
         }
     };
 
     const tienePermiso = (permiso) => {
-        if (!user) {
-            return false;
-        }
-
-        return permisosDeRol(user.rol).includes(permiso);
+        if (!user) return false;
+        const permisos = permisosDeRol(user.rol);
+        return permisos ? permisos.includes(permiso) : false;
     };
 
     const puede = (accion) => {
-        if (!user) {
-            return false;
-        }
-
-        return accionesDeRol(user.rol).includes(accion);
+        if (!user) return false;
+        const acciones = accionesDeRol(user.rol);
+        return acciones ? acciones.includes(accion) : false;
     };
 
+    // Helper para verificar el rol del usuario
+    const esRol = (rol) => {
+        if (!user) return false;
+        return user.rol === rol;
+    };
+
+    // Helpers específicos para cada rol
+    const esAdmin = () => esRol("Administrador");
+    const esAdministrativo = () => esRol("Administrativo");
+    const esDocente = () => esRol("Docente");
+    const esEstudiante = () => esRol("Estudiante");
+
     return (
-        <AuthContext.Provider value={{ user, login, logout, tienePermiso, puede }}>
+        <AuthContext.Provider value={{ 
+            user, 
+            login, 
+            logout, 
+            tienePermiso, 
+            puede,
+            esRol,
+            esAdmin,
+            esAdministrativo,
+            esDocente,
+            esEstudiante
+        }}>
             {children}
         </AuthContext.Provider>
     );
