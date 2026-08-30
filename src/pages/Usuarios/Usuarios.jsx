@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
+import DataTable from "../../components/DataTable/DataTable";
+import Pagination from "../../components/Pagination/Pagination";
 import { ROLES, obtenerUsuarios, guardarUsuarios } from "../../utils/users";
+import useSearch from "../../hooks/useSearch";
+import usePagination from "../../hooks/usePagination";
 import "./Usuarios.css";
 
 const ROL_ICONO = {
@@ -46,36 +50,17 @@ function Usuarios() {
     const [aviso, setAviso] = useState("");
     const [mostrarPass, setMostrarPass] = useState(false);
 
-    const normalizar = (texto) =>
-        texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const buscados = useSearch(items, busqueda, ["usuario", "nombre", "correo", "rol", "programa"]);
 
     const porRol = filtroRol
-        ? items.filter((item) => item.rol === filtroRol)
-        : items;
+        ? buscados.filter((item) => item.rol === filtroRol)
+        : buscados;
 
     const porEstado = filtroEstado
         ? porRol.filter((item) => item.estado === filtroEstado)
         : porRol;
 
-    const encontrados = busqueda.trim()
-        ? porEstado.filter((item) =>
-              [item.usuario, item.nombre, item.correo, item.rol, item.programa]
-                  .join(" ")
-                  .toLowerCase()
-                  .includes(normalizar(busqueda))
-          )
-        : porEstado;
-
-    const activos = items.filter((item) => item.estado === "Activo").length;
-    const contarRol = (rol) => items.filter((item) => item.rol === rol).length;
-
-    const sugerencias = [
-        ...new Set(
-            items
-                .flatMap((item) => [item.usuario, item.nombre, item.correo, item.rol, item.programa])
-                .filter(Boolean)
-        )
-    ];
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } = usePagination(porEstado, 8);
 
     const iniciales = (nombre) =>
         (nombre || "?")
@@ -85,10 +70,23 @@ function Usuarios() {
             .slice(0, 2)
             .join("");
 
-    const mostrarAviso = (mensaje) => {
+    const activos = items.filter((item) => item.estado === "Activo").length;
+    const contarRol = (rol) => items.filter((item) => item.rol === rol).length;
+
+    const sugerencias = useMemo(() => {
+        return [
+            ...new Set(
+                items
+                    .flatMap((item) => [item.usuario, item.nombre, item.correo, item.rol, item.programa])
+                    .filter(Boolean)
+            )
+        ];
+    }, [items]);
+
+    const mostrarAviso = useCallback((mensaje) => {
         setAviso(mensaje);
         setTimeout(() => setAviso(""), 2500);
-    };
+    }, []);
 
     const abrirNuevo = () => {
         setEditandoId(null);
@@ -97,7 +95,7 @@ function Usuarios() {
         setModalAbierto(true);
     };
 
-    const abrirEditar = (item) => {
+    const abrirEditar = useCallback((item) => {
         const partes = (item.nombre || "").split(" ");
         const nombre = partes.length > 1 ? partes.slice(0, -1).join(" ") : partes[0] || "";
         const apellido = partes.length > 1 ? partes[partes.length - 1] : "";
@@ -117,7 +115,7 @@ function Usuarios() {
         });
         setError("");
         setModalAbierto(true);
-    };
+    }, []);
 
     const cerrar = () => {
         setModalAbierto(false);
@@ -187,7 +185,7 @@ function Usuarios() {
         setModalAbierto(false);
     };
 
-    const alternarEstado = (item) => {
+    const alternarEstado = useCallback((item) => {
         const activando = item.estado !== "Activo";
         const lista = items.map((usuario) =>
             usuario.id === item.id
@@ -204,7 +202,75 @@ function Usuarios() {
                 ? `Usuario "${item.usuario}" activado.`
                 : `Usuario "${item.usuario}" desactivado.`
         );
-    };
+    }, [items, mostrarAviso]);
+
+    const columns = useMemo(() => [
+        {
+            key: "nombre",
+            label: "Usuario",
+            render: (row) => (
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div className="users__avatar">{iniciales(row.nombre)}</div>
+                    <div>
+                        <div style={{ fontWeight: 600 }}>{row.nombre}</div>
+                        <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{row.correo}</div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            key: "rol",
+            label: "Rol",
+            render: (row) => (
+                <span className={`users__item-badge ${ROL_CLASE[row.rol] || "blue"}`}>
+                    {row.rol}
+                </span>
+            )
+        },
+        {
+            key: "estado",
+            label: "Estado",
+            render: (row) => (
+                <span
+                    className={
+                        row.estado === "Activo"
+                            ? "users__item-state users__item-state--active"
+                            : "users__item-state users__item-state--inactive"
+                    }
+                >
+                    {row.estado}
+                </span>
+            )
+        },
+        {
+            key: "programa",
+            label: "Programa"
+        },
+        {
+            key: "acciones",
+            label: "Acciones",
+            render: (row) => (
+                <div className="dtable__actions">
+                    <button
+                        className="users__edit-button"
+                        onClick={() => abrirEditar(row)}
+                    >
+                        <Icon name="perfil" size={12} /> Editar
+                    </button>
+                    <button
+                        className={
+                            row.estado === "Activo"
+                                ? "users__deactivate-button"
+                                : "users__activate-button"
+                        }
+                        onClick={() => alternarEstado(row)}
+                    >
+                        {row.estado === "Activo" ? "Desactivar" : "Activar"}
+                    </button>
+                </div>
+            )
+        }
+    ], [abrirEditar, alternarEstado]);
 
     return (
         <div className="users">
@@ -230,11 +296,14 @@ function Usuarios() {
             <div className="users__summary">
                 <button
                     className={
-                        filtroRol === ""
+                        filtroRol === "" && filtroEstado === ""
                             ? "users__summary-card users__summary-card--active"
                             : "users__summary-card"
                     }
-                    onClick={() => setFiltroRol("")}
+                    onClick={() => {
+                        setFiltroRol("");
+                        setFiltroEstado("");
+                    }}
                 >
                     <div className="users__summary-icon users__summary-icon--all">
                         <Icon name="usuarios" size={19} />
@@ -345,71 +414,32 @@ function Usuarios() {
 
             <div className="users__list-header">
                 <h2>Usuarios del sistema</h2>
-                <span>{encontrados.length} registros</span>
+                <span>
+                    {desde}–{hasta} de {porEstado.length} registros
+                </span>
             </div>
 
-            {encontrados.length === 0 ? (
+            {itemsPagina.length === 0 ? (
                 <div className="users__empty">
                     No se encontraron usuarios con los filtros aplicados.
                 </div>
             ) : (
-                <div className="users__list">
-                    {encontrados.map((item) => (
-                        <article className="users__item" key={item.id}>
-                            <div className="users__avatar">{iniciales(item.nombre)}</div>
-
-                            <div className="users__item-body">
-                                <h3>{item.nombre}</h3>
-                                <div className="users__item-mail">
-                                    <Icon name="solicitudes" size={11} />
-                                    {item.correo}
-                                </div>
-
-                                <div className="users__item-meta">
-                                    <span
-                                        className={`users__item-badge ${ROL_CLASE[item.rol] || "blue"}`}
-                                    >
-                                        {item.rol}
-                                    </span>
-                                    <span
-                                        className={
-                                            item.estado === "Activo"
-                                                ? "users__item-state users__item-state--active"
-                                                : "users__item-state users__item-state--inactive"
-                                        }
-                                    >
-                                        {item.estado}
-                                    </span>
-                                    <span className="users__item-chip">
-                                        @{item.usuario}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="users__item-actions">
-                                <button
-                                    className="users__edit-button"
-                                    onClick={() => abrirEditar(item)}
-                                >
-                                    <Icon name="perfil" size={12} />
-                                    Editar
-                                </button>
-                                <button
-                                    className={
-                                        item.estado === "Activo"
-                                            ? "users__deactivate-button"
-                                            : "users__activate-button"
-                                    }
-                                    onClick={() => alternarEstado(item)}
-                                >
-                                    {item.estado === "Activo"
-                                        ? "Desactivar"
-                                        : "Activar"}
-                                </button>
-                            </div>
-                        </article>
-                    ))}
-                </div>
+                <>
+                    <DataTable
+                        columns={columns}
+                        rows={itemsPagina}
+                        keyField="id"
+                        emptyMessage="No hay registros para mostrar."
+                    />
+                    <Pagination
+                        pagina={pagina}
+                        totalPaginas={totalPaginas}
+                        onChange={setPagina}
+                        desde={desde}
+                        hasta={hasta}
+                        total={porEstado.length}
+                    />
+                </>
             )}
 
             {modalAbierto && (

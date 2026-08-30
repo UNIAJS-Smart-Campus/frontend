@@ -30,16 +30,15 @@ const handleLogin = async () => {
             return;
         }
         navigate(desde, { replace: true });
-    }catch (err) {
-    console.error("Error en login:", err);
-    setError(
-        err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError")
-            ? "No se pudo conectar con el servidor. Verifica tu conexión."
-            : "Error inesperado. Inténtalo de nuevo."
-    );
-    setLoading(false);
-} finally {
-        setLoading(false);  // ✅ Un solo lugar
+    } catch (err) {
+        setError(
+            err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError")
+                ? "No se pudo conectar con el servidor. Verifica tu conexión."
+                : "Error inesperado. Inténtalo de nuevo."
+        );
+        setLoading(false);
+    } finally {
+        setLoading(false);
     }
 };
 
@@ -95,7 +94,7 @@ const fillCredentials = (identificacion, pass) => {
                     </div>
                     <div className="login__aside-inner">
                         <div className="login__brand">
-                            <img src="/uniajs-logo-light.svg" alt="UniAJS - Corporación Universitaria Antonio José de Sucre" className="login__brand-logo" />
+                            <img src="/Logo_Light_UAJS.png" alt="UniAJS - Corporación Universitaria Antonio José de Sucre" className="login__brand-logo" />
                         </div>
 
                         <div className="login__hero">

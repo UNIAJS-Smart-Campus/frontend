@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
+import Pagination from "../../components/Pagination/Pagination";
 import pqrsBase, { TIPOS_PQRS } from "../../utils/pqrs";
+import useSearch from "../../hooks/useSearch";
+import usePagination from "../../hooks/usePagination";
 import "./PQRS.css";
 
 const STORAGE_KEY = "uajs_pqrs";
@@ -43,35 +46,29 @@ function PQRS() {
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");
 
-    const normalizar = (texto) =>
-        texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const buscados = useSearch(items, busqueda, ["id", "tipo", "descripcion", "estado"]);
 
     const filtradas =
         filtro === "Todos"
-            ? items
-            : items.filter((item) => item.tipo === filtro);
+            ? buscados
+            : buscados.filter((item) => item.tipo === filtro);
 
-    const encontradas = busqueda.trim()
-        ? filtradas.filter((item) =>
-              [item.id, item.tipo, item.descripcion, item.estado]
-                  .join(" ")
-                  .toLowerCase()
-                  .includes(normalizar(busqueda))
-          )
-        : filtradas;
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } = usePagination(filtradas, 8);
 
     const contarTipo = (tipo) =>
         tipo === "Todos"
-            ? items.length
-            : items.filter((item) => item.tipo === tipo).length;
+            ? filtradas.length
+            : filtradas.filter((item) => item.tipo === tipo).length;
 
-    const sugerencias = [
-        ...new Set(
-            items
-                .flatMap((item) => [String(item.id), item.tipo, item.estado])
-                .filter(Boolean)
-        )
-    ];
+    const sugerencias = useMemo(() => {
+        return [
+            ...new Set(
+                items
+                    .flatMap((item) => [String(item.id), item.tipo, item.estado])
+                    .filter(Boolean)
+            )
+        ];
+    }, [items]);
 
     const fechaLegible = (fecha) => {
         const partes = String(fecha).split("-");
@@ -179,45 +176,57 @@ function PQRS() {
 
             <div className="pqrs__list-header">
                 <h2>Mis PQRS</h2>
-                <span>{encontradas.length} registros</span>
+                <span>
+                    {desde}–{hasta} de {filtradas.length} registros
+                </span>
             </div>
 
-            {encontradas.length === 0 ? (
+            {itemsPagina.length === 0 ? (
                 <div className="pqrs__empty">
                     No se encontraron PQRS con los filtros aplicados.
                 </div>
             ) : (
-                <div className="pqrs__list">
-                    {encontradas.map((item) => (
-                        <article className="pqrs__item" key={item.id}>
-                            <div
-                                className={`pqrs__item-icon pqrs__item-icon--${TIPO_CLASE[item.tipo]}`}
-                            >
-                                <Icon name={TIPO_ICONO[item.tipo]} size={20} />
-                            </div>
+                <>
+                    <div className="pqrs__list">
+                        {itemsPagina.map((item) => (
+                            <article className="pqrs__item" key={item.id}>
+                                <div
+                                    className={`pqrs__item-icon pqrs__item-icon--${TIPO_CLASE[item.tipo]}`}
+                                >
+                                    <Icon name={TIPO_ICONO[item.tipo]} size={20} />
+                                </div>
 
-                            <div className="pqrs__item-body">
-                                <div className="pqrs__item-meta">
-                                    <span className="pqrs__item-id">
-                                        {item.id}
-                                    </span>
-                                    <span
-                                        className={`pqrs__item-status ${ESTADO_CLASE[item.estado] || "closed"}`}
-                                    >
-                                        {item.estado}
+                                <div className="pqrs__item-body">
+                                    <div className="pqrs__item-meta">
+                                        <span className="pqrs__item-id">
+                                            {item.id}
+                                        </span>
+                                        <span
+                                            className={`pqrs__item-status ${ESTADO_CLASE[item.estado] || "closed"}`}
+                                        >
+                                            {item.estado}
+                                        </span>
+                                    </div>
+                                    <h3>{item.tipo}</h3>
+                                    <p className="pqrs__item-desc">
+                                        {item.descripcion}
+                                    </p>
+                                    <span className="pqrs__item-date">
+                                        {fechaLegible(item.fecha)}
                                     </span>
                                 </div>
-                                <h3>{item.tipo}</h3>
-                                <p className="pqrs__item-desc">
-                                    {item.descripcion}
-                                </p>
-                                <span className="pqrs__item-date">
-                                    {fechaLegible(item.fecha)}
-                                </span>
-                            </div>
-                        </article>
-                    ))}
-                </div>
+                            </article>
+                        ))}
+                    </div>
+                    <Pagination
+                        pagina={pagina}
+                        totalPaginas={totalPaginas}
+                        onChange={setPagina}
+                        desde={desde}
+                        hasta={hasta}
+                        total={filtradas.length}
+                    />
+                </>
             )}
         </div>
     );

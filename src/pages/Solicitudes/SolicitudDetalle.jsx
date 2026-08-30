@@ -3,31 +3,11 @@ import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import { ESTADOS_SOLICITUD } from "../../utils/solicitudes";
 import solicitudes from "../../utils/solicitudes";
 import "./SolicitudDetalle.css";
-import {useState, useEffect} from "react";
-
-const url = "http://localhost:3006";
 
 function SolicitudDetalle() {
-
     const { id } = useParams();
-    console.log("ID recibido por la URL:", id);
-    const [datos, setDatos] = useState(null);
 
-    useEffect(() => {async function fetchSolicitud() {try {
-        const respuesta = await fetch(url);
-        const data = await respuesta.json();
-       console.log("Solicitud obtenida:", data);
-       setDatos(data);
-        
-    } catch (error) {
-        console.error("Error al fetchear la solicitud:", error);
-    }
-} 
-      fetchSolicitud();
-}, []);
-
-const solicitud = solicitudes.find((item) => String(item.id) === id);
-console.log("Solicitud encontrada:", solicitud);
+    const solicitud = solicitudes.find((item) => String(item.id) === id);
 
     if (!solicitud) {
         return (

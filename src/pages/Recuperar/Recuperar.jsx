@@ -64,7 +64,7 @@ function Recuperar() {
                     </div>
                     <div className="login__aside-inner">
                         <div className="login__brand">
-                            <img src="/uniajs-logo-light.svg" alt="UniAJS - Corporación Universitaria Antonio José de Sucre" className="login__brand-logo" />
+                            <img src="/Logo_Light_UAJS.png" alt="UniAJS - Corporación Universitaria Antonio José de Sucre" className="login__brand-logo" />
                         </div>
 
                         <div className="login__hero">

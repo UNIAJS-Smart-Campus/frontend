@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import useAuth from "../../context/useAuth";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
+import Pagination from "../../components/Pagination/Pagination";
 import solicitudes, { ESTADOS_SOLICITUD } from "../../utils/solicitudes";
+import useSearch from "../../hooks/useSearch";
+import usePagination from "../../hooks/usePagination";
 import "./Solicitudes.css";
 
 const SERVICIO_ICONO = {
@@ -58,32 +61,26 @@ function Solicitudes() {
     const puedeRegistrar = puede("registrar_solicitudes");
     const puedeAvanzar = puede("actualizar_estados");
 
-    const normalizar = (texto) =>
-        texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-    const filtradasPorEstado = estado
+    const porEstado = estado
         ? items.filter((item) => item.estado === estado)
         : items;
 
-    const encontradas = busqueda.trim()
-        ? filtradasPorEstado.filter((item) =>
-              [item.id, item.tipo, item.servicio, item.descripcion, item.solicitante, item.estado]
-                  .join(" ")
-                  .toLowerCase()
-                  .includes(normalizar(busqueda))
-          )
-        : filtradasPorEstado;
+    const encontradas = useSearch(porEstado, busqueda, ["id", "tipo", "servicio", "descripcion", "solicitante", "estado"]);
+
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } = usePagination(encontradas, 6);
 
     const contarPorEstado = (estadoItem) =>
         items.filter((item) => item.estado === estadoItem).length;
 
-    const sugerencias = [
-        ...new Set(
-            items
-                .flatMap((item) => [String(item.id), item.tipo, item.servicio, item.solicitante])
-                .filter(Boolean)
-        )
-    ];
+    const sugerencias = useMemo(() => {
+        return [
+            ...new Set(
+                items
+                    .flatMap((item) => [String(item.id), item.tipo, item.servicio, item.solicitante])
+                    .filter(Boolean)
+            )
+        ];
+    }, [items]);
 
     const fechasLegibles = (fecha) => {
         const partes = String(fecha).split("-");
@@ -242,81 +239,93 @@ function Solicitudes() {
 
             <div className="sols__list-header">
                 <h2>Mis solicitudes</h2>
-                <span>{encontradas.length} registros</span>
+                <span>
+                    {desde}–{hasta} de {encontradas.length} registros
+                </span>
             </div>
 
-            {encontradas.length === 0 ? (
+            {itemsPagina.length === 0 ? (
                 <div className="sols__empty">
                     No se encontraron solicitudes con los filtros aplicados.
                 </div>
             ) : (
-                <div className="sols__list">
-                    {encontradas.map((item) => (
-                        <article className="sols__item" key={item.id}>
-                            <div
-                                className={`sols__item-icon sols__item-icon--${SERVICIO_CLASE[item.servicio] || "blue"}`}
-                            >
-                                <Icon
-                                    name={SERVICIO_ICONO[item.servicio] || "solicitudes"}
-                                    size={20}
-                                />
-                            </div>
-
-                            <div className="sols__item-body">
-                                <div className="sols__item-meta">
-                                    <span className="sols__item-id">
-                                        {item.id}
-                                    </span>
-                                    <span
-                                        className={`sols__item-status ${ESTADO_CLASE[item.estado] || "gray"}`}
-                                    >
-                                        {item.estado}
-                                    </span>
-                                    <span
-                                        className={`sols__item-priority sols__item-priority--${PRIORIDAD_CLASE[item.prioridad] || "media"}`}
-                                    >
-                                        {item.prioridad || "Media"}
-                                    </span>
-                                </div>
-
-                                <h3>{item.tipo}</h3>
-                                <p className="sols__item-desc">
-                                    {item.descripcion}
-                                </p>
-
-                                <div className="sols__item-sub">
-                                    <span className="sols__item-chip">
-                                        {item.servicio}
-                                    </span>
-                                    <span className="sols__item-sol">
-                                        {item.solicitante}
-                                    </span>
-                                    <span className="sols__item-date">
-                                        {fechasLegibles(item.fecha)}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="sols__item-actions">
-                                <Link
-                                    to={`/solicitudes/${item.id}`}
-                                    className="sols__details-button"
+                <>
+                    <div className="sols__list">
+                        {itemsPagina.map((item) => (
+                            <article className="sols__item" key={item.id}>
+                                <div
+                                    className={`sols__item-icon sols__item-icon--${SERVICIO_CLASE[item.servicio] || "blue"}`}
                                 >
-                                    Ver detalle
-                                </Link>
+                                    <Icon
+                                        name={SERVICIO_ICONO[item.servicio] || "solicitudes"}
+                                        size={20}
+                                    />
+                                </div>
 
-                                {puedeAvanzar && item.estado !== "Cerrada" && (
-                                    <button
-                                        className="sols__advance-button"
-                                        onClick={() => avanzarEstado(item.id)}
+                                <div className="sols__item-body">
+                                    <div className="sols__item-meta">
+                                        <span className="sols__item-id">
+                                            {item.id}
+                                        </span>
+                                        <span
+                                            className={`sols__item-status ${ESTADO_CLASE[item.estado] || "gray"}`}
+                                        >
+                                            {item.estado}
+                                        </span>
+                                        <span
+                                            className={`sols__item-priority sols__item-priority--${PRIORIDAD_CLASE[item.prioridad] || "media"}`}
+                                        >
+                                            {item.prioridad || "Media"}
+                                        </span>
+                                    </div>
+
+                                    <h3>{item.tipo}</h3>
+                                    <p className="sols__item-desc">
+                                        {item.descripcion}
+                                    </p>
+
+                                    <div className="sols__item-sub">
+                                        <span className="sols__item-chip">
+                                            {item.servicio}
+                                        </span>
+                                        <span className="sols__item-sol">
+                                            {item.solicitante}
+                                        </span>
+                                        <span className="sols__item-date">
+                                            {fechasLegibles(item.fecha)}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="sols__item-actions">
+                                    <Link
+                                        to={`/solicitudes/${item.id}`}
+                                        className="sols__details-button"
                                     >
-                                        Avanzar
-                                    </button>
-                                )}
-                            </div>
-                        </article>
-                    ))}
-                </div>
+                                        Ver detalle
+                                    </Link>
+
+                                    {puedeAvanzar && item.estado !== "Cerrada" && (
+                                        <button
+                                            className="sols__advance-button"
+                                            onClick={() => avanzarEstado(item.id)}
+                                        >
+                                            Avanzar
+                                        </button>
+                                    )}
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                    <Pagination
+                        pagina={pagina}
+                        totalPaginas={totalPaginas}
+                        onChange={setPagina}
+                        desde={desde}
+                        hasta={hasta}
+                        total={encontradas.length}
+                    />
+                </>
             )}
 
             {crearAbierto && (

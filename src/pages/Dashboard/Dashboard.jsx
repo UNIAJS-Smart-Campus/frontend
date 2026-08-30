@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import solicitudes from "../../utils/solicitudes";
 import notificaciones from "../../utils/notificaciones";
 import eventos from "../../utils/eventos";
@@ -40,14 +42,26 @@ function Dashboard() {
     const primerNombre = (user?.nombre || "Usuario").split(" ")[0];
 
     const hoy = new Date();
-    const mesActual = hoy.getMonth();
-    const anioActual = hoy.getFullYear();
+    const [mesVista, setMesVista] = useState(hoy.getMonth());
+    const [anioVista, setAnioVista] = useState(hoy.getFullYear());
 
     const nombreMes = capitalizar(
         hoy.toLocaleDateString("es-CO", { month: "long", day: "numeric", year: "numeric" })
     );
     const diaSemana = capitalizar(
         hoy.toLocaleDateString("es-CO", { weekday: "long" })
+    );
+
+    const cambiarMes = (delta) => {
+        const nueva = new Date(anioVista, mesVista + delta, 1);
+        setMesVista(nueva.getMonth());
+        setAnioVista(nueva.getFullYear());
+    };
+
+    const mesVistaLabel = capitalizar(
+        new Date(anioVista, mesVista, 1).toLocaleDateString("es-CO", {
+            month: "long"
+        })
     );
 
     const misSolicitudes = solicitudes.slice(0, 5);
@@ -58,21 +72,22 @@ function Dashboard() {
     const eventosProximosCount = proximosEventos.length;
     const reservas = solicitudes.filter((sol) => sol.servicio === "Reservas");
 
-    const primerDia = new Date(anioActual, mesActual, 1).getDay();
-    const diasEnMes = new Date(anioActual, mesActual + 1, 0).getDate();
-    const diasAnterior = new Date(anioActual, mesActual, 0).getDate();
+    const primerDia = new Date(anioVista, mesVista, 1).getDay();
+    const diasEnMes = new Date(anioVista, mesVista + 1, 0).getDate();
+    const diasAnterior = new Date(anioVista, mesVista, 0).getDate();
 
-    const eventosPorDia = new Set(
-        eventos
-            .filter((evento) => {
-                const fechaEvento = new Date(evento.fecha + "T00:00:00");
-                return (
-                    fechaEvento.getMonth() === mesActual &&
-                    fechaEvento.getFullYear() === anioActual
-                );
-            })
-            .map((evento) => new Date(evento.fecha + "T00:00:00").getDate())
-    );
+    const eventosPorDia = new Map();
+    eventos.forEach((evento) => {
+        const fechaEvento = new Date(evento.fecha + "T00:00:00");
+        if (
+            fechaEvento.getMonth() === mesVista &&
+            fechaEvento.getFullYear() === anioVista
+        ) {
+            const dia = fechaEvento.getDate();
+            if (!eventosPorDia.has(dia)) eventosPorDia.set(dia, []);
+            eventosPorDia.get(dia).push(evento);
+        }
+    });
 
     const diasSemana = ["LUN", "MAR", "MI", "JUE", "VIE", "SÁB", "DOM"];
     const celdas = [];
@@ -86,17 +101,33 @@ function Dashboard() {
     }
 
     for (let dia = 1; dia <= diasEnMes; dia++) {
-        const esHoy = dia === hoy.getDate();
+        const esHoy =
+            dia === hoy.getDate() &&
+            mesVista === hoy.getMonth() &&
+            anioVista === hoy.getFullYear();
+        const eventosDelDia = eventosPorDia.get(dia) || [];
         celdas.push(
             <span
                 className={
                     "dashboard__calendar-day" +
                     (esHoy ? " dashboard__calendar-day--selected" : "") +
-                    (eventosPorDia.has(dia) ? " dashboard__calendar-day--event" : "")
+                    (eventosDelDia.length ? " dashboard__calendar-day--event" : "")
                 }
                 key={dia}
             >
                 {dia}
+                {eventosDelDia.length > 0 && (
+                    <span className="dashboard__calendar-tooltip">
+                        {eventosDelDia.map((evento) => (
+                            <span className="dashboard__calendar-tooltip-item" key={evento.id}>
+                                <strong>{evento.nombre}</strong>
+                                <span>
+                                    {evento.hora} · {evento.lugar}
+                                </span>
+                            </span>
+                        ))}
+                    </span>
+                )}
             </span>
         );
     }
@@ -274,17 +305,27 @@ function Dashboard() {
                 <div className="dashboard__card">
                     <div className="dashboard__card-title">
                         <h2>Calendario</h2>
-                        <a href="#" className="dashboard__card-view">Ver calendario →</a>
+                        <Link to="/eventos" className="dashboard__card-view">Ver calendario →</Link>
                     </div>
 
                     <div className="dashboard__calendar-header">
-                        <button className="dashboard__calendar-nav" aria-label="Mes anterior">
+                        <button
+                            type="button"
+                            className="dashboard__calendar-nav"
+                            aria-label="Mes anterior"
+                            onClick={() => cambiarMes(-1)}
+                        >
                             ‹
                         </button>
                         <span className="dashboard__calendar-month">
-                            {capitalizar(hoy.toLocaleDateString("es-CO", { month: "long" }))} {anioActual}
+                            {mesVistaLabel} {anioVista}
                         </span>
-                        <button className="dashboard__calendar-nav" aria-label="Mes siguiente">
+                        <button
+                            type="button"
+                            className="dashboard__calendar-nav"
+                            aria-label="Mes siguiente"
+                            onClick={() => cambiarMes(1)}
+                        >
                             ›
                         </button>
                     </div>

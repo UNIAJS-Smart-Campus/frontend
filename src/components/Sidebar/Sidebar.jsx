@@ -21,7 +21,7 @@ function Sidebar({ collapsed }) {
   return (
     <nav className={classes}>
       <div className="sidebar__brand">
-        <img src="/uniajs-logo-light.svg" alt="Logo UniAJS" className="sidebar__logo" />
+        <img src="/Logo_Light_UAJS.png" alt="Logo UniAJS" className="sidebar__logo" />
       </div>
 
       <div className="sidebar__menu">

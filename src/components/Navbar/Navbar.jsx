@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import notificaciones from "../../utils/notificaciones";
 import { getModuleName } from "../../utils/menu";
 import useAuth from "../../context/useAuth";
+import useLocalStorage from "../../hooks/useLocalStorage";
 import Icon from "../Icon/Icon";
 import "./Navbar.css";
 
@@ -34,7 +35,7 @@ function getInitialTheme() {
 
 function Navbar({ onToggle }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [theme, setTheme] = useState(getInitialTheme);
+    const [theme, setTheme] = useLocalStorage(THEME_KEY, getInitialTheme);
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
     const location = useLocation();
@@ -45,12 +46,6 @@ function Navbar({ onToggle }) {
 
     useEffect(() => {
         document.documentElement.setAttribute("data-theme", theme);
-
-        try {
-            localStorage.setItem(THEME_KEY, theme);
-        } catch {
-            // si localStorage no está disponible se ignora
-        }
     }, [theme]);
 
     const toggleTheme = () => {

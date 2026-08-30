@@ -54,8 +54,11 @@ function Landing() {
         <div className="landing">
             <header className="landing__header">
                 <div className="landing__brand">
-                    <span className="landing__logo">U</span>
-                    <h1 className="landing__name">UniAJS</h1>
+                    <img
+                        src="/Logo_Light_UAJS.png"
+                        alt="UniAJS — Corporación Universitaria Antonio José de Sucre"
+                        className="landing__logo"
+                    />
                 </div>
             </header>
 
