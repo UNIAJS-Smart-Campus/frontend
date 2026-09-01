@@ -1,6 +1,8 @@
 /* ==========================================
-   Block: Table
+   Block: Table (generic utility)
    BEM: .table, .table--modifier, .table__element
+   Note: This is a generic table block. The DataTable component uses .dtable
+   (see components/DataTable/DataTable.css) for component-scoped styling.
    ========================================== */
 
 .table-wrapper {

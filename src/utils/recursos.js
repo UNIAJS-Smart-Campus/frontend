@@ -19,7 +19,7 @@ const recursos = [
         capacidad: 30,
         ubicacion: "Bloque A · Piso 2",
         estado: "Activo",
-        disponibilidad: "Ocupado"
+        disponibilidad: "En uso"
     },
     {
         id: "R-003",
@@ -39,7 +39,7 @@ const recursos = [
         capacidad: 20,
         ubicacion: "Bloque B · Piso 2",
         estado: "En mantenimiento",
-        disponibilidad: "Ocupado"
+        disponibilidad: "No disponible"
     },
     {
         id: "R-005",
@@ -59,12 +59,12 @@ const recursos = [
         capacidad: 120,
         ubicacion: "Bloque C · Piso 2",
         estado: "Activo",
-        disponibilidad: "Ocupado"
+        disponibilidad: "En uso"
     },
     {
         id: "R-007",
         codigo: "REC-EQ1",
-        nombre: "Video proyector",
+        nombre: "Video proyector Epson 4K",
         tipo: "Equipos",
         capacidad: 1,
         ubicacion: "Bodega de tecnología",
@@ -74,12 +74,32 @@ const recursos = [
     {
         id: "R-008",
         codigo: "REC-EQ2",
-        nombre: "Computador portátil",
+        nombre: "Portátil Lenovo ThinkPad",
         tipo: "Equipos",
         capacidad: 1,
         ubicacion: "Bodega de tecnología",
-        estado: "Inactivo",
-        disponibilidad: "Ocupado"
+        estado: "En revisión",
+        disponibilidad: "No disponible"
+    },
+    {
+        id: "R-009",
+        codigo: "REC-SAL3",
+        nombre: "Salón 303",
+        tipo: "Salas",
+        capacidad: 50,
+        ubicacion: "Bloque D · Piso 3",
+        estado: "Activo",
+        disponibilidad: "Disponible"
+    },
+    {
+        id: "R-010",
+        codigo: "REC-LAB2",
+        nombre: "Laboratorio de redes",
+        tipo: "Laboratorios",
+        capacidad: 18,
+        ubicacion: "Bloque B · Piso 3",
+        estado: "Activo",
+        disponibilidad: "En uso"
     }
 ];
 
@@ -100,6 +120,17 @@ export function guardarRecursos(lista) {
     } catch {
         // si localStorage no está disponible se ignora
     }
+}
+
+export const RECURSOS_POR_PERFIL = {
+    Administrador: recursos,
+    Administrativo: recursos.filter((recurso) => ["Salas", "Laboratorios", "Auditorios"].includes(recurso.tipo)),
+    Docente: recursos.filter((recurso) => ["Salas", "Laboratorios", "Auditorios"].includes(recurso.tipo)),
+    Estudiante: recursos.filter((recurso) => ["Salas", "Laboratorios", "Auditorios", "Equipos"].includes(recurso.tipo))
+};
+
+export function obtenerRecursosPorPerfil(rol = "Estudiante") {
+    return RECURSOS_POR_PERFIL[rol] || RECURSOS_POR_PERFIL.Estudiante;
 }
 
 export default recursos;

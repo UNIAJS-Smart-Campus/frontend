@@ -24,3 +24,32 @@
 @import 'utils/_helpers.css';
 @import 'utils/_spacing.css';
 @import 'utils/_layout.css';
+
+/* ==========================================
+   Blocks (componentes UI reutilizables)
+   ========================================== */
+@import 'blocks/_page.css';
+@import 'blocks/_alert.css';
+@import 'blocks/_badge.css';
+@import 'blocks/_button.css';
+@import 'blocks/_card.css';
+@import 'blocks/_dropdown.css';
+@import 'blocks/_input.css';
+@import 'blocks/_modal.css';
+@import 'blocks/_nav.css';
+@import 'blocks/_table.css';
+
+/* ==========================================
+   Components (componentes específicos)
+   ========================================== */
+@import 'components/_activity-item.css';
+@import 'components/_dashboard-widget.css';
+@import 'components/_event-card.css';
+@import 'components/_notification.css';
+@import 'components/_profile-card.css';
+@import 'components/_request-detail.css';
+@import 'components/_request-item.css';
+@import 'components/_reservation-card.css';
+@import 'components/_resource-item.css';
+@import 'components/_search-bar.css';
+@import 'components/_service-card.css';

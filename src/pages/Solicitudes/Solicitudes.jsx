@@ -4,7 +4,7 @@ import useAuth from "../../context/useAuth";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import Pagination from "../../components/Pagination/Pagination";
-import solicitudes, { ESTADOS_SOLICITUD } from "../../utils/solicitudes";
+import { crearSolicitud, ESTADOS_SOLICITUD, obtenerSolicitudes, guardarSolicitudes } from "../../utils/solicitudes";
 import useSearch from "../../hooks/useSearch";
 import usePagination from "../../hooks/usePagination";
 import "./Solicitudes.css";
@@ -51,7 +51,7 @@ function Solicitudes() {
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");
     const [estado, setEstado] = useState("");
-    const [items, setItems] = useState(solicitudes);
+    const [items, setItems] = useState(() => obtenerSolicitudes());
     const [crearAbierto, setCrearAbierto] = useState(false);
     const [form, setForm] = useState(formVacio);
     const [aviso, setAviso] = useState("");
@@ -114,14 +114,20 @@ function Solicitudes() {
 
     const handleCrear = (e) => {
         e.preventDefault();
-        const nueva = {
-            id: `SOL-2026-${String(items.length + 1).padStart(3, "0")}`,
-            fecha: new Date().toISOString().slice(0, 10),
-            estado: "Registrada",
-            solicitante: user?.nombre ?? "Usuario",
-            ...form
-        };
-        setItems([nueva, ...items]);
+        const nombreSolicitante = user?.nombre ?? "Usuario";
+        const nueva = crearSolicitud(
+            {
+                tipo: form.tipo,
+                servicio: form.servicio,
+                descripcion: form.descripcion,
+                prioridad: form.prioridad || "Media"
+            },
+            nombreSolicitante
+        );
+
+        const actualizadas = [nueva, ...obtenerSolicitudes()];
+        setItems(actualizadas);
+        guardarSolicitudes(actualizadas);
         setCrearAbierto(false);
         setForm(formVacio);
         setAviso("Solicitud registrada correctamente.");
@@ -134,16 +140,15 @@ function Solicitudes() {
     };
 
     return (
-        <div className="sols">
-            <div className="sols__page-header">
-                <div className="sols__page-title">
-                    <h1>Solicitudes</h1>
+        <div className="page">
+            <div className="page__header">
+                <div className="page__title">
                     <p>Registra y da seguimiento a tus solicitudes de servicios.</p>
                 </div>
 
                 {puedeRegistrar && (
                     <button
-                        className="sols__new-button"
+                        className="button button--accent button--md"
                         onClick={() => setCrearAbierto(true)}
                     >
                         <Icon name="solicitudes" size={15} />
@@ -153,27 +158,27 @@ function Solicitudes() {
             </div>
 
             {aviso && (
-                <div className="sols__toast">
+                <div className="toast toast--success">
                     <Icon name="info" size={14} />
                     {aviso}
                 </div>
             )}
 
-            <div className="sols__summary">
+            <div className="summary">
                 <button
                     className={
                         estado === ""
-                            ? "sols__summary-card sols__summary-card--active"
-                            : "sols__summary-card"
+                            ? "summary__card summary__card--active"
+                            : "summary__card"
                     }
                     onClick={() => setEstado("")}
                 >
-                    <div className="sols__summary-icon sols__summary-icon--all">
+                    <div className="summary__icon sols__summary-icon--all">
                         <Icon name="solicitudes" size={19} />
                     </div>
                     <div>
-                        <div className="sols__summary-label">Todos</div>
-                        <div className="sols__summary-number">{items.length}</div>
+                        <div className="summary__number">{items.length}</div>
+                        <div className="summary__label">Todos</div>
                     </div>
                 </button>
 
@@ -182,31 +187,31 @@ function Solicitudes() {
                         key={estadoItem}
                         className={
                             estado === estadoItem
-                                ? "sols__summary-card sols__summary-card--active"
-                                : "sols__summary-card"
+                                ? "summary__card summary__card--active"
+                                : "summary__card"
                         }
                         onClick={() => setEstado(estadoItem)}
                     >
                         <div
-                            className={`sols__summary-icon sols__summary-icon--${ESTADO_CLASE[estadoItem] || "gray"}`}
+                            className={`summary__icon sols__summary-icon--${ESTADO_CLASE[estadoItem] || "gray"}`}
                         >
                             <Icon name="solicitudes" size={19} />
                         </div>
                         <div>
-                            <div className="sols__summary-label">
-                                {estadoItem}
-                            </div>
-                            <div className="sols__summary-number">
+                            <div className="summary__number">
                                 {contarPorEstado(estadoItem)}
+                            </div>
+                            <div className="summary__label">
+                                {estadoItem}
                             </div>
                         </div>
                     </button>
                 ))}
             </div>
 
-            <div className="sols__filter-card">
-                <div className="sols__filters">
-                    <div className="sols__filter-group sols__filter-group--search">
+            <div className="filters">
+                <div className="filters__grid">
+                    <div className="filters__group filters__group--search">
                         <label htmlFor="sols-search">Buscar</label>
                         <SearchBar
                             id="sols-search"
@@ -218,7 +223,7 @@ function Solicitudes() {
                         />
                     </div>
 
-                    <div className="sols__filter-group">
+                    <div className="filters__group">
                         <label htmlFor="sols-estado">Estado</label>
                         <select
                             id="sols-estado"
@@ -237,15 +242,15 @@ function Solicitudes() {
                 </div>
             </div>
 
-            <div className="sols__list-header">
+            <div className="list-header">
                 <h2>Mis solicitudes</h2>
-                <span>
+                <span className="list-header__meta">
                     {desde}–{hasta} de {encontradas.length} registros
                 </span>
             </div>
 
             {itemsPagina.length === 0 ? (
-                <div className="sols__empty">
+                <div className="empty">
                     No se encontraron solicitudes con los filtros aplicados.
                 </div>
             ) : (
@@ -329,26 +334,26 @@ function Solicitudes() {
             )}
 
             {crearAbierto && (
-                <div className="sols__overlay" onClick={cerrar}>
+                <div className="overlay" onClick={cerrar}>
                     <div
-                        className="sols__modal"
+                        className="modal"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="sols__modal-header">
+                        <div className="modal__header">
                             <div>
-                                <h2>Registrar solicitud</h2>
-                                <p>Completa los datos de la nueva solicitud.</p>
+                                <h2 className="modal__title">Registrar solicitud</h2>
+                                <p className="modal__subtitle">Completa los datos de la nueva solicitud.</p>
                             </div>
                             <button
-                                className="sols__modal-close"
+                                className="modal__close"
                                 onClick={cerrar}
                             >
                                 ×
                             </button>
                         </div>
 
-                        <form className="sols__form" onSubmit={handleCrear}>
-                            <div className="sols__form-grid">
+                        <form className="modal__body sols__modal-form" onSubmit={handleCrear}>
+                            <div className="form-grid sols__form-grid">
                                 <div className="sols__form-group">
                                     <label htmlFor="sol-tipo">Tipo de solicitud</label>
                                     <input
@@ -379,7 +384,7 @@ function Solicitudes() {
                                 </div>
                             </div>
 
-                            <div className="sols__form-grid">
+                            <div className="form-grid">
                                 <div className="sols__form-group">
                                     <label htmlFor="sol-prioridad">Prioridad</label>
                                     <select
@@ -407,17 +412,17 @@ function Solicitudes() {
                                 />
                             </div>
 
-                            <div className="sols__modal-actions">
+                            <div className="modal__footer">
                                 <button
                                     type="button"
-                                    className="sols__cancel-button"
+                                    className="button button--ghost button--md"
                                     onClick={cerrar}
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
-                                    className="sols__confirm-button"
+                                    className="button button--accent button--md"
                                     disabled={
                                         !form.tipo ||
                                         !form.servicio ||

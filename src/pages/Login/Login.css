@@ -9,7 +9,7 @@
     align-items: center;
     justify-content: center;
     padding: 24px;
-    background: #f0f4f8;
+    background: var(--color-bg);
 }
 
 /* --- Card principal --- */
@@ -21,7 +21,7 @@
     min-height: 620px;
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-lg);
     animation: login-fade-in 0.5s ease-out;
 }
 
@@ -39,10 +39,10 @@
     align-items: center;
     justify-content: center;
     padding: 48px 40px;
-    color: #fff;
+    color: var(--color-text-inverse);
     background:
         radial-gradient(ellipse 80% 60% at 20% 15%, rgba(247, 208, 0, 0.08), transparent 55%),
-        linear-gradient(135deg, #001a33 0%, #003366 45%, #004080 100%);
+        linear-gradient(135deg, var(--sidebar-bg-1) 0%, var(--sidebar-bg-2) 45%, var(--sidebar-bg-3) 100%);
     overflow: hidden;
 }
 
@@ -310,7 +310,7 @@
     align-items: center;
     justify-content: center;
     padding: 48px 44px;
-    background: #fff;
+    background: var(--color-surface);
 }
 
 .login__form-box {
@@ -328,14 +328,14 @@
     font-family: var(--font-heading);
     font-size: 28px;
     font-weight: 700;
-    color: #003366;
+    color: var(--color-primary);
     line-height: 1.2;
 }
 
 .login__form-header p {
     margin: 0;
     font-size: 14px;
-    color: #5a7190;
+    color: var(--color-text-secondary);
 }
 
 /* Error */
@@ -347,15 +347,15 @@
     margin-bottom: 20px;
     font-size: 13px;
     font-weight: 600;
-    color: #c62828;
-    background: #ffebee;
-    border-left: 4px solid #c62828;
+    color: var(--color-danger);
+    background: var(--color-danger-100);
+    border-left: 4px solid var(--color-danger);
     border-radius: 8px;
 }
 
 .login__error svg {
     flex-shrink: 0;
-    color: #c62828;
+    color: var(--color-danger);
 }
 
 /* Form */
@@ -370,7 +370,7 @@
     display: block;
     font-size: 13px;
     font-weight: 600;
-    color: #1e3a5f;
+    color: var(--color-text);
     margin-bottom: 6px;
 }
 
@@ -383,7 +383,7 @@
 .login__input-icon {
     position: absolute;
     left: 14px;
-    color: #8da0b8;
+    color: var(--color-text-muted);
     pointer-events: none;
     transition: color 0.3s ease;
 }
@@ -391,29 +391,29 @@
 .login__input-wrap input {
     width: 100%;
     padding: 13px 14px 13px 42px;
-    border: 2px solid #e8e8e8;
+    border: 2px solid var(--color-border);
     border-radius: 12px;
     font-family: inherit;
     font-size: 15px;
-    color: #1a1a1a;
-    background: #f8f9fa;
+    color: var(--color-text);
+    background: var(--color-input-bg);
     transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
     box-sizing: border-box;
 }
 
 .login__input-wrap input::placeholder {
-    color: #9aa0a6;
+    color: var(--color-text-muted);
 }
 
 .login__input-wrap input:focus {
     outline: none;
-    border-color: #003366;
-    background: #fff;
-    box-shadow: 0 0 0 4px rgba(0, 51, 102, 0.08);
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+    box-shadow: 0 0 0 4px var(--color-primary-100);
 }
 
 .login__input-wrap:has(input:focus) .login__input-icon {
-    color: #003366;
+    color: var(--color-primary);
 }
 
 .login__input-wrap input:disabled {
@@ -433,14 +433,14 @@
     padding: 0;
     border: none;
     background: transparent;
-    color: #8da0b8;
+    color: var(--color-text-muted);
     cursor: pointer;
     border-radius: 8px;
     transition: color 0.3s ease, background 0.3s ease;
 }
 
 .login__toggle-pw:hover {
-    color: #1e3a5f;
+    color: var(--color-text);
     background: var(--color-hover);
 }
 
@@ -451,7 +451,7 @@
     gap: 8px;
     cursor: pointer;
     font-size: 14px;
-    color: #5a7190;
+    color: var(--color-text-secondary);
     user-select: none;
 }
 
@@ -462,7 +462,7 @@
 .login__checkmark {
     width: 18px;
     height: 18px;
-    border: 2px solid #ccc;
+    border: 2px solid var(--color-border-strong);
     border-radius: 5px;
     display: inline-flex;
     align-items: center;
@@ -478,7 +478,7 @@
 
 .login__checkbox input:checked + .login__checkmark::after {
     content: "✓";
-    color: #fff;
+    color: var(--color-text-inverse);
     font-size: 11px;
     font-weight: 700;
 }
@@ -513,8 +513,8 @@
     font-family: inherit;
     font-size: 16px;
     font-weight: 600;
-    color: #fff;
-    background: linear-gradient(135deg, #f39200, #f7d000);
+    color: var(--color-text-inverse);
+    background: linear-gradient(135deg, var(--color-accent-dark), var(--color-accent));
     cursor: pointer;
     transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
     box-shadow: 0 4px 15px rgba(243, 146, 0, 0.3);
@@ -557,7 +557,7 @@
 .login__creds {
     margin-top: 28px;
     padding-top: 22px;
-    border-top: 2px solid #f0f0f0;
+    border-top: 2px solid var(--color-border);
 }
 
 .login__creds h4 {
@@ -570,7 +570,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #999;
+    color: var(--color-text-muted);
 }
 
 .login__creds-grid {
@@ -581,9 +581,9 @@
 
 .login__cred-btn {
     padding: 10px 12px;
-    border: 2px solid #e8e8e8;
+    border: 2px solid var(--color-border);
     border-radius: 10px;
-    background: #fff;
+    background: var(--color-surface);
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: left;
@@ -595,7 +595,7 @@
 
 .login__cred-btn:hover:not(:disabled) {
     border-color: var(--cred-color);
-    background: #fafafa;
+    background: var(--color-surface-elevated);
     transform: scale(1.02);
 }
 
@@ -608,12 +608,12 @@
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.03em;
-    color: #003366;
+    color: var(--color-primary);
 }
 
 .login__cred-detail {
     font-size: 11px;
-    color: #888;
+    color: var(--color-text-muted);
     font-family: "SF Mono", "Fira Code", monospace;
 }
 

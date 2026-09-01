@@ -8,14 +8,17 @@ body {
     font-family: var(--font-body);
     font-size: 16px;
     line-height: 1.6;
+    font-weight: 500;
+    letter-spacing: -0.01em;
     color: var(--color-text);
     background-color: var(--color-bg);
 }
 
 h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
-    font-weight: 700;
+    font-weight: 800;
     line-height: 1.25;
+    letter-spacing: -0.02em;
     color: var(--color-text);
 }
 
@@ -42,7 +45,7 @@ a:hover {
 }
 
 strong, b {
-    font-weight: 600;
+    font-weight: 700;
 }
 
 small {

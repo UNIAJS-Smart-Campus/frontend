@@ -3,17 +3,20 @@ import { Link } from "react-router-dom";
 import solicitudes from "../../utils/solicitudes";
 import notificaciones from "../../utils/notificaciones";
 import eventos from "../../utils/eventos";
+import services from "../../utils/services";
 import useAuth from "../../context/useAuth";
+import useSearch from "../../hooks/useSearch";
 import Icon from "../../components/Icon/Icon";
+import SearchBar from "../../components/SearchBar/SearchBar";
 import "./Dashboard.css";
 
 const ESTADO_CLASE = {
     "En proceso": "status-blue",
     "En revisión": "status-yellow",
     "Registrada": "status-yellow",
-    "Asignada": "status-purple",
-    "Resuelta": "status-green",
-    "Cerrada": "status-gray"
+    Asignada: "status-purple",
+    Resuelta: "status-green",
+    Cerrada: "status-gray"
 };
 
 const PROGRESS_STATES = [
@@ -25,14 +28,6 @@ const PROGRESS_STATES = [
     "Cerrada"
 ];
 
-const ACCESOS = [
-    { icono: "estudiante", titulo: "Información Académica", clase: "quick-blue" },
-    { icono: "solicitudes", titulo: "Solicitar Documentos", clase: "quick-green" },
-    { icono: "reservas", titulo: "Reservar Espacios", clase: "quick-purple" },
-    { icono: "pqrs", titulo: "Tramitar Solicitudes", clase: "quick-yellow" },
-    { icono: "info", titulo: "Centro de Ayuda", clase: "quick-cyan" }
-];
-
 function capitalizar(texto) {
     return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : texto;
 }
@@ -40,6 +35,11 @@ function capitalizar(texto) {
 function Dashboard() {
     const { user } = useAuth();
     const primerNombre = (user?.nombre || "Usuario").split(" ")[0];
+
+    const [query, setQuery] = useState("");
+    const [busqueda, setBusqueda] = useState("");
+
+    const serviciosEncontrados = useSearch(services, busqueda, ["name", "category"]);
 
     const hoy = new Date();
     const [mesVista, setMesVista] = useState(hoy.getMonth());
@@ -198,56 +198,107 @@ function Dashboard() {
             titulo: "Nueva notificación recibida",
             tiempo: "Hace 3 horas",
             clase: "purple"
+        },
+        {
+            icono: "eventos",
+            titulo: "Inscripción confirmada: Taller de UX",
+            tiempo: "Hace 5 horas",
+            clase: "green"
+        },
+        {
+            icono: "solicitudes",
+            titulo: "Solicitud de certificado aprobada",
+            tiempo: "Hace 1 día",
+            clase: "blue"
         }
     ];
 
     return (
-        <div className="dashboard">
-            <div className="dashboard__welcome">
-                <div>
-                    <h1 className="dashboard__welcome-title">
-                        Hola, {primerNombre}!
-                    </h1>
-                    <p className="dashboard__welcome-subtitle">
-                        Bienvenido a UAJS Smart Campus
-                    </p>
+        <div className="page">
+            <div className="page__header">
+                <div className="page__title">
+                    <h1>Hola, {primerNombre} 👋</h1>
+                    <p>Bienvenido a Smart Campus UNIAJS: tu panel central de servicios universitarios.</p>
                 </div>
 
                 <div className="dashboard__date-card">
-                    <Icon name="reservas" size={20} />
+                    <Icon name="calendar" size={20} />
                     <div>
                         <div className="dashboard__date-main">
                             {diaSemana}, {nombreMes}
                         </div>
                         <div className="dashboard__date-sub">
-                            Semestre 2026-II
+                            {hoy.getDate()}
                         </div>
                     </div>
                 </div>
             </div>
 
-            <section className="dashboard__stats">
+            <section className="dashboard__services">
+                <div className="dashboard__services-header">
+                    <h2 className="dashboard__services-title">Servicios disponibles</h2>
+                    <p className="dashboard__services-subtitle">
+                        Explora y accede rápidamente a los servicios del campus.
+                    </p>
+                </div>
+
+                <div className="dashboard__search-container">
+<SearchBar
+                        id="dashboard-search"
+                        placeholder="Buscar servicios, reservas, recursos…"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onSearch={() => setBusqueda(query)}
+                        suggestions={services.flatMap((s) => [s.name, s.category])}
+/>
+                </div>
+
+                {serviciosEncontrados.length === 0 ? (
+                    <div className="dashboard__services-empty">
+                        <Icon name="info" size={32} />
+                        <p>No se encontraron servicios que coincidan con tu búsqueda.</p>
+                    </div>
+                ) : (
+                    <div className="dashboard__services-grid">
+                        {serviciosEncontrados.map((service) => (
+                            <Link
+                                to={service.path}
+                                className="dashboard__service-card"
+                                key={service.name}
+                            >
+                                <div className="dashboard__service-icon">
+                                    <Icon name={service.icon} size={28} />
+                                </div>
+                                <div className="dashboard__service-info">
+                                    <h3 className="dashboard__service-name">{service.name}</h3>
+                                    <span className="dashboard__service-category">{service.category}</span>
+                                </div>
+                                <span className="dashboard__service-arrow">→</span>
+                            </Link>
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            <section className="summary">
                 {stats.map((stat) => (
-                    <article className="dashboard__stat-card" key={stat.titulo}>
+                    <article className="summary__card" key={stat.titulo}>
                         <div className={`dashboard__stat-icon ${stat.clase}`}>
                             <Icon name={stat.icono} size={21} />
                         </div>
                         <div>
-                            <div className="dashboard__stat-number">{stat.numero}</div>
-                            <div className="dashboard__stat-title">{stat.titulo}</div>
-                            <a href="#" className="dashboard__stat-link">
-                                {stat.enlace} →
-                            </a>
+                            <div className="summary__number">{stat.numero}</div>
+                            <div className="summary__label">{stat.titulo}</div>
                         </div>
                     </article>
                 ))}
             </section>
 
             <section className="dashboard__grid">
-                <div className="dashboard__card dashboard__card--solicitudes">
-                    <div className="dashboard__card-title">
+                <div className="card">
+                    <div className="card__header">
                         <h2>Mis solicitudes</h2>
-                        <a href="#" className="dashboard__card-view">Ver todas →</a>
+                        <Link to="/solicitudes" className="dashboard__card-view">Ver todas →</Link>
                     </div>
 
                     {misSolicitudes.map((sol) => (
@@ -302,8 +353,39 @@ function Dashboard() {
                     </div>
                 </div>
 
-                <div className="dashboard__card">
-                    <div className="dashboard__card-title">
+                <div className="card">
+                    <div className="card__header">
+                        <h2>Notificaciones</h2>
+                        <Link to="/notificaciones" className="dashboard__card-view">Ver todas →</Link>
+                    </div>
+
+                    <div className="dashboard__notification-list">
+                        {notificaciones.slice(0, 5).map((notificacion) => (
+                            <div className="dashboard__notification" key={notificacion.id}>
+                                <div className="dashboard__notification-top">
+                                    <span
+                                        className={`dashboard__notification-dot dashboard__notification-dot--${notificacion.icono.toLowerCase()}`}
+                                    />
+                                    <div>
+                                        <div className="dashboard__notification-title">{notificacion.tipo}</div>
+                                        <div className="dashboard__notification-text">{notificacion.mensaje}</div>
+                                        <div className="dashboard__notification-time">
+                                            {new Date(notificacion.fecha + "T00:00:00").toLocaleDateString("es-CO", {
+                                                day: "numeric",
+                                                month: "short"
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            <section className="dashboard__bottom-grid">
+                <div className="card">
+                    <div className="card__header">
                         <h2>Calendario</h2>
                         <Link to="/eventos" className="dashboard__card-view">Ver calendario →</Link>
                     </div>
@@ -337,87 +419,32 @@ function Dashboard() {
                     </div>
 
                     <div className="dashboard__days">{celdas}</div>
-
-                    {proximosEventos.slice(0, 3).map((evento) => (
-                        <div className="dashboard__event" key={evento.id}>
-                            <div className="dashboard__event-title">{evento.nombre}</div>
-                            <div className="dashboard__event-time">
-                                {new Date(evento.fecha + "T00:00:00").toLocaleDateString("es-CO", {
-                                    weekday: "long",
-                                    day: "numeric",
-                                    month: "long"
-                                })} a las {evento.hora}
-                            </div>
-                        </div>
-                    ))}
                 </div>
 
-                <div className="dashboard__card dashboard__card--notificaciones">
-                    <div className="dashboard__card-title">
-                        <h2>Notificaciones</h2>
-                        <a href="#" className="dashboard__card-view">Ver todas →</a>
+                <div className="card">
+                    <div className="card__header">
+                        <h2>Actividad reciente</h2>
+                        <Link to="/eventos" className="dashboard__card-view">Ver toda →</Link>
                     </div>
 
-                    {notificaciones.slice(0, 3).map((notificacion) => (
-                        <div className="dashboard__notification" key={notificacion.id}>
-                            <div className="dashboard__notification-top">
-                                <span
-                                    className={`dashboard__notification-dot dashboard__notification-dot--${notificacion.icono.toLowerCase()}`}
-                                />
-                                <div>
-                                    <div className="dashboard__notification-title">{notificacion.tipo}</div>
-                                    <div className="dashboard__notification-text">{notificacion.mensaje}</div>
-                                    <div className="dashboard__notification-time">
-                                        {new Date(notificacion.fecha + "T00:00:00").toLocaleDateString("es-CO", {
-                                            day: "numeric",
-                                            month: "short"
-                                        })}
-                                    </div>
+                    <div className="dashboard__activity-list">
+                        {actividades.slice(0, 5).map((actividad, idx) => (
+                            <div className="dashboard__activity" key={idx}>
+                                <div className={`dashboard__activity-icon ${actividad.clase}`}>
+                                    <Icon name={actividad.icono} size={15} />
                                 </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            <section className="dashboard__bottom-grid">
-                <div className="dashboard__card">
-                    <div className="dashboard__card-title">
-                        <h2>Accesos rápidos</h2>
-                    </div>
-
-                    <div className="dashboard__quick-access">
-                        {ACCESOS.map((acceso) => (
-                            <div className={`dashboard__quick-item ${acceso.clase}`} key={acceso.titulo}>
-                                <Icon name={acceso.icono} size={22} />
-                                <span>{acceso.titulo}</span>
+                                <div className="dashboard__activity-info">
+                                    <div className="dashboard__activity-title">{actividad.titulo}</div>
+                                    <div className="dashboard__activity-time">{actividad.tiempo}</div>
+                                </div>
+                                {actividad.etiqueta && (
+                                    <span className={`status ${actividad.estadoClase}`}>
+                                        {actividad.etiqueta}
+                                    </span>
+                                )}
                             </div>
                         ))}
                     </div>
-                </div>
-
-                <div className="dashboard__card">
-                    <div className="dashboard__card-title">
-                        <h2>Actividad reciente</h2>
-                        <a href="#" className="dashboard__card-view">Ver toda →</a>
-                    </div>
-
-                    {actividades.map((actividad, idx) => (
-                        <div className="dashboard__activity" key={idx}>
-                            <div className={`dashboard__activity-icon ${actividad.clase}`}>
-                                <Icon name={actividad.icono} size={15} />
-                            </div>
-                            <div className="dashboard__activity-info">
-                                <div className="dashboard__activity-title">{actividad.titulo}</div>
-                                <div className="dashboard__activity-time">{actividad.tiempo}</div>
-                            </div>
-                            {actividad.etiqueta && (
-                                <span className={`status ${actividad.estadoClase}`}>
-                                    {actividad.etiqueta}
-                                </span>
-                            )}
-                        </div>
-                    ))}
                 </div>
             </section>
         </div>

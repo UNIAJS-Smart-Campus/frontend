@@ -9,31 +9,49 @@ const pqrs = [
     {
         id: "PQRS-2026-014",
         tipo: "Queja",
-        fecha: "2026-08-12",
+        fecha: "2026-09-01",
         estado: "En revisión",
-        descripcion: "Queja por la demora en la entrega de constancias académicas."
+        descripcion: "Queja por la demora en la atención del servicio de certificados y constancias académicas."
     },
     {
         id: "PQRS-2026-013",
         tipo: "Petición",
-        fecha: "2026-08-09",
+        fecha: "2026-08-28",
         estado: "Resuelta",
-        descripcion: "Solicitud de información sobre el proceso de homologación."
+        descripcion: "Solicitud de información sobre el proceso de homologación de asignaturas y requisitos."
     },
     {
         id: "PQRS-2026-012",
         tipo: "Sugerencia",
-        fecha: "2026-08-05",
+        fecha: "2026-08-24",
         estado: "Cerrada",
-        descripcion: "Sugerencia para ampliar los horarios de atención de la biblioteca."
+        descripcion: "Sugerencia para ampliar los horarios de atención de la biblioteca y laboratorio de cómputo."
     },
     {
         id: "PQRS-2026-011",
         tipo: "Reclamo",
-        fecha: "2026-08-02",
+        fecha: "2026-08-18",
         estado: "Asignada",
-        descripcion: "Reclamo por el estado de los equipos del laboratorio de informática 2."
+        descripcion: "Reclamo por las fallas de red y acceso a internet en el laboratorio de redes."
+    },
+    {
+        id: "PQRS-2026-010",
+        tipo: "Petición",
+        fecha: "2026-08-14",
+        estado: "En revisión",
+        descripcion: "Solicitud de apoyo para programación de horarios de prácticas y tutorías académicas."
     }
 ];
+
+export const PQRS_POR_PERFIL = {
+    Administrador: pqrs,
+    Administrativo: pqrs.filter((item) => ["Queja", "Reclamo", "Petición"].includes(item.tipo)),
+    Docente: pqrs.filter((item) => ["Petición", "Sugerencia"].includes(item.tipo)),
+    Estudiante: pqrs.filter((item) => ["Queja", "Petición", "Sugerencia"].includes(item.tipo))
+};
+
+export function obtenerPqrsPorPerfil(rol = "Estudiante") {
+    return PQRS_POR_PERFIL[rol] || PQRS_POR_PERFIL.Estudiante;
+}
 
 export default pqrs;

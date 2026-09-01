@@ -1,3 +1,9 @@
+/* ============================================================
+   EVENTOS — BEM Methodology
+   Block: .eventos (Eventos)
+   Convention: block__element | block__element--modifier
+   ============================================================ */
+
 .eventos {
     display: flex;
     flex-direction: column;
@@ -33,7 +39,7 @@
     gap: 8px;
     border: none;
     background: linear-gradient(90deg, var(--color-accent-dark), var(--color-accent));
-    color: #1e3a5f;
+    color: var(--color-primary);
     padding: 12px 18px;
     border-radius: 50px;
     font-size: 12px;
@@ -58,8 +64,8 @@
     gap: 7px;
     font-size: 11px;
     font-weight: 700;
-    color: #199b5b;
-    background: #e7f8ee;
+    color: var(--color-success);
+    background: var(--color-success-100);
     border: 1px solid #bfe6cd;
     padding: 9px 14px;
     border-radius: 7px;
@@ -123,11 +129,11 @@
     display: block;
 }
 
-.eventos__summary-icon--all { background: #e8f3ff; color: var(--color-primary-600); }
-.eventos__summary-icon--blue { background: #e8f3ff; color: var(--color-primary-600); }
-.eventos__summary-icon--orange { background: #fff4df; color: #d99000; }
-.eventos__summary-icon--green { background: #e3f8ec; color: #199b5b; }
-.eventos__summary-icon--purple { background: #eee8ff; color: #7547d6; }
+.eventos__summary-icon--all { background: var(--color-primary-100); color: var(--color-primary-600); }
+.eventos__summary-icon--blue { background: var(--color-primary-100); color: var(--color-primary-600); }
+.eventos__summary-icon--orange { background: var(--color-accent-50); color: var(--color-accent-dark); }
+.eventos__summary-icon--green { background: var(--color-success-100); color: var(--color-success); }
+.eventos__summary-icon--purple { background: #eee8ff; color: var(--color-primary-600); }
 
 .eventos__summary-card--active .eventos__summary-icon {
     background: rgba(255, 255, 255, 0.55);
@@ -151,7 +157,7 @@
 }
 
 .eventos__summary-card--active .eventos__summary-number {
-    color: #1e3a5f;
+    color: var(--color-primary);
 }
 
 /* ============ FILTER CARD ============ */
@@ -178,6 +184,10 @@
 
 .eventos__filter-group--search {
     min-width: 0;
+}
+
+.eventos__filter-group--search .searchbar-wrap {
+    max-width: 300px;
 }
 
 .eventos__filter-group label {
@@ -270,10 +280,10 @@
     white-space: nowrap;
 }
 
-.eventos__item-badge.blue { background: #e8f3ff; color: var(--color-primary-600); }
-.eventos__item-badge.purple { background: #eee8ff; color: #7547d6; }
-.eventos__item-badge.orange { background: #fff4df; color: #d99000; }
-.eventos__item-badge.green { background: #e3f8ec; color: #199b5b; }
+.eventos__item-badge.blue { background: var(--color-primary-100); color: var(--color-primary-600); }
+.eventos__item-badge.purple { background: #eee8ff; color: var(--color-primary-600); }
+.eventos__item-badge.orange { background: var(--color-accent-50); color: var(--color-accent-dark); }
+.eventos__item-badge.green { background: var(--color-success-100); color: var(--color-success); }
 
 .eventos__item-state {
     padding: 4px 9px;
@@ -285,9 +295,23 @@
     white-space: nowrap;
 }
 
-.eventos__item-state--active { background: #e3f8ec; color: #199b5b; }
-.eventos__item-state--done { background: #e8f3ff; color: var(--color-primary-600); }
-.eventos__item-state--canceled { background: #fff0f0; color: #d84b4b; }
+.eventos__item-state--active { background: var(--color-success-100); color: var(--color-success); }
+.eventos__item-state--done { background: var(--color-primary-100); color: var(--color-primary-600); }
+.eventos__item-state--canceled { background: var(--color-danger-50); color: var(--color-danger); }
+
+.eventos__item-modalidad {
+    padding: 4px 9px;
+    border-radius: 6px;
+    font-size: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.eventos__item-modalidad--presencial { background: var(--color-info-50); color: var(--color-info); }
+.eventos__item-modalidad--virtual { background: var(--color-primary-100); color: var(--color-primary-600); }
+.eventos__item-modalidad--hibrido { background: var(--color-accent-50); color: var(--color-accent-dark); }
 
 .eventos__item-title {
     margin: 0;
@@ -354,7 +378,7 @@
 }
 
 .eventos__cupos-num--full {
-    color: #d84b4b;
+    color: var(--color-danger);
 }
 
 .eventos__cupos-label {
@@ -365,14 +389,53 @@
 
 .eventos__view-button {
     height: 32px;
-    padding: 0 14px;
+    padding: 0 16px;
     border: none;
     background: linear-gradient(90deg, var(--color-accent-dark), var(--color-accent));
-    color: #1e3a5f;
+    color: var(--color-primary-800);
     border-radius: 50px;
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 700;
     cursor: pointer;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    white-space: nowrap;
+}
+
+.eventos__view-button:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.eventos__item-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.eventos__inscribir-button {
+    height: 32px;
+    padding: 0 14px;
+    border: none;
+    background: var(--color-primary-600);
+    color: var(--color-text-inverse);
+    border-radius: 50px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.eventos__inscribir-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.eventos__inscribir-button:disabled {
+    background: var(--color-hover);
+    color: var(--color-text-faint);
+    cursor: not-allowed;
 }
 
 .eventos__empty {
@@ -542,7 +605,7 @@
     padding: 0 18px;
     border: none;
     background: linear-gradient(90deg, var(--color-accent-dark), var(--color-accent));
-    color: #1e3a5f;
+    color: var(--color-primary);
     border-radius: 7px;
     cursor: pointer;
     font-size: 10px;
@@ -634,7 +697,7 @@
 
 .eventos__cupo-bar--full .eventos__cupo-bar span,
 .eventos__cupo-bar--full .eventos__cupo-fill {
-    color: #d84b4b;
+    color: var(--color-danger);
 }
 
 .eventos__cupo-track {
@@ -651,7 +714,7 @@
 }
 
 .eventos__cupo-bar--full .eventos__cupo-fill {
-    background: #d84b4b;
+    background: var(--color-danger);
 }
 
 .eventos__subscribe-button {
@@ -659,7 +722,7 @@
     height: 42px;
     border: none;
     background: linear-gradient(90deg, var(--color-accent-dark), var(--color-accent));
-    color: #1e3a5f;
+    color: var(--color-primary);
     border-radius: 50px;
     font-size: 11px;
     font-weight: 700;
@@ -701,9 +764,9 @@
 }
 
 .eventos__admin-btn--danger:hover {
-    border-color: #d84b4b;
-    color: #d84b4b;
-    background: #fff0f0;
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+    background: var(--color-danger-50);
 }
 
 /* ============ INSCRITOS ============ */
@@ -733,7 +796,7 @@
     height: 32px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--color-primary-600), var(--color-primary));
-    color: #fff;
+    color: var(--color-text-inverse);
     font-size: 10px;
     font-weight: 800;
     display: flex;

@@ -113,6 +113,12 @@ const paths = {
             <path d="M12 16v-4" />
             <path d="M12 8h.01" />
         </>
+    ),
+    buscar: (
+        <>
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.3-4.3" />
+        </>
     )
 };
 

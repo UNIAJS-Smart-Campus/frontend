@@ -1,13 +1,11 @@
 import { Link, useParams } from "react-router-dom";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
-import { ESTADOS_SOLICITUD } from "../../utils/solicitudes";
-import solicitudes from "../../utils/solicitudes";
+import { ESTADOS_SOLICITUD, obtenerSolicitudes } from "../../utils/solicitudes";
 import "./SolicitudDetalle.css";
 
 function SolicitudDetalle() {
     const { id } = useParams();
-
-    const solicitud = solicitudes.find((item) => String(item.id) === id);
+    const solicitud = obtenerSolicitudes().find((item) => String(item.id) === id);
 
     if (!solicitud) {
         return (

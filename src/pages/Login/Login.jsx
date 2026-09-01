@@ -22,25 +22,21 @@ function Login() {
     const location = useLocation();
     const desde = location.state?.from?.pathname || "/dashboard";
 
-const handleLogin = async () => {
-    try {
-        const resultado = await login(identificacion, password);
-        if (!resultado?.ok) {
-            setError(resultado?.mensaje || "Credenciales inválidas");
-            return;
+    const handleLogin = async () => {
+        try {
+            const resultado = await login(identificacion, password);
+            if (!resultado?.ok) {
+                setError(resultado?.mensaje || "Credenciales inválidas");
+                return;
+            }
+            navigate(desde, { replace: true });
+        } catch {
+            setError("Error inesperado. Inténtalo de nuevo.");
+            setLoading(false);
+        } finally {
+            setLoading(false);
         }
-        navigate(desde, { replace: true });
-    } catch (err) {
-        setError(
-            err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError")
-                ? "No se pudo conectar con el servidor. Verifica tu conexión."
-                : "Error inesperado. Inténtalo de nuevo."
-        );
-        setLoading(false);
-    } finally {
-        setLoading(false);
-    }
-};
+    };
 
 const handleSubmit = (e) => {
     e.preventDefault();

@@ -1,26 +1,9 @@
 import { useState } from "react";
 import { AuthContext } from "./auth-context";
-import { authApi } from "../utils/api";
 import { permisosDeRol, accionesDeRol } from "../utils/users";
+import usuarios from "../utils/users";
 
 const SESSION_KEY = "uajs_session";
-
-const ROL_POR_ID = {
-    1: "Administrador",
-    2: "Estudiante",
-    3: "Docente",
-    4: "Administrativo",
-};
-
-function mapearRol(idRol) {
-    // Validar que el rol exista
-    const rol = ROL_POR_ID[idRol];
-    if (!rol) {
-        console.warn(`Rol no reconocido: ${idRol}, asignando "Estudiante" por defecto`);
-        return "Estudiante";
-    }
-    return rol;
-}
 
 function getSession() {
     try {
@@ -46,21 +29,24 @@ function AuthProvider({ children }) {
 
     const login = async (identificacion, password) => {
         try {
-            const data = await authApi.login(identificacion, password);
+            const usuario = usuarios.find(
+                (u) =>
+                    u.usuario === identificacion &&
+                    u.password === password
+            );
 
-            // Validar respuesta de la API
-            if (!data || !data.id_usuario || !data.identificacion) {
-                throw new Error("Respuesta inválida del servidor");
+            if (!usuario) {
+                throw new Error("Credenciales inválidas");
             }
 
             const sesion = {
-                id: data.id_usuario,
-                usuario: data.identificacion,
-                nombre: `${data.nombre || ""} ${data.apellido || ""}`.trim() || "Usuario",
-                correo: data.correo || "",
-                rol: mapearRol(data.rol),
-                programa: data.programa || "No especificado",
-                token: data.token || "",
+                id: usuario.id,
+                usuario: usuario.usuario,
+                nombre: usuario.nombre || "Usuario",
+                correo: usuario.correo || "",
+                rol: usuario.rol,
+                programa: usuario.programa || "No especificado",
+                token: "mock-token-" + btoa(usuario.usuario),
             };
 
             setUser(sesion);

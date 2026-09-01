@@ -21,7 +21,7 @@ function Sidebar({ collapsed }) {
   return (
     <nav className={classes}>
       <div className="sidebar__brand">
-        <img src="/Logo_Light_UAJS.png" alt="Logo UniAJS" className="sidebar__logo" />
+        <img src="/Logo_Light_UAJS.png" alt="Logo UAJS Smart Campus" className="sidebar__logo" />
       </div>
 
       <div className="sidebar__menu">
@@ -49,11 +49,11 @@ function Sidebar({ collapsed }) {
             ))}
           </div>
         ))}
-      </div>
 
-      <footer className="sidebar__footer">
-        <span className="sidebar__version">UniAJS v0.4.0</span>
-      </footer>
+        <footer className="sidebar__footer">
+          <span className="sidebar__version">UniAJS v0.4.0</span>
+        </footer>
+      </div>
     </nav>
   );
 }

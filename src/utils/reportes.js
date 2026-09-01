@@ -52,7 +52,23 @@ function construirReportes() {
 
     const masUtilizados = contarPor(reservas, "recurso").slice(0, 5);
 
+    const tendenciaMensual = [
+        { mes: "Ene", solicitudes: 22, reservas: 14 },
+        { mes: "Feb", solicitudes: 28, reservas: 18 },
+        { mes: "Mar", solicitudes: 25, reservas: 21 },
+        { mes: "Abr", solicitudes: 33, reservas: 19 },
+        { mes: "May", solicitudes: 30, reservas: 24 },
+        { mes: "Jun", solicitudes: 38, reservas: 22 },
+        { mes: "Jul", solicitudes: 26, reservas: 16 },
+        { mes: "Ago", solicitudes: 41, reservas: 27 },
+        { mes: "Sep", solicitudes: 44, reservas: 30 },
+        { mes: "Oct", solicitudes: 47, reservas: 33 },
+        { mes: "Nov", solicitudes: 52, reservas: 36 },
+        { mes: "Dic", solicitudes: 45, reservas: 31 }
+    ];
+
     return {
+        tendenciaMensual,
         kpis: [
             {
                 etiqueta: "Usuarios registrados",

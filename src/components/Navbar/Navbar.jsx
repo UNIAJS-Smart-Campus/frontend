@@ -3,39 +3,14 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import notificaciones from "../../utils/notificaciones";
 import { getModuleName } from "../../utils/menu";
 import useAuth from "../../context/useAuth";
-import useLocalStorage from "../../hooks/useLocalStorage";
+import { useTheme } from "../../context/ThemeContext";
+import { getAvatarStyle, getUserInitials, getUserPhoto } from "../../utils/avatar";
 import Icon from "../Icon/Icon";
 import "./Navbar.css";
 
-const THEME_KEY = "uajs_theme";
-
-function getInitialTheme() {
-    try {
-        const guardado = localStorage.getItem(THEME_KEY);
-        if (guardado === "dark" || guardado === "light") {
-            return guardado;
-        }
-    } catch {
-        // si localStorage no está disponible se ignora
-    }
-
-    try {
-        if (
-            window.matchMedia &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches
-        ) {
-            return "dark";
-        }
-    } catch {
-        // si matchMedia no está disponible se ignora
-    }
-
-    return "light";
-}
-
 function Navbar({ onToggle }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [theme, setTheme] = useLocalStorage(THEME_KEY, getInitialTheme);
+    const { darkMode, toggleTheme } = useTheme();
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
     const location = useLocation();
@@ -43,14 +18,6 @@ function Navbar({ onToggle }) {
 
     const moduleName = getModuleName(location.pathname);
     const noLeidas = notificaciones.filter((item) => !item.leida).length;
-
-    useEffect(() => {
-        document.documentElement.setAttribute("data-theme", theme);
-    }, [theme]);
-
-    const toggleTheme = () => {
-        setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-    };
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -82,7 +49,10 @@ function Navbar({ onToggle }) {
                     ☰
                 </button>
 
-                <h1 className="navbar__title">{moduleName}</h1>
+                <div className="navbar__module">
+                    <span className="navbar__module-kicker">UAJS Smart Campus</span>
+                    <h1 className="navbar__title">{moduleName}</h1>
+                </div>
             </div>
 
             <div className="navbar__right">
@@ -98,8 +68,12 @@ function Navbar({ onToggle }) {
                     ref={dropdownRef}
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                 >
-                    <div className="navbar__avatar">
-                        {user?.nombre?.charAt(0) ?? "U"}
+                    <div
+                        className="navbar__avatar"
+                        style={getAvatarStyle(user?.nombre, "linear-gradient(135deg, var(--color-primary), var(--color-primary-600))")}
+                        aria-label={user?.nombre || "Usuario"}
+                    >
+                        {!getUserPhoto() && getUserInitials(user?.nombre, "U")}
                     </div>
 
                     <div className="navbar__user">
@@ -138,7 +112,7 @@ function Navbar({ onToggle }) {
                                 className="navbar__dropdown-item"
                                 onClick={toggleTheme}
                             >
-                                {theme === "dark" ? "☀️ Modo claro" : "🌙 Modo oscuro"}
+                                {darkMode ? "☀️ Modo claro" : "🌙 Modo oscuro"}
                             </button>
 
                             <button

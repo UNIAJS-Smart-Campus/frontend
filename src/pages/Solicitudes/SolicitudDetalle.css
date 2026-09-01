@@ -89,10 +89,10 @@
     white-space: nowrap;
 }
 
-.solicitud-detalle__status.blue { background: #e8f3ff; color: var(--color-primary-600); }
-.solicitud-detalle__status.yellow { background: #fff4df; color: #d99000; }
-.solicitud-detalle__status.purple { background: #eee8ff; color: #7547d6; }
-.solicitud-detalle__status.green { background: #e3f8ec; color: #199b5b; }
+.solicitud-detalle__status.blue { background: var(--color-primary-100); color: var(--color-primary-600); }
+.solicitud-detalle__status.yellow { background: var(--color-accent-50); color: var(--color-accent-dark); }
+.solicitud-detalle__status.purple { background: var(--color-primary-50); color: var(--color-primary-600); }
+.solicitud-detalle__status.green { background: var(--color-success-100); color: var(--color-success); }
 .solicitud-detalle__status.gray { background: var(--color-hover); color: var(--color-text-muted); }
 
 .solicitud-detalle__tipo {
@@ -201,13 +201,13 @@
 .solicitud-detalle__step--done .solicitud-detalle__step-marker {
     background-color: var(--color-success);
     border-color: var(--color-success);
-    color: #ffffff;
+    color: var(--color-text-inverse);
 }
 
 .solicitud-detalle__step--current .solicitud-detalle__step-marker {
     background-color: var(--color-accent-dark);
     border-color: var(--color-accent-dark);
-    color: #1e3a5f;
+    color: var(--color-primary-800);
     box-shadow: 0 0 0 4px rgba(247, 208, 0, 0.25);
 }
 

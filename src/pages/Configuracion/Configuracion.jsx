@@ -27,6 +27,7 @@ const configBase = {
     cuenta: {
         correo: "",
         telefono: "",
+        foto: "",
         idioma: "Español",
         zonaHoraria: "Bogotá (CO) — GMT-5",
         formatoFecha: "DD/MM/YYYY"
@@ -38,8 +39,7 @@ const configBase = {
     notificaciones: {
         canales: {
             plataforma: true,
-            correo: true,
-            sms: false
+            correo: true
         },
         modulos: MODULOS_NOTIFICACION.reduce(
             (acc, m) => ({ ...acc, [m.id]: true }),
@@ -106,13 +106,37 @@ function mergeConfig(base, extra) {
     return resultado;
 }
 
+function normalizarConfiguracion(base, extra) {
+    const merged = mergeConfig(base, extra);
+
+    if (merged?.notificaciones) {
+        const canalesBase = { ...base.notificaciones.canales };
+        const canalesMerged = { ...canalesBase, ...(merged.notificaciones.canales || {}) };
+
+        delete canalesMerged.push;
+        delete canalesMerged.sms;
+        delete canalesMerged.alertas;
+
+        merged.notificaciones = {
+            ...base.notificaciones,
+            ...merged.notificaciones,
+            canales: {
+                plataforma: Boolean(canalesMerged.plataforma ?? true),
+                correo: Boolean(canalesMerged.correo ?? true)
+            }
+        };
+    }
+
+    return merged;
+}
+
 function Configuracion() {
     const { user } = useAuth();
 
     const [config, setConfig] = useState(() => {
         try {
             const guardada = JSON.parse(localStorage.getItem(STORAGE_KEY));
-            return guardada ? mergeConfig(configBase, guardada) : configBase;
+            return guardada ? normalizarConfiguracion(configBase, guardada) : configBase;
         } catch {
             return configBase;
         }
@@ -127,6 +151,14 @@ function Configuracion() {
     const [telefonoEditable, setTelefonoEditable] = useState(
         user?.telefono || ""
     );
+
+    const inicialesUsuario =
+        (user?.nombre || "Usuario")
+            .split(" ")
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((parte) => parte[0]?.toUpperCase() || "")
+            .join("") || "U";
 
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
@@ -176,6 +208,42 @@ function Configuracion() {
         marcarGuardado();
     };
 
+    const manejarFoto = (event) => {
+        const archivo = event.target.files?.[0];
+        if (!archivo || !archivo.type.startsWith("image/")) return;
+
+        const lector = new FileReader();
+        lector.onload = (e) => {
+            const dataUrl = e.target?.result;
+            if (!dataUrl) return;
+
+            setConfig((prev) => ({
+                ...prev,
+                cuenta: {
+                    ...prev.cuenta,
+                    foto: dataUrl
+                }
+            }));
+            marcarGuardado();
+        };
+        lector.readAsDataURL(archivo);
+
+        if (event.target) {
+            event.target.value = "";
+        }
+    };
+
+    const eliminarFoto = () => {
+        setConfig((prev) => ({
+            ...prev,
+            cuenta: {
+                ...prev.cuenta,
+                foto: ""
+            }
+        }));
+        marcarGuardado();
+    };
+
     const actualizarPassword = (e) => {
         e.preventDefault();
         marcarGuardado();
@@ -188,16 +256,15 @@ function Configuracion() {
     ];
 
     return (
-        <div className="config">
-            <div className="config__page-header">
-                <div className="config__page-title">
-                    <h1>Configuración</h1>
+        <div className="page">
+            <div className="page__header">
+                <div className="page__title">
                     <p>Controla cómo funciona tu cuenta y tus preferencias.</p>
                 </div>
 
                 {guardado && (
-                    <span className="config__saved">
-                        <Icon name="info" size={14} />
+                    <span className="badge badge--green">
+                        <Icon name="info" size={12} />
                         Cambios guardados
                     </span>
                 )}
@@ -226,8 +293,8 @@ function Configuracion() {
                 <div className="config__content">
                     {/* ============ CUENTA ============ */}
                     {seccion === "cuenta" && (
-                        <section className="config__card">
-                            <div className="config__card-header">
+                        <section className="card">
+                            <div className="card__header">
                                 <div className="config__card-header-icon">
                                     <Icon name="perfil" size={17} />
                                 </div>
@@ -238,6 +305,43 @@ function Configuracion() {
                             </div>
 
                             <form className="config__form" onSubmit={guardarCuenta}>
+                                <div className="config__profile-photo">
+                                    <div
+                                        className="config__avatar-preview"
+                                        style={
+                                            config.cuenta.foto
+                                                ? {
+                                                    backgroundImage: `url(${config.cuenta.foto})`,
+                                                    backgroundSize: "cover",
+                                                    backgroundPosition: "center"
+                                                }
+                                                : undefined
+                                        }
+                                    >
+                                        {!config.cuenta.foto && inicialesUsuario}
+                                    </div>
+
+                                    <div className="config__profile-photo-info">
+                                        <strong>Foto de perfil</strong>
+                                        <p>Sube una imagen para personalizar tu cuenta.</p>
+                                        <div className="config__upload-actions">
+                                            <label className="config__upload-button">
+                                                <input type="file" accept="image/*" onChange={manejarFoto} />
+                                                <span>Seleccionar foto</span>
+                                            </label>
+                                            {config.cuenta.foto && (
+                                                <button
+                                                    type="button"
+                                                    className="config__outline-button"
+                                                    onClick={eliminarFoto}
+                                                >
+                                                    Eliminar
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="config__form-grid">
                                     <div className="config__form-group">
                                         <label htmlFor="cfg-correo">Correo electrónico</label>
@@ -507,20 +611,6 @@ function Configuracion() {
                                         />
                                     </div>
 
-                                    <div className="config__row">
-                                        <div className="config__row-icon">
-                                            <Icon name="reservas" size={16} />
-                                        </div>
-                                        <div className="config__row-info">
-                                            <div className="config__row-title">SMS</div>
-                                            <div className="config__row-desc">Mensajes de texto al celular.</div>
-                                        </div>
-                                        <Toggle
-                                            activo={config.notificaciones.canales.sms}
-                                            onClick={alternar("notificaciones.canales.sms")}
-                                            label="SMS"
-                                        />
-                                    </div>
                                 </div>
                             </section>
 

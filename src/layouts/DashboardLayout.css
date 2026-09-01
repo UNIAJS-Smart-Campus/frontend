@@ -25,7 +25,10 @@
     position: relative;
 }
 
-.app__content-inner {
+    .app__content-inner {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    width: 100%;
     animation: appFadeIn 0.2s ease;
 }
 

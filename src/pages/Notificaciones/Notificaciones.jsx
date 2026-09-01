@@ -46,15 +46,14 @@ function Notificaciones() {
     };
 
     return (
-        <div className="notifs">
-            <div className="notifs__page-header">
-                <div className="notifs__page-title">
-                    <h1>Notificaciones</h1>
+        <div className="page">
+            <div className="page__header">
+                <div className="page__title">
                     <p>Revisa los avisos de solicitudes, reservas y eventos.</p>
                 </div>
 
                 <button
-                    className="notifs__read-all"
+                    className="button button--outline button--md"
                     onClick={marcarTodasLeidas}
                     disabled={noLeidas === 0}
                 >
@@ -63,34 +62,34 @@ function Notificaciones() {
                 </button>
             </div>
 
-            <div className="notifs__summary">
+            <div className="summary">
                 {TIPOS.map((tipo) => (
                     <button
                         key={tipo}
                         className={
                             filtro === tipo
-                                ? "notifs__summary-card notifs__summary-card--active"
-                                : "notifs__summary-card"
+                                ? "summary__card summary__card--active"
+                                : "summary__card"
                         }
                         onClick={() => setFiltro(tipo)}
                     >
-                        <div className="notifs__summary-label">{tipo}</div>
-                        <div className="notifs__summary-number">
+                        <div className="summary__number">
                             {conteoTipo(tipo)}
                         </div>
+                        <div className="summary__label">{tipo}</div>
                     </button>
                 ))}
             </div>
 
-            <div className="notifs__list-header">
+            <div className="list-header">
                 <h2>Bandeja de notificaciones</h2>
-                <span>
+                <span className="list-header__meta">
                     {noLeidas} sin leer · {items.length} en total
                 </span>
             </div>
 
             {filtradas.length === 0 ? (
-                <div className="notifs__empty">
+                <div className="empty">
                     No hay notificaciones {filtro !== "Todas" ? `de tipo ${filtro}` : "disponibles"}.
                 </div>
             ) : (

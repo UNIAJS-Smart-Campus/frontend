@@ -56,20 +56,26 @@ function Landing() {
                 <div className="landing__brand">
                     <img
                         src="/Logo_Light_UAJS.png"
-                        alt="UniAJS — Corporación Universitaria Antonio José de Sucre"
+                        alt="UAJS Smart Campus — Universidad Antonio José de Sucre"
                         className="landing__logo"
                     />
+                    <div className="landing__brand-copy">
+                        <span className="landing__eyebrow">Proyecto Integrador</span>
+                        <strong>UAJS Smart Campus</strong>
+                    </div>
                 </div>
             </header>
 
             <section className="landing__hero">
+                <span className="landing__badge">Campus inteligente • gestión universitaria</span>
+
                 <h2 className="landing__title">
-                    Bienvenido a la plataforma de servicios universitarios
+                    Plataforma institucional para conectar servicios, comunidad y operaciones del campus.
                 </h2>
 
                 <p className="landing__subtitle">
-                    Gestiona solicitudes, reservas, recursos, eventos y más, en
-                    un solo lugar para toda la comunidad académica.
+                    Smart Campus UNIAJS centraliza solicitudes, reservas, recursos,
+                    eventos, notificaciones y atención al estudiante en una sola experiencia digital.
                 </p>
 
                 <div className="landing__actions">
@@ -78,7 +84,7 @@ function Landing() {
                         size="lg"
                         onClick={handleEnter}
                     >
-                        Entrar ahora
+                        Entrar a Smart Campus
                     </Button>
 
                     <button
@@ -91,7 +97,7 @@ function Landing() {
                 </div>
 
                 <p className="landing__countdown">
-                    Acceso automático al panel en{" "}
+                    Redirección automática al panel en{" "}
                     <strong>{seconds}</strong> segundos…
                 </p>
             </section>

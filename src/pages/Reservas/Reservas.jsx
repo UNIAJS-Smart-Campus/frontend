@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import Icon from "../../components/Icon/Icon";
 import Modal from "../../components/Modal/Modal";
 import Input from "../../components/Input/Input";
+import SearchBar from "../../components/SearchBar/SearchBar";
 import recursos from "../../utils/recursos";
 import "./Reservas.css";
 
@@ -208,20 +209,29 @@ function Reservas() {
         setBusquedaAlerta(true);
     };
 
+    const sugerencias = useMemo(() => {
+        return [
+            ...new Set(
+                recursos
+                    .flatMap((r) => [r.nombre, r.tipo, r.ubicacion, r.codigo])
+                    .filter(Boolean)
+            )
+        ];
+    }, []);
+
     const fechaReferencia = new Date(`${fecha || hoyStr}T00:00:00`);
     const inicioSemana = new Date(fechaReferencia);
     inicioSemana.setDate(fechaReferencia.getDate() - fechaReferencia.getDay() + 1);
 
     return (
-        <div className="reservas">
-            <div className="reservas__page-header">
-                <div className="reservas__page-title">
-                    <h1>Reservas</h1>
+        <div className="page">
+            <div className="page__header">
+                <div className="page__title">
                     <p>Reserva espacios y recursos disponibles del campus.</p>
                 </div>
 
                 <button
-                    className="reservas__new-button"
+                    className="button button--accent button--md"
                     onClick={() => abrirModal(null)}
                 >
                     <Icon name="configuracion" size={13} />
@@ -229,33 +239,24 @@ function Reservas() {
                 </button>
             </div>
 
-            <div className="reservas__filters-card">
-                <div className="reservas__filters-title">
-                    <div className="reservas__filters-title-icon">
-                        <Icon name="solicitudes" size={16} />
-                    </div>
-                    <div>
-                        <h2>Buscar disponibilidad</h2>
-                        <p>Encuentra un espacio o recurso para reservar.</p>
-                    </div>
-                </div>
-
-                <div className="reservas__filters">
-                    <div className="reservas__filter-group">
+            <div className="filters">
+                <div className="filters__grid">
+                    <div className="filters__group filters__group--search">
                         <label className="reservas__filter-label">¿Qué necesitas?</label>
-                        <input
-                            className="reservas__filter-input"
-                            type="text"
-                            placeholder="Ej. Laboratorio"
+                        <SearchBar
+                            id="reservas-search"
+                            placeholder="Ej. Laboratorio, Salón 101…"
                             value={query}
                             onChange={(e) => {
                                 setQuery(e.target.value);
                                 refrescar();
                             }}
+                            onSearch={buscarRecursos}
+                            suggestions={sugerencias}
                         />
                     </div>
 
-                    <div className="reservas__filter-group">
+                    <div className="filters__group">
                         <label className="reservas__filter-label">Tipo de recurso</label>
                         <select
                             className="reservas__filter-select"
@@ -270,7 +271,7 @@ function Reservas() {
                         </select>
                     </div>
 
-                    <div className="reservas__filter-group">
+                    <div className="filters__group">
                         <label className="reservas__filter-label">Fecha</label>
                         <input
                             className="reservas__filter-input"
@@ -280,7 +281,7 @@ function Reservas() {
                         />
                     </div>
 
-                    <div className="reservas__filter-group">
+                    <div className="filters__group">
                         <label className="reservas__filter-label">Hora</label>
                         <select
                             className="reservas__filter-select"
@@ -296,24 +297,17 @@ function Reservas() {
                         </select>
                     </div>
 
-                    <button
-                        className="reservas__filter-button"
-                        onClick={buscarRecursos}
-                    >
-                        Buscar
-                    </button>
+                    {busquedaAlerta && (
+                        <p className="reservas__search-alert">
+                            {disponibles.length} recurso(s) disponible(s) según tu búsqueda.
+                        </p>
+                    )}
                 </div>
-
-                {busquedaAlerta && (
-                    <p className="reservas__search-alert">
-                        {disponibles.length} recurso(s) disponible(s) según tu búsqueda.
-                    </p>
-                )}
             </div>
 
-            <div className="reservas__section-header">
+            <div className="list-header">
                 <h2>Espacios disponibles</h2>
-                <span>{disponibles.length} recursos encontrados</span>
+                <span className="list-header__meta">{disponibles.length} recursos encontrados</span>
             </div>
 
             <div className="reservas__resources">
@@ -356,16 +350,16 @@ function Reservas() {
                         );
                     })
                 ) : (
-                    <p className="reservas__resources-empty">
+                    <div className="empty">
                         No se encontraron recursos disponibles para tu búsqueda.
-                    </p>
+                    </div>
                 )}
             </div>
 
-            <div className="reservas__reservations-card">
-                <div className="reservas__section-header">
+            <div className="card">
+                <div className="card__header">
                     <h2>Mis reservas</h2>
-                    <span>Ver historial →</span>
+                    <span className="dashboard__card-view">Ver historial →</span>
                 </div>
 
                 {misReservas.length > 0 ? (
@@ -421,18 +415,13 @@ function Reservas() {
                         </div>
                     ))
                 ) : (
-                    <p className="reservas__reservations-empty">Aún no tienes reservas.</p>
+                    <div className="empty">Aún no tienes reservas.</div>
                 )}
             </div>
 
-            <div className="reservas__calendar-card">
-                <div className="reservas__calendar-header">
+            <div className="card">
+                <div className="card__header">
                     <h2>Calendario de reservas</h2>
-                    <div className="reservas__calendar-navigation">
-                        <button>
-                            <Icon name="solicitudes" size={12} />
-                        </button>
-                    </div>
                 </div>
 
                 <div className="reservas__calendar-week">

@@ -1,3 +1,9 @@
+/* ============================================================
+   PQRS — BEM Methodology
+   Block: .pqrs (PQRS)
+   Convention: block__element | block__element--modifier
+   ============================================================ */
+
 .pqrs {
     display: flex;
     flex-direction: column;
@@ -33,7 +39,7 @@
     gap: 8px;
     border: none;
     background: linear-gradient(90deg, var(--color-accent-dark), var(--color-accent));
-    color: #1e3a5f;
+    color: var(--color-primary-800);
     padding: 12px 18px;
     border-radius: 50px;
     font-size: 12px;
@@ -99,11 +105,11 @@
     display: block;
 }
 
-.pqrs__summary-icon--all { background: #e8f3ff; color: var(--color-primary-600); }
-.pqrs__summary-icon--blue { background: #e8f3ff; color: var(--color-primary-600); }
-.pqrs__summary-icon--red { background: #fff0f0; color: #d84b4b; }
-.pqrs__summary-icon--orange { background: #fff4df; color: #d99000; }
-.pqrs__summary-icon--green { background: #e7f8ee; color: #199b5b; }
+.pqrs__summary-icon--all { background: var(--color-primary-100); color: var(--color-primary-600); }
+.pqrs__summary-icon--blue { background: var(--color-primary-100); color: var(--color-primary-600); }
+.pqrs__summary-icon--red { background: var(--color-danger-50); color: var(--color-danger); }
+.pqrs__summary-icon--orange { background: var(--color-accent-50); color: var(--color-accent-dark); }
+.pqrs__summary-icon--green { background: var(--color-success-50); color: var(--color-success); }
 
 .pqrs__summary-card--active .pqrs__summary-icon {
     background: rgba(255, 255, 255, 0.55);
@@ -118,7 +124,7 @@
 }
 
 .pqrs__summary-card--active .pqrs__summary-label {
-    color: rgba(30, 58, 95, 0.75);
+    color: var(--color-primary-800);
 }
 
 .pqrs__summary-number {
@@ -129,7 +135,7 @@
 }
 
 .pqrs__summary-card--active .pqrs__summary-number {
-    color: #1e3a5f;
+    color: var(--color-primary-800);
 }
 
 /* ============ FILTER CARD ============ */
@@ -156,6 +162,10 @@
 
 .pqrs__filter-group--search {
     min-width: 0;
+}
+
+.pqrs__filter-group--search .searchbar-wrap {
+    max-width: 300px;
 }
 
 .pqrs__filter-group label {
@@ -244,10 +254,10 @@
     display: block;
 }
 
-.pqrs__item-icon--blue { background: #e8f3ff; color: var(--color-primary-600); }
-.pqrs__item-icon--red { background: #fff0f0; color: #d84b4b; }
-.pqrs__item-icon--orange { background: #fff4df; color: #d99000; }
-.pqrs__item-icon--green { background: #e7f8ee; color: #199b5b; }
+.pqrs__item-icon--blue { background: var(--color-primary-100); color: var(--color-primary-600); }
+.pqrs__item-icon--red { background: var(--color-danger-50); color: var(--color-danger); }
+.pqrs__item-icon--orange { background: var(--color-accent-50); color: var(--color-accent-dark); }
+.pqrs__item-icon--green { background: var(--color-success-50); color: var(--color-success); }
 
 .pqrs__item-body {
     flex: 1;
@@ -278,10 +288,10 @@
     white-space: nowrap;
 }
 
-.pqrs__item-status.review { background: #e8f3ff; color: var(--color-primary-600); }
-.pqrs__item-status.assigned { background: #fff4df; color: #d99000; }
-.pqrs__item-status.resolved { background: #e3f8ec; color: #199b5b; }
-.pqrs__item-status.registered { background: #eee8ff; color: #7547d6; }
+.pqrs__item-status.review { background: var(--color-primary-100); color: var(--color-primary-600); }
+.pqrs__item-status.assigned { background: var(--color-accent-50); color: var(--color-accent-dark); }
+.pqrs__item-status.resolved { background: var(--color-success-50); color: var(--color-success); }
+.pqrs__item-status.registered { background: var(--color-primary-50); color: var(--color-primary-500); }
 .pqrs__item-status.closed { background: var(--color-hover); color: var(--color-text-muted); }
 
 .pqrs__item-body h3 {

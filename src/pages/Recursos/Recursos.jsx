@@ -298,15 +298,14 @@ function Recursos() {
     };
 
     return (
-        <div className="recursos">
-            <div className="recursos__page-header">
-                <div className="recursos__page-title">
-                    <h1>Recursos</h1>
+        <div className="page">
+            <div className="page__header">
+                <div className="page__title">
                     <p>Consulta los espacios, equipos y recursos disponibles del campus.</p>
                 </div>
 
                 {puedeAdmin && (
-                    <button className="recursos__new-button" onClick={abrirNuevoRecurso}>
+                    <button className="button button--accent button--md" onClick={abrirNuevoRecurso}>
                         <Icon name="recursos" size={15} />
                         Nuevo recurso
                     </button>
@@ -314,59 +313,57 @@ function Recursos() {
             </div>
 
             {aviso && (
-                <div className="recursos__toast">
+                <div className="toast toast--success">
                     <Icon name="info" size={14} />
                     {aviso}
                 </div>
             )}
 
-            <div className="recursos__summary">
-                <div className="recursos__summary-card">
-                    <div className="recursos__summary-icon blue">
+            <div className="summary">
+                <div className="summary__card">
+                    <div className="summary__icon recursos__summary-icon--blue">
                         <Icon name="recursos" size={18} />
                     </div>
-                    <div className="recursos__summary-info">
-                        <span className="recursos__summary-number">{stats.total}</span>
-                        <span className="recursos__summary-label">Recursos totales</span>
+                    <div>
+                        <div className="summary__number">{stats.total}</div>
+                        <div className="summary__label">Recursos totales</div>
                     </div>
                 </div>
 
-                <div className="recursos__summary-card">
-                    <div className="recursos__summary-icon green">
+                <div className="summary__card">
+                    <div className="summary__icon recursos__summary-icon--green">
                         <Icon name="estudiante" size={18} />
                     </div>
-                    <div className="recursos__summary-info">
-                        <span className="recursos__summary-number">{stats.disponibles}</span>
-                        <span className="recursos__summary-label">Disponibles</span>
+                    <div>
+                        <div className="summary__number">{stats.disponibles}</div>
+                        <div className="summary__label">Disponibles</div>
                     </div>
                 </div>
 
-                <div className="recursos__summary-card">
-                    <div className="recursos__summary-icon orange">
+                <div className="summary__card">
+                    <div className="summary__icon recursos__summary-icon--orange">
                         <Icon name="configuracion" size={18} />
                     </div>
-                    <div className="recursos__summary-info">
-                        <span className="recursos__summary-number">{stats.mantenimiento}</span>
-                        <span className="recursos__summary-label">En mantenimiento</span>
+                    <div>
+                        <div className="summary__number">{stats.mantenimiento}</div>
+                        <div className="summary__label">En mantenimiento</div>
                     </div>
                 </div>
 
-                <div className="recursos__summary-card">
-                    <div className="recursos__summary-icon purple">
+                <div className="summary__card">
+                    <div className="summary__icon recursos__summary-icon--purple">
                         <Icon name="reservas" size={18} />
                     </div>
-                    <div className="recursos__summary-info">
-                        <span className="recursos__summary-number">{stats.reservados}</span>
-                        <span className="recursos__summary-label">Reservados</span>
+                    <div>
+                        <div className="summary__number">{stats.reservados}</div>
+                        <div className="summary__label">Reservados</div>
                     </div>
                 </div>
             </div>
 
-            <div className="recursos__filter-card">
-                <div className="recursos__filter-title">Filtrar recursos</div>
-
-                <div className="recursos__filters">
-                    <div className="recursos__filter-group">
+            <div className="filters filters--recursos">
+                <div className="filters__grid">
+                    <div className="filters__group filters__group--search">
                         <label>Buscar</label>
                         <SearchBar
                             placeholder="Nombre del recurso..."
@@ -377,7 +374,7 @@ function Recursos() {
                         />
                     </div>
 
-                    <div className="recursos__filter-group">
+                    <div className="filters__group">
                         <label>Categoría</label>
                         <select
                             className="recursos__filter-select"
@@ -392,7 +389,7 @@ function Recursos() {
                         </select>
                     </div>
 
-                    <div className="recursos__filter-group">
+                    <div className="filters__group">
                         <label>Edificio</label>
                         <select
                             className="recursos__filter-select"
@@ -405,7 +402,7 @@ function Recursos() {
                         </select>
                     </div>
 
-                    <div className="recursos__filter-group">
+                    <div className="filters__group">
                         <label>Estado</label>
                         <select
                             className="recursos__filter-select"
@@ -432,9 +429,9 @@ function Recursos() {
                 </div>
             </div>
 
-            <div className="recursos__resources-header">
+            <div className="list-header">
                 <h2>Recursos</h2>
-                <span>Mostrando {filtrados.length} recursos</span>
+                <span className="list-header__meta">Mostrando {filtrados.length} recursos</span>
             </div>
 
             <div className="recursos__resources">
@@ -517,9 +514,9 @@ function Recursos() {
                         );
                     })
                 ) : (
-                    <p className="recursos__empty">
+                    <div className="empty">
                         No se encontraron recursos con los filtros aplicados.
-                    </p>
+                    </div>
                 )}
             </div>
 

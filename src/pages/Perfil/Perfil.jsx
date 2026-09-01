@@ -1,16 +1,12 @@
 import useAuth from "../../context/useAuth";
 import Icon from "../../components/Icon/Icon";
+import { getAvatarStyle, getUserInitials, getUserPhoto } from "../../utils/avatar";
 import "./Perfil.css";
 
 function Perfil() {
     const { user } = useAuth();
 
-    const iniciales = (user?.nombre || "U")
-        .split(" ")
-        .filter(Boolean)
-        .map((parte) => parte.charAt(0).toUpperCase())
-        .slice(0, 2)
-        .join("");
+    const iniciales = getUserInitials(user?.nombre, "U");
 
     const rol = user?.rol || "Usuario";
     const programa = user?.programa || "—";
@@ -39,21 +35,26 @@ function Perfil() {
     ];
 
     return (
-        <div className="perfil">
-            <div className="perfil__page-header">
-                <div className="perfil__page-title">
-                    <h1>Mi perfil</h1>
+        <div className="page">
+            <div className="page__header">
+                <div className="page__title">
                     <p>Consulta y administra tu información personal y académica.</p>
                 </div>
 
-                <button className="perfil__edit-button">
+                <button className="button button--outline button--md">
                     <Icon name="configuracion" size={14} />
                     Editar información
                 </button>
             </div>
 
             <div className="perfil__hero">
-                <div className="perfil__big-avatar">{iniciales}</div>
+                <div
+                    className="perfil__big-avatar"
+                    style={getAvatarStyle(user?.nombre, "linear-gradient(135deg, var(--color-primary), var(--color-primary-700))")}
+                    aria-label={user?.nombre || "Usuario"}
+                >
+                    {!getUserPhoto() && iniciales}
+                </div>
 
                 <div className="perfil__hero-main">
                     <h2>{user?.nombre}</h2>
@@ -74,8 +75,8 @@ function Perfil() {
             </div>
 
             <div className="perfil__grid">
-                <div className="perfil__card">
-                    <div className="perfil__card-header">
+                <div className="card">
+                    <div className="card__header">
                         <div className="perfil__card-header-icon">
                             <Icon name="perfil" size={16} />
                         </div>
@@ -95,8 +96,8 @@ function Perfil() {
                     </div>
                 </div>
 
-                <div className="perfil__card">
-                    <div className="perfil__card-header">
+                <div className="card">
+                    <div className="card__header">
                         <div className="perfil__card-header-icon">
                             <Icon name="estudiante" size={16} />
                         </div>
@@ -116,8 +117,8 @@ function Perfil() {
                     </div>
                 </div>
 
-                <div className="perfil__card">
-                    <div className="perfil__card-header">
+                <div className="card">
+                    <div className="card__header">
                         <div className="perfil__card-header-icon">
                             <Icon name="notificaciones" size={16} />
                         </div>
@@ -158,8 +159,8 @@ function Perfil() {
                     </div>
                 </div>
 
-                <div className="perfil__card">
-                    <div className="perfil__card-header">
+                <div className="card">
+                    <div className="card__header">
                         <div className="perfil__card-header-icon">
                             <Icon name="configuracion" size={16} />
                         </div>
@@ -203,8 +204,8 @@ function Perfil() {
                     </div>
                 </div>
 
-                <div className="perfil__card perfil__card--full">
-                    <div className="perfil__card-header">
+                <div className="card perfil__card--full">
+                    <div className="card__header">
                         <div className="perfil__card-header-icon">
                             <Icon name="info" size={16} />
                         </div>

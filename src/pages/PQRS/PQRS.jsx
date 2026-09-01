@@ -81,38 +81,37 @@ function PQRS() {
     };
 
     return (
-        <div className="pqrs">
-            <div className="pqrs__page-header">
-                <div className="pqrs__page-title">
-                    <h1>PQRS</h1>
+        <div className="page">
+            <div className="page__header">
+                <div className="page__title">
                     <p>
                         Gestiona tus peticiones, quejas, reclamos y sugerencias.
                     </p>
                 </div>
 
-                <Link to="/pqrs/nueva" className="pqrs__new-button">
+                <Link to="/pqrs/nueva" className="button button--accent button--md">
                     <Icon name="solicitudes" size={15} />
                     Nueva PQRS
                 </Link>
             </div>
 
-            <div className="pqrs__summary">
+            <div className="summary">
                 <button
                     className={
                         filtro === "Todos"
-                            ? "pqrs__summary-card pqrs__summary-card--active"
-                            : "pqrs__summary-card"
+                            ? "summary__card summary__card--active"
+                            : "summary__card"
                     }
                     onClick={() => setFiltro("Todos")}
                 >
-                    <div className="pqrs__summary-icon pqrs__summary-icon--all">
+                    <div className="summary__icon pqrs__summary-icon--all">
                         <Icon name="pqrs" size={19} />
                     </div>
                     <div>
-                        <div className="pqrs__summary-label">Todos</div>
-                        <div className="pqrs__summary-number">
+                        <div className="summary__number">
                             {contarTipo("Todos")}
                         </div>
+                        <div className="summary__label">Todos</div>
                     </div>
                 </button>
 
@@ -121,29 +120,29 @@ function PQRS() {
                         key={tipo}
                         className={
                             filtro === tipo
-                                ? `pqrs__summary-card pqrs__summary-card--active`
-                                : "pqrs__summary-card"
+                                ? "summary__card summary__card--active"
+                                : "summary__card"
                         }
                         onClick={() => setFiltro(tipo)}
                     >
                         <div
-                            className={`pqrs__summary-icon pqrs__summary-icon--${TIPO_CLASE[tipo]}`}
+                            className={`summary__icon pqrs__summary-icon--${TIPO_CLASE[tipo]}`}
                         >
                             <Icon name={TIPO_ICONO[tipo]} size={19} />
                         </div>
                         <div>
-                            <div className="pqrs__summary-label">{tipo}</div>
-                            <div className="pqrs__summary-number">
+                            <div className="summary__number">
                                 {contarTipo(tipo)}
                             </div>
+                            <div className="summary__label">{tipo}</div>
                         </div>
                     </button>
                 ))}
             </div>
 
-            <div className="pqrs__filter-card">
-                <div className="pqrs__filters">
-                    <div className="pqrs__filter-group pqrs__filter-group--search">
+            <div className="filters">
+                <div className="filters__grid">
+                    <div className="filters__group filters__group--search">
                         <label htmlFor="pqrs-search">Buscar</label>
                         <SearchBar
                             id="pqrs-search"
@@ -155,7 +154,7 @@ function PQRS() {
                         />
                     </div>
 
-                    <div className="pqrs__filter-group">
+                    <div className="filters__group">
                         <label htmlFor="pqrs-tipo">Tipo</label>
                         <select
                             id="pqrs-tipo"
@@ -174,15 +173,15 @@ function PQRS() {
                 </div>
             </div>
 
-            <div className="pqrs__list-header">
+            <div className="list-header">
                 <h2>Mis PQRS</h2>
-                <span>
+                <span className="list-header__meta">
                     {desde}–{hasta} de {filtradas.length} registros
                 </span>
             </div>
 
             {itemsPagina.length === 0 ? (
-                <div className="pqrs__empty">
+                <div className="empty">
                     No se encontraron PQRS con los filtros aplicados.
                 </div>
             ) : (

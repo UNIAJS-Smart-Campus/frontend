@@ -28,6 +28,26 @@ const CATEGORIA_CLASE = {
     Seminario: "red"
 };
 
+const ESTADOS_PUBLICACION = ["Pendiente", "Aprobada", "Rechazada"];
+
+const ESTADO_CLASE = {
+    Pendiente: "pendiente",
+    Aprobada: "aprobada",
+    Rechazada: "rechazada"
+};
+
+const PROGRAMAS = [
+    "Toda la comunidad",
+    "Ingeniería de Sistemas",
+    "Ingeniería Civil",
+    "Administración de Empresas",
+    "Contaduría Pública",
+    "Derecho",
+    "Psicología",
+    "Matemáticas",
+    "Bienestar Universitario"
+];
+
 const publicacionesIniciales = [
     {
         id: 1,
@@ -35,7 +55,12 @@ const publicacionesIniciales = [
         categoria: "Convocatoria",
         fecha: "2026-03-15",
         autor: "Laura Gómez",
-        contenido: "Se abre el período de inscripción para el primer semestre 2026. Los estudiantes deberán completar su matrícula antes del 28 de marzo."
+        contenido: "Se abre el período de inscripción para el primer semestre 2026. Los estudiantes deberán completar su matrícula antes del 28 de marzo.",
+        estado: "Aprobada",
+        programa: "Toda la comunidad",
+        tipoVigencia: "Hasta",
+        vigencia: "2026-03-28",
+        destacado: true
     },
     {
         id: 2,
@@ -43,7 +68,12 @@ const publicacionesIniciales = [
         categoria: "Taller",
         fecha: "2026-04-10",
         autor: "Laura Gómez",
-        contenido: "Se realizará un taller práctico sobre métodos de investigación cuantitativa y cualitativa para estudiantes de posgrado."
+        contenido: "Se realizará un taller práctico sobre métodos de investigación cuantitativa y cualitativa para estudiantes de posgrado.",
+        estado: "Aprobada",
+        programa: "Matemáticas",
+        tipoVigencia: "Hasta",
+        vigencia: "2026-04-25",
+        destacado: false
     },
     {
         id: 3,
@@ -51,14 +81,36 @@ const publicacionesIniciales = [
         categoria: "Resultado",
         fecha: "2026-04-22",
         autor: "Laura Gómez",
-        contenido: "Se publican los resultados del primer parcial de Cálculo I. Los estudiantes pueden revisar en la plataforma académica."
+        contenido: "Se publican los resultados del primer parcial de Cálculo I. Los estudiantes pueden revisar en la plataforma académica.",
+        estado: "Aprobada",
+        programa: "Ingeniería de Sistemas",
+        tipoVigencia: "Permanente",
+        vigencia: "",
+        destacado: false
+    },
+    {
+        id: 4,
+        titulo: "Aviso: mantenimiento plataforma académica",
+        categoria: "Aviso académico",
+        fecha: "2026-04-28",
+        autor: "Carlos Méndez",
+        contenido: "La plataforma académica tendrá mantenimiento programado el próximo sábado. El servicio no estará disponible entre las 8:00 y las 12:00.",
+        estado: "Pendiente",
+        programa: "Toda la comunidad",
+        tipoVigencia: "Hasta",
+        vigencia: "2026-05-02",
+        destacado: false
     }
 ];
 
 const formVacio = {
     titulo: "",
     categoria: "Aviso académico",
-    contenido: ""
+    contenido: "",
+    programa: "Toda la comunidad",
+    tipoVigencia: "Permanente",
+    vigencia: "",
+    destacado: false
 };
 
 function InfoAcademica() {
@@ -70,29 +122,37 @@ function InfoAcademica() {
     const [form, setForm] = useState(formVacio);
     const [aviso, setAviso] = useState("");
 
-    const { puede } = useAuth();
+    const { user, puede } = useAuth();
     const puedePublicar = puede("publicar_info_academica");
 
     const normalizar = (texto) =>
         texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-    const filtradasPorCategoria = categoria
-        ? items.filter((item) => item.categoria === categoria)
-        : items;
+    const visibles = puedePublicar
+        ? items
+        : items.filter((item) => item.estado === "Aprobada");
 
-    const encontradas = busqueda.trim()
-        ? filtradasPorCategoria.filter((item) =>
-              [item.titulo, item.categoria, item.contenido, item.autor]
-                  .join(" ")
-                  .toLowerCase()
-                  .includes(normalizar(busqueda))
-          )
-        : filtradasPorCategoria;
+    const filtradasPorCategoria = categoria
+        ? visibles.filter((item) => item.categoria === categoria)
+        : visibles;
+
+    const encontradas = (
+        busqueda.trim()
+            ? filtradasPorCategoria.filter((item) =>
+                  [item.titulo, item.categoria, item.contenido, item.autor]
+                      .join(" ")
+                      .toLowerCase()
+                      .includes(normalizar(busqueda))
+              )
+            : filtradasPorCategoria
+    )
+        .slice()
+        .sort((a, b) => Number(b.destacado) - Number(a.destacado));
 
     const contarCategoria = (cat) =>
         cat === ""
-            ? items.length
-            : items.filter((item) => item.categoria === cat).length;
+            ? visibles.length
+            : visibles.filter((item) => item.categoria === cat).length;
 
     const sugerencias = [
         ...new Set(
@@ -113,7 +173,11 @@ function InfoAcademica() {
     };
 
     const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
+        const { name, type, checked, value } = e.target;
+        setForm({
+            ...form,
+            [name]: type === "checkbox" ? checked : value
+        });
     };
 
     const handleCrear = (e) => {
@@ -121,13 +185,31 @@ function InfoAcademica() {
         const nueva = {
             id: Date.now(),
             fecha: new Date().toISOString().slice(0, 10),
-            autor: "Laura Gómez",
-            ...form
+            autor: user?.nombre ?? "Usuario",
+            estado: "Pendiente",
+            ...form,
+            vigencia: form.tipoVigencia === "Hasta" ? form.vigencia : ""
         };
         setItems([nueva, ...items]);
         setCrearAbierto(false);
         setForm(formVacio);
         setAviso("Publicación creada correctamente.");
+        setTimeout(() => setAviso(""), 2500);
+    };
+
+    const cambiarEstado = (id, nuevoEstado) => {
+        setItems((prev) =>
+            prev.map((item) =>
+                item.id === id ? { ...item, estado: nuevoEstado } : item
+            )
+        );
+        setAviso(`Publicación ${nuevoEstado.toLowerCase()}.`);
+        setTimeout(() => setAviso(""), 2500);
+    };
+
+    const eliminarPublicacion = (id) => {
+        setItems((prev) => prev.filter((item) => item.id !== id));
+        setAviso("Publicación eliminada.");
         setTimeout(() => setAviso(""), 2500);
     };
 
@@ -137,16 +219,15 @@ function InfoAcademica() {
     };
 
     return (
-        <div className="info-ac">
-            <div className="info-ac__page-header">
-                <div className="info-ac__page-title">
-                    <h1>Información académica</h1>
+        <div className="page">
+            <div className="page__header">
+                <div className="page__title">
                     <p>Consulta los avisos, convocatorias y resultados publicados.</p>
                 </div>
 
                 {puedePublicar && (
                     <button
-                        className="info-ac__new-button"
+                        className="button button--accent button--md"
                         onClick={() => setCrearAbierto(true)}
                     >
                         <Icon name="estudiante" size={15} />
@@ -156,29 +237,29 @@ function InfoAcademica() {
             </div>
 
             {aviso && (
-                <div className="info-ac__toast">
+                <div className="toast toast--success">
                     <Icon name="info" size={14} />
                     {aviso}
                 </div>
             )}
 
-            <div className="info-ac__summary">
+            <div className="summary">
                 <button
                     className={
                         categoria === ""
-                            ? "info-ac__summary-card info-ac__summary-card--active"
-                            : "info-ac__summary-card"
+                            ? "summary__card summary__card--active"
+                            : "summary__card"
                     }
                     onClick={() => setCategoria("")}
                 >
-                    <div className="info-ac__summary-icon info-ac__summary-icon--all">
+                    <div className="summary__icon info-ac__summary-icon--all">
                         <Icon name="info" size={19} />
                     </div>
                     <div>
-                        <div className="info-ac__summary-label">Todos</div>
-                        <div className="info-ac__summary-number">
-                            {items.length}
+                        <div className="summary__number">
+                            {visibles.length}
                         </div>
+                        <div className="summary__label">Todos</div>
                     </div>
                 </button>
 
@@ -187,29 +268,29 @@ function InfoAcademica() {
                         key={cat}
                         className={
                             categoria === cat
-                                ? "info-ac__summary-card info-ac__summary-card--active"
-                                : "info-ac__summary-card"
+                                ? "summary__card summary__card--active"
+                                : "summary__card"
                         }
                         onClick={() => setCategoria(cat)}
                     >
                         <div
-                            className={`info-ac__summary-icon info-ac__summary-icon--${CATEGORIA_CLASE[cat] || "blue"}`}
+                            className={`summary__icon info-ac__summary-icon--${CATEGORIA_CLASE[cat] || "blue"}`}
                         >
                             <Icon name={CATEGORIA_ICONO[cat] || "info"} size={19} />
                         </div>
                         <div>
-                            <div className="info-ac__summary-label">{cat}</div>
-                            <div className="info-ac__summary-number">
+                            <div className="summary__number">
                                 {contarCategoria(cat)}
                             </div>
+                            <div className="summary__label">{cat}</div>
                         </div>
                     </button>
                 ))}
             </div>
 
-            <div className="info-ac__filter-card">
-                <div className="info-ac__filters">
-                    <div className="info-ac__filter-group info-ac__filter-group--search">
+            <div className="filters">
+                <div className="filters__grid">
+                    <div className="filters__group filters__group--search">
                         <label htmlFor="info-search">Buscar</label>
                         <SearchBar
                             id="info-search"
@@ -221,7 +302,7 @@ function InfoAcademica() {
                         />
                     </div>
 
-                    <div className="info-ac__filter-group">
+                    <div className="filters__group">
                         <label htmlFor="info-categoria">Categoría</label>
                         <select
                             id="info-categoria"
@@ -240,19 +321,22 @@ function InfoAcademica() {
                 </div>
             </div>
 
-            <div className="info-ac__list-header">
+            <div className="list-header">
                 <h2>Publicaciones</h2>
-                <span>{encontradas.length} registros</span>
+                <span className="list-header__meta">{encontradas.length} registros</span>
             </div>
 
             {encontradas.length === 0 ? (
-                <div className="info-ac__empty">
+                <div className="empty">
                     No se encontraron publicaciones con los filtros aplicados.
                 </div>
             ) : (
                 <div className="info-ac__list">
                     {encontradas.map((item) => (
-                        <article className="info-ac__item" key={item.id}>
+                        <article
+                            className={`info-ac__item ${item.destacado ? "info-ac__item--destacado" : ""}`}
+                            key={item.id}
+                        >
                             <div
                                 className={`info-ac__item-icon info-ac__item-icon--${CATEGORIA_CLASE[item.categoria] || "blue"}`}
                             >
@@ -269,6 +353,16 @@ function InfoAcademica() {
                                     >
                                         {item.categoria}
                                     </span>
+                                    <span
+                                        className={`info-ac__item-state info-ac__item-state--${ESTADO_CLASE[item.estado] || "pendiente"}`}
+                                    >
+                                        {item.estado}
+                                    </span>
+                                    {item.destacado && (
+                                        <span className="info-ac__item-destacado">
+                                            Destacado
+                                        </span>
+                                    )}
                                     <span className="info-ac__item-date">
                                         {fechaLegible(item.fecha)}
                                     </span>
@@ -279,11 +373,58 @@ function InfoAcademica() {
                                     {item.contenido}
                                 </p>
 
-                                <div className="info-ac__item-author">
-                                    <Icon name="perfil" size={12} />
-                                    {item.autor}
+                                <div className="info-ac__item-footer">
+                                    <span className="info-ac__item-program">
+                                        <Icon name="estudiante" size={12} />
+                                        {item.programa}
+                                    </span>
+                                    {item.tipoVigencia === "Hasta" ? (
+                                        <span className="info-ac__item-vigencia">
+                                            <Icon name="eventos" size={12} />
+                                            Hasta: {fechaLegible(item.vigencia)}
+                                        </span>
+                                    ) : (
+                                        <span className="info-ac__item-vigencia info-ac__item-vigencia--permanente">
+                                            <Icon name="info" size={12} />
+                                            Permanente
+                                        </span>
+                                    )}
+                                    <span className="info-ac__item-author">
+                                        <Icon name="perfil" size={12} />
+                                        {item.autor}
+                                    </span>
                                 </div>
                             </div>
+
+                            {puedePublicar && (
+                                <div className="info-ac__item-actions">
+                                    {item.estado !== "Aprobada" && (
+                                        <button
+                                            type="button"
+                                            className="info-ac__action info-ac__action--approve"
+                                            onClick={() => cambiarEstado(item.id, "Aprobada")}
+                                        >
+                                            Aprobar
+                                        </button>
+                                    )}
+                                    {item.estado !== "Rechazada" && (
+                                        <button
+                                            type="button"
+                                            className="info-ac__action info-ac__action--reject"
+                                            onClick={() => cambiarEstado(item.id, "Rechazada")}
+                                        >
+                                            Rechazar
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        className="info-ac__action info-ac__action--delete"
+                                        onClick={() => eliminarPublicacion(item.id)}
+                                    >
+                                        Eliminar
+                                    </button>
+                                </div>
+                            )}
                         </article>
                     ))}
                 </div>
@@ -337,6 +478,50 @@ function InfoAcademica() {
                                 </select>
                             </div>
 
+                            <div className="form-grid">
+                                <div className="info-ac__form-group">
+                                    <label htmlFor="info-programa">Dirigido a</label>
+                                    <select
+                                        id="info-programa"
+                                        name="programa"
+                                        value={form.programa}
+                                        onChange={handleChange}
+                                    >
+                                        {PROGRAMAS.map((prog) => (
+                                            <option key={prog} value={prog}>
+                                                {prog}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="info-ac__form-group">
+                                    <label htmlFor="info-vigencia">Vigencia</label>
+                                    <select
+                                        id="info-vigencia"
+                                        name="tipoVigencia"
+                                        value={form.tipoVigencia}
+                                        onChange={handleChange}
+                                    >
+                                        <option value="Permanente">Permanente</option>
+                                        <option value="Hasta">Hasta una fecha</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {form.tipoVigencia === "Hasta" && (
+                                <div className="info-ac__form-group">
+                                    <label htmlFor="info-vigencia-fecha">Fecha límite</label>
+                                    <input
+                                        id="info-vigencia-fecha"
+                                        type="date"
+                                        name="vigencia"
+                                        value={form.vigencia}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                            )}
+
                             <div className="info-ac__form-group">
                                 <label htmlFor="info-contenido">Contenido</label>
                                 <textarea
@@ -348,6 +533,16 @@ function InfoAcademica() {
                                     placeholder="Describe la información académica"
                                 />
                             </div>
+
+                            <label className="info-ac__check">
+                                <input
+                                    type="checkbox"
+                                    name="destacado"
+                                    checked={form.destacado}
+                                    onChange={handleChange}
+                                />
+                                <span>Destacar publicación (fijar al inicio del tablero)</span>
+                            </label>
 
                             <div className="info-ac__modal-actions">
                                 <button

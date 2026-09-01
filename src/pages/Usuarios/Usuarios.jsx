@@ -6,6 +6,7 @@ import Pagination from "../../components/Pagination/Pagination";
 import { ROLES, obtenerUsuarios, guardarUsuarios } from "../../utils/users";
 import useSearch from "../../hooks/useSearch";
 import usePagination from "../../hooks/usePagination";
+import { getAvatarStyle, getUserInitials, getUserPhoto } from "../../utils/avatar";
 import "./Usuarios.css";
 
 const ROL_ICONO = {
@@ -62,13 +63,7 @@ function Usuarios() {
 
     const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } = usePagination(porEstado, 8);
 
-    const iniciales = (nombre) =>
-        (nombre || "?")
-            .split(" ")
-            .filter(Boolean)
-            .map((parte) => parte.charAt(0).toUpperCase())
-            .slice(0, 2)
-            .join("");
+    const iniciales = (nombre) => getUserInitials(nombre, "?");
 
     const activos = items.filter((item) => item.estado === "Activo").length;
     const contarRol = (rol) => items.filter((item) => item.rol === rol).length;
@@ -210,7 +205,13 @@ function Usuarios() {
             label: "Usuario",
             render: (row) => (
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div className="users__avatar">{iniciales(row.nombre)}</div>
+                    <div
+                        className="users__avatar"
+                        style={getAvatarStyle(row.nombre, "linear-gradient(135deg, var(--color-primary-600), var(--color-primary))")}
+                        aria-label={row.nombre || "Usuario"}
+                    >
+                        {!getUserPhoto() && iniciales(row.nombre)}
+                    </div>
                     <div>
                         <div style={{ fontWeight: 600 }}>{row.nombre}</div>
                         <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{row.correo}</div>
@@ -273,63 +274,62 @@ function Usuarios() {
     ], [abrirEditar, alternarEstado]);
 
     return (
-        <div className="users">
-            <div className="users__page-header">
-                <div className="users__page-title">
-                    <h1>Usuarios</h1>
+        <div className="page">
+            <div className="page__header">
+                <div className="page__title">
                     <p>Administra usuarios, roles y estados de acceso.</p>
                 </div>
 
-                <button className="users__new-button" onClick={abrirNuevo}>
+                <button className="button button--accent button--md" onClick={abrirNuevo}>
                     <Icon name="usuarios" size={15} />
                     Nuevo usuario
                 </button>
             </div>
 
             {aviso && (
-                <div className="users__toast">
+                <div className="toast toast--success">
                     <Icon name="info" size={14} />
                     {aviso}
                 </div>
             )}
 
-            <div className="users__summary">
+            <div className="summary">
                 <button
                     className={
                         filtroRol === "" && filtroEstado === ""
-                            ? "users__summary-card users__summary-card--active"
-                            : "users__summary-card"
+                            ? "summary__card summary__card--active"
+                            : "summary__card"
                     }
                     onClick={() => {
                         setFiltroRol("");
                         setFiltroEstado("");
                     }}
                 >
-                    <div className="users__summary-icon users__summary-icon--all">
+                    <div className="summary__icon users__summary-icon--all">
                         <Icon name="usuarios" size={19} />
                     </div>
                     <div>
-                        <div className="users__summary-label">Total usuarios</div>
-                        <div className="users__summary-number">{items.length}</div>
+                        <div className="summary__number">{items.length}</div>
+                        <div className="summary__label">Total usuarios</div>
                     </div>
                 </button>
 
                 <button
                     className={
                         filtroEstado === "Activo"
-                            ? "users__summary-card users__summary-card--active"
-                            : "users__summary-card"
+                            ? "summary__card summary__card--active"
+                            : "summary__card"
                     }
                     onClick={() =>
                         setFiltroEstado(filtroEstado === "Activo" ? "" : "Activo")
                     }
                 >
-                    <div className="users__summary-icon users__summary-icon--green">
+                    <div className="summary__icon users__summary-icon--green">
                         <Icon name="estudiante" size={19} />
                     </div>
                     <div>
-                        <div className="users__summary-label">Activos</div>
-                        <div className="users__summary-number">{activos}</div>
+                        <div className="summary__number">{activos}</div>
+                        <div className="summary__label">Activos</div>
                     </div>
                 </button>
 
@@ -338,8 +338,8 @@ function Usuarios() {
                         key={rol.nombre}
                         className={
                             filtroRol === rol.nombre
-                                ? "users__summary-card users__summary-card--active"
-                                : "users__summary-card"
+                                ? "summary__card summary__card--active"
+                                : "summary__card"
                         }
                         onClick={() =>
                             setFiltroRol(
@@ -348,23 +348,23 @@ function Usuarios() {
                         }
                     >
                         <div
-                            className={`users__summary-icon users__summary-icon--${ROL_CLASE[rol.nombre] || "blue"}`}
+                            className={`summary__icon users__summary-icon--${ROL_CLASE[rol.nombre] || "blue"}`}
                         >
                             <Icon name={ROL_ICONO[rol.nombre] || "usuarios"} size={19} />
                         </div>
                         <div>
-                            <div className="users__summary-label">{rol.nombre}</div>
-                            <div className="users__summary-number">
+                            <div className="summary__number">
                                 {contarRol(rol.nombre)}
                             </div>
+                            <div className="summary__label">{rol.nombre}</div>
                         </div>
                     </button>
                 ))}
             </div>
 
-            <div className="users__filter-card">
-                <div className="users__filters">
-                    <div className="users__filter-group users__filter-group--search">
+            <div className="filters">
+                <div className="filters__grid">
+                    <div className="filters__group filters__group--search">
                         <label htmlFor="users-search">Buscar</label>
                         <SearchBar
                             id="users-search"
@@ -376,7 +376,7 @@ function Usuarios() {
                         />
                     </div>
 
-                    <div className="users__filter-group">
+                    <div className="filters__group">
                         <label htmlFor="users-rol">Rol</label>
                         <select
                             id="users-rol"
@@ -393,7 +393,7 @@ function Usuarios() {
                         </select>
                     </div>
 
-                    <div className="users__filter-group">
+                    <div className="filters__group">
                         <label htmlFor="users-estado">Estado</label>
                         <select
                             id="users-estado"
@@ -412,15 +412,15 @@ function Usuarios() {
                 </div>
             </div>
 
-            <div className="users__list-header">
+            <div className="list-header">
                 <h2>Usuarios del sistema</h2>
-                <span>
+                <span className="list-header__meta">
                     {desde}–{hasta} de {porEstado.length} registros
                 </span>
             </div>
 
             {itemsPagina.length === 0 ? (
-                <div className="users__empty">
+                <div className="empty">
                     No se encontraron usuarios con los filtros aplicados.
                 </div>
             ) : (
@@ -443,29 +443,29 @@ function Usuarios() {
             )}
 
             {modalAbierto && (
-                <div className="users__overlay" onClick={cerrar}>
+                <div className="overlay" onClick={cerrar}>
                     <div
-                        className="users__modal"
+                        className="modal"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="users__modal-header">
+                        <div className="modal__header">
                             <div>
-                                <h2>
+                                <h2 className="modal__title">
                                     {editandoId === null
                                         ? "Nuevo usuario"
                                         : "Editar usuario"}
                                 </h2>
-                                <p>Completa los datos del usuario.</p>
+                                <p className="modal__subtitle">Completa los datos del usuario.</p>
                             </div>
                             <button
-                                className="users__modal-close"
+                                className="modal__close"
                                 onClick={cerrar}
                             >
                                 ×
                             </button>
                         </div>
 
-                        <form className="users__form" onSubmit={handleSubmit}>
+                        <form className="modal__body" onSubmit={handleSubmit}>
                             {error && <p className="users__error">{error}</p>}
 
                             <div className="users__form-group">
@@ -480,7 +480,7 @@ function Usuarios() {
                                 />
                             </div>
 
-                            <div className="users__form-grid">
+                            <div className="form-grid">
                                 <div className="users__form-group">
                                     <label htmlFor="u-nombre">Nombre</label>
                                     <input
@@ -506,7 +506,7 @@ function Usuarios() {
                                 </div>
                             </div>
 
-                            <div className="users__form-grid">
+                            <div className="form-grid">
                                 <div className="users__form-group">
                                     <label htmlFor="u-correo">Correo</label>
                                     <input
@@ -532,7 +532,7 @@ function Usuarios() {
                                 </div>
                             </div>
 
-                            <div className="users__form-grid">
+                            <div className="form-grid">
                                 <div className="users__form-group">
                                     <label htmlFor="u-telefono">Teléfono</label>
                                     <input
@@ -584,7 +584,7 @@ function Usuarios() {
                                 </div>
                             </div>
 
-                            <div className="users__form-grid">
+                            <div className="form-grid">
                                 <div className="users__form-group">
                                     <label htmlFor="u-rol">Rol</label>
                                     <select
@@ -621,17 +621,17 @@ function Usuarios() {
                                 </div>
                             </div>
 
-                            <div className="users__modal-actions">
+                            <div className="modal__footer">
                                 <button
                                     type="button"
-                                    className="users__cancel-button"
+                                    className="button button--ghost button--md"
                                     onClick={cerrar}
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
-                                    className="users__confirm-button"
+                                    className="button button--accent button--md"
                                     disabled={
                                         !form.usuario ||
                                         !form.nombre ||
