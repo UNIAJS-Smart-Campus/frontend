@@ -1,0 +1,38 @@
+.session-warning {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.session-warning p {
+    margin: 0;
+    color: var(--color-text-muted, #4a5568);
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+.session-warning__countdown {
+    text-align: center;
+    background: var(--color-warning-100, #fff4d6);
+    border: 1px solid var(--color-warning, #f2b705);
+    color: var(--color-warning-dark, #8a6500);
+    border-radius: var(--radius-md, 8px);
+    padding: var(--space-4);
+    font-size: 15px;
+}
+
+.session-warning__countdown strong {
+    font-family: var(--font-heading);
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--color-text, #14304d);
+    margin-left: 4px;
+    letter-spacing: 0.04em;
+}
+
+.session-warning__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+}

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Button from "../../components/Button/Button";
 import Icon from "../../components/Icon/Icon";
 import ServiceCard from "../../components/ServiceCard/ServiceCard";
 import BrandLogo from "../../components/BrandLogo/BrandLogo";
@@ -46,25 +45,40 @@ const SOBRE_NOSOTROS = {
 
 function Landing() {
     const [seconds, setSeconds] = useState(REDIRECT_SECONDS);
+    const [paused, setPaused] = useState(false);
     const navigate = useNavigate();
     const { user } = useAuth();
 
     useEffect(() => {
-        const timer = setInterval(() => {
+        if (paused) return undefined;
+        if (seconds <= 0) return undefined;
+        const timer = setTimeout(() => {
             setSeconds((prev) => prev - 1);
         }, 1000);
-
-        return () => clearInterval(timer);
-    }, []);
+        return () => clearTimeout(timer);
+    }, [seconds, paused]);
 
     useEffect(() => {
-        if (seconds <= 0) {
-            navigate(user ? "/dashboard" : "/login");
-        }
-    }, [seconds, navigate, user]);
+        if (seconds > 0 || paused) return;
+        const target = user ? "/dashboard" : "/login";
+        navigate(target);
+    }, [seconds, paused, navigate, user]);
 
-    const handleEnter = () => {
-        navigate(user ? "/dashboard" : "/login");
+    useEffect(() => {
+        const pausar = () => setPaused(true);
+        window.addEventListener("keydown", pausar, { once: true });
+        window.addEventListener("click", pausar, { once: true });
+        window.addEventListener("touchstart", pausar, { once: true });
+        return () => {
+            window.removeEventListener("keydown", pausar);
+            window.removeEventListener("click", pausar);
+            window.removeEventListener("touchstart", pausar);
+        };
+    }, []);
+
+    const handleLogin = () => {
+        setPaused(true);
+        navigate("/login");
     };
 
     return (
@@ -99,26 +113,20 @@ function Landing() {
                 </p>
 
                 <div className="landing__actions">
-                    <Button
-                        variant="primary"
-                        size="lg"
-                        onClick={handleEnter}
-                    >
-                        Entrar a Smart Campus
-                    </Button>
-
                     <button
                         type="button"
-                        className="landing__secondary"
-                        onClick={() => navigate("/servicios")}
+                        className="landing__primary"
+                        onClick={handleLogin}
                     >
-                        Explorar servicios
+                        Iniciar sesión
                     </button>
                 </div>
 
                 <p className="landing__countdown">
-                    Redirección automática al panel en{" "}
-                    <strong>{seconds}</strong> segundos…
+                    {paused
+                        ? "Redirección automática cancelada — usa el botón para continuar."
+                        : <>Redirección automática al panel en{" "}
+                            <strong>{seconds}</strong> segundos…</>}
                 </p>
             </section>
 
@@ -246,7 +254,6 @@ function Landing() {
                         <h5 className="landing__footer-title">Accesos rápidos</h5>
                         <ul className="landing__footer-list">
                             <li><a href="/login">Iniciar sesión</a></li>
-                            <li><a href="/servicios">Servicios del campus</a></li>
                             <li>
                                 <a
                                     href="https://www.uniajs.edu.co"

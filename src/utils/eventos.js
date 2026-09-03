@@ -4,6 +4,29 @@ export const ESTADOS_EVENTO = ["Activo", "Finalizado", "Cancelado"];
 
 export const MODALIDADES_EVENTO = ["Presencial", "Virtual", "Híbrido"];
 
+function generarParticipantesIniciales(n) {
+    const total = Math.max(0, Number(n) || 0);
+    const resultado = [];
+    for (let i = 0; i < total; i += 1) {
+        resultado.push({
+            usuarioId: null,
+            nombre: `Inscrito #${i + 1}`,
+            fecha: "2026-08-30"
+        });
+    }
+    return resultado;
+}
+
+function migrarEvento(ev) {
+    if (!ev || typeof ev !== "object") return ev;
+    if (Array.isArray(ev.participantes)) return ev;
+    const legacy = typeof ev.inscritos === "number" ? ev.inscritos : 0;
+    const next = { ...ev };
+    delete next.inscritos;
+    next.participantes = generarParticipantesIniciales(legacy);
+    return next;
+}
+
 const eventos = [
     {
         id: 1,
@@ -15,7 +38,7 @@ const eventos = [
         descripcion: "Jornada académica con expertos en IA aplicada, innovación y transformación digital.",
         estado: "Activo",
         cupo: 150,
-        inscritos: 118,
+        participantes: generarParticipantesIniciales(118),
         ponente: "Dra. Ana María López",
         modalidad: "Presencial"
     },
@@ -29,7 +52,7 @@ const eventos = [
         descripcion: "Sesión práctica para desarrollar modelos de negocio, pitch y trabajo en equipo.",
         estado: "Activo",
         cupo: 45,
-        inscritos: 36,
+        participantes: generarParticipantesIniciales(36),
         ponente: "Daniel Ruiz",
         modalidad: "Híbrido"
     },
@@ -43,7 +66,7 @@ const eventos = [
         descripcion: "Proyección, conversación y análisis del papel de la cultura en la vida universitaria.",
         estado: "Activo",
         cupo: 90,
-        inscritos: 58,
+        participantes: generarParticipantesIniciales(58),
         ponente: "Colectivo cultural UAJS",
         modalidad: "Presencial"
     },
@@ -57,7 +80,7 @@ const eventos = [
         descripcion: "Encuentro con empresas, programas de prácticas y oportunidades de empleo para estudiantes.",
         estado: "Activo",
         cupo: 220,
-        inscritos: 187,
+        participantes: generarParticipantesIniciales(187),
         ponente: "Vicerrectoría de bienestar y empleabilidad",
         modalidad: "Presencial"
     },
@@ -71,7 +94,7 @@ const eventos = [
         descripcion: "Presentación de proyectos de investigación y resultados de trabajo de grado.",
         estado: "Activo",
         cupo: 60,
-        inscritos: 49,
+        participantes: generarParticipantesIniciales(49),
         ponente: "Dra. Carolina Ruiz",
         modalidad: "Virtual"
     },
@@ -85,7 +108,7 @@ const eventos = [
         descripcion: "Actividades de acompañamiento, sensibilización y bienestar para la comunidad universitaria.",
         estado: "Activo",
         cupo: 180,
-        inscritos: 142,
+        participantes: generarParticipantesIniciales(142),
         ponente: "Bienestar institucional",
         modalidad: "Híbrido"
     }
@@ -93,10 +116,33 @@ const eventos = [
 
 export const STORAGE_KEY = "uajs_eventos";
 
+export function contarInscritos(evento) {
+    return Array.isArray(evento?.participantes) ? evento.participantes.length : 0;
+}
+
+export function estaInscrito(evento, usuarioId) {
+    if (!evento || !Array.isArray(evento.participantes) || usuarioId == null) {
+        return false;
+    }
+    return evento.participantes.some((p) => p.usuarioId === usuarioId);
+}
+
+export function cuposDisponibles(evento) {
+    const libres = (evento?.cupo || 0) - contarInscritos(evento);
+    return Math.max(0, libres);
+}
+
 export function obtenerEventos() {
     try {
         const guardados = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-        if (guardados.length > 0) return guardados;
+        if (Array.isArray(guardados) && guardados.length > 0) {
+            const migrados = guardados.map(migrarEvento);
+            const necesitaGuardar = migrados.some(
+                (m, i) => m !== guardados[i]
+            );
+            if (necesitaGuardar) guardarEventos(migrados);
+            return migrados;
+        }
         guardarEventos(eventos);
         return eventos;
     } catch {

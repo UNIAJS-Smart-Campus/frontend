@@ -2,7 +2,17 @@ import { useState } from "react";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
-import { CATEGORIAS_EVENTO, ESTADOS_EVENTO, MODALIDADES_EVENTO, obtenerEventos, guardarEventos } from "../../utils/eventos";
+import useToast from "../../context/ToastContext";
+import {
+    CATEGORIAS_EVENTO,
+    ESTADOS_EVENTO,
+    MODALIDADES_EVENTO,
+    obtenerEventos,
+    guardarEventos,
+    estaInscrito,
+    cuposDisponibles,
+    contarInscritos
+} from "../../utils/eventos";
 import "./Eventos.css";
 
 const CATEGORIA_CLASE = {
@@ -34,7 +44,8 @@ const formVacio = {
     cupo: 0,
     estado: "Activo",
     ponente: "",
-    modalidad: "Presencial"
+    modalidad: "Presencial",
+    participantes: []
 };
 
 function formatearFecha(iso) {
@@ -62,6 +73,7 @@ function formatearHora(hora) {
 function Eventos() {
     const [items, setItems] = useState(() => obtenerEventos());
     const { user, puede } = useAuth();
+    const toast = useToast();
     const esAdmin = puede("publicar_eventos");
 
     const [query, setQuery] = useState("");
@@ -104,7 +116,7 @@ function Eventos() {
             return (a.fecha || "").localeCompare(b.fecha || "");
         }
         if (orden === "cupo") {
-            return (b.cupo - b.inscritos) - (a.cupo - a.inscritos);
+            return (b.cupo - contarInscritos(b)) - (a.cupo - contarInscritos(a));
         }
         return (a.nombre || "").localeCompare(b.nombre || "");
     });
@@ -175,7 +187,7 @@ function Eventos() {
         }
 
         if (editandoId === null) {
-            const nuevo = { id: Date.now(), ...form, inscritos: 0 };
+            const nuevo = { id: Date.now(), ...form, participantes: [] };
             const nueva = [nuevo, ...items];
             setItems(nueva);
             guardarEventos(nueva);
@@ -208,26 +220,64 @@ function Eventos() {
     };
 
     const inscribirse = (ev) => {
-        if (ev.inscritos >= ev.cupo) {
-            mostrarAviso("El evento ya alcanzó su cupo máximo.");
+        if (!user) {
+            toast.warning("Inicia sesión para inscribirte.");
             return;
         }
+        if (estaInscrito(ev, user.id)) {
+            toast.info("Ya estás inscrito en este evento.");
+            return;
+        }
+        if (cuposDisponibles(ev) === 0) {
+            toast.error("El evento ya alcanzó su cupo máximo.");
+            return;
+        }
+        const participante = {
+            usuarioId: user.id,
+            nombre: user.nombre || "Usuario",
+            fecha: new Date().toISOString().slice(0, 10)
+        };
         const nueva = items.map((item) =>
-            item.id === ev.id ? { ...item, inscritos: item.inscritos + 1 } : item
+            item.id === ev.id
+                ? { ...item, participantes: [...(item.participantes || []), participante] }
+                : item
         );
         setItems(nueva);
         guardarEventos(nueva);
         setDetalleAbierto((prev) =>
             prev && prev.id === ev.id
-                ? { ...prev, inscritos: prev.inscritos + 1 }
+                ? { ...prev, participantes: [...(prev.participantes || []), participante] }
                 : prev
         );
-        mostrarAviso("Te has inscrito al evento.");
+        toast.success(`Te inscribiste a "${ev.nombre}".`);
     };
 
-    const cuposDisponibles = (ev) => {
-        const libres = (ev.cupo || 0) - (ev.inscritos || 0);
-        return Math.max(0, libres);
+    const cancelarInscripcion = (ev) => {
+        if (!user) return;
+        if (!estaInscrito(ev, user.id)) return;
+        const nueva = items.map((item) =>
+            item.id === ev.id
+                ? {
+                    ...item,
+                    participantes: (item.participantes || []).filter(
+                        (p) => p.usuarioId !== user.id
+                    )
+                }
+                : item
+        );
+        setItems(nueva);
+        guardarEventos(nueva);
+        setDetalleAbierto((prev) =>
+            prev && prev.id === ev.id
+                ? {
+                    ...prev,
+                    participantes: (prev.participantes || []).filter(
+                        (p) => p.usuarioId !== user.id
+                    )
+                }
+                : prev
+        );
+        toast.info("Inscripción cancelada.");
     };
 
     const verDetalle = (ev) => setDetalleAbierto(ev);
@@ -422,8 +472,16 @@ function Eventos() {
                                 <div className="eventos__item-actions">
                                     {!esAdmin && (
                                         <button
-                                            className="eventos__inscribir-button"
-                                            onClick={() => inscribirse(ev)}
+                                            className={
+                                                estaInscrito(ev, user?.id)
+                                                    ? "eventos__inscribir-button eventos__inscribir-button--done"
+                                                    : "eventos__inscribir-button"
+                                            }
+                                            onClick={() =>
+                                                estaInscrito(ev, user?.id)
+                                                    ? cancelarInscripcion(ev)
+                                                    : inscribirse(ev)
+                                            }
                                             disabled={
                                                 ev.estado !== "Activo" ||
                                                 cuposDisponibles(ev) === 0
@@ -431,9 +489,11 @@ function Eventos() {
                                         >
                                             {ev.estado !== "Activo"
                                                 ? "No disponible"
-                                                : cuposDisponibles(ev) === 0
+                                                : cuposDisponibles(ev) === 0 && !estaInscrito(ev, user?.id)
                                                     ? "Cupo agotado"
-                                                    : "Inscribirme"}
+                                                    : estaInscrito(ev, user?.id)
+                                                        ? "Inscrito ✓ · Cancelar"
+                                                        : "Inscribirme"}
                                         </button>
                                     )}
 
@@ -704,13 +764,13 @@ function Eventos() {
                             className={`eventos__cupo-bar ${cuposDisponibles(detalle) === 0 ? "eventos__cupo-bar--full" : ""}`}
                         >
                             <span>
-                                {detalle.inscritos} / {detalle.cupo} inscritos
+                                {contarInscritos(detalle)} / {detalle.cupo} inscritos
                             </span>
                             <div className="eventos__cupo-track">
                                 <div
                                     className="eventos__cupo-fill"
                                     style={{
-                                        width: `${detalle.cupo ? Math.min(100, (detalle.inscritos / detalle.cupo) * 100) : 0}%`
+                                        width: `${detalle.cupo ? Math.min(100, (contarInscritos(detalle) / detalle.cupo) * 100) : 0}%`
                                     }}
                                 />
                             </div>
@@ -724,9 +784,9 @@ function Eventos() {
                                         setVerInscritosAbierto(true);
                                         setDetalleAbierto(null);
                                     }}
-                                    disabled={!detalle.inscritos}
+                                    disabled={contarInscritos(detalle) === 0}
                                 >
-                                    Ver inscritos ({detalle.inscritos})
+                                    Ver inscritos ({contarInscritos(detalle)})
                                 </button>
                                 <button
                                     className="eventos__admin-btn"
@@ -745,20 +805,37 @@ function Eventos() {
                                 </button>
                             </div>
                         ) : (
-                            <button
-                                className="eventos__subscribe-button"
-                                onClick={() => inscribirse(detalle)}
-                                disabled={
-                                    detalle.estado !== "Activo" ||
-                                    cuposDisponibles(detalle) === 0
-                                }
-                            >
-                                {detalle.estado !== "Activo"
-                                    ? `No disponible (${detalle.estado})`
-                                    : cuposDisponibles(detalle) === 0
-                                        ? "Cupo agotado"
-                                        : "Inscribirme"}
-                            </button>
+                            <div className="eventos__subscribe-actions">
+                                <button
+                                    className={
+                                        estaInscrito(detalle, user?.id)
+                                            ? "eventos__subscribe-button eventos__subscribe-button--done"
+                                            : "eventos__subscribe-button"
+                                    }
+                                    onClick={() =>
+                                        estaInscrito(detalle, user?.id)
+                                            ? cancelarInscripcion(detalle)
+                                            : inscribirse(detalle)
+                                    }
+                                    disabled={
+                                        detalle.estado !== "Activo" ||
+                                        (cuposDisponibles(detalle) === 0 && !estaInscrito(detalle, user?.id))
+                                    }
+                                >
+                                    {detalle.estado !== "Activo"
+                                        ? `No disponible (${detalle.estado})`
+                                        : estaInscrito(detalle, user?.id)
+                                            ? "Inscrito ✓ · Cancelar inscripción"
+                                            : cuposDisponibles(detalle) === 0
+                                                ? "Cupo agotado"
+                                                : "Inscribirme"}
+                                </button>
+                                {estaInscrito(detalle, user?.id) && (
+                                    <span className="eventos__inscrito-badge">
+                                        Tu inscripción está confirmada.
+                                    </span>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>
@@ -792,33 +869,46 @@ function Eventos() {
                         </div>
 
                         <div className="eventos__inscritos">
-                            {detalleAbierto &&
-                            (items.find((i) => i.id === detalleAbierto.id)
-                                ?.inscritos || 0) > 0 ? (
-                                <ul className="eventos__inscritos-list">
-                                    {Array.from({
-                                        length: items.find(
-                                            (i) => i.id === detalleAbierto.id
-                                        ).inscritos
-                                    }).map((_, i) => (
-                                        <li
-                                            className="eventos__inscrito"
-                                            key={i}
-                                        >
-                                            <span className="eventos__inscrito-avatar">
-                                                S{i + 1}
-                                            </span>
-                                            <span className="eventos__inscrito-name">
-                                                Estudiante {i + 1}
-                                            </span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <p className="eventos__empty">
-                                    Aún no hay inscritos en este evento.
-                                </p>
-                            )}
+                            {(() => {
+                                const detalle = detalleAbierto
+                                    ? items.find((i) => i.id === detalleAbierto.id)
+                                    : null;
+                                const lista = Array.isArray(detalle?.participantes)
+                                    ? detalle.participantes
+                                    : [];
+                                if (lista.length === 0) {
+                                    return (
+                                        <p className="eventos__empty">
+                                            Aún no hay inscritos en este evento.
+                                        </p>
+                                    );
+                                }
+                                return (
+                                    <ul className="eventos__inscritos-list">
+                                        {lista.map((p, i) => (
+                                            <li
+                                                className="eventos__inscrito"
+                                                key={`${p.usuarioId || "anon"}-${i}`}
+                                            >
+                                                <span className="eventos__inscrito-avatar">
+                                                    {(p.nombre || "U")
+                                                        .split(" ")
+                                                        .map((s) => s[0])
+                                                        .join("")
+                                                        .slice(0, 2)
+                                                        .toUpperCase()}
+                                                </span>
+                                                <span className="eventos__inscrito-name">
+                                                    {p.nombre || "Inscrito"}
+                                                </span>
+                                                <span className="eventos__inscrito-fecha">
+                                                    {p.fecha || ""}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>

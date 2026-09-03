@@ -4,8 +4,10 @@ import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import Pagination from "../../components/Pagination/Pagination";
 import Modal from "../../components/Modal/Modal";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import useAuth from "../../context/useAuth";
+import useToast from "../../context/ToastContext";
 import { TIPOS_PQRS, obtenerPqrs, guardarPqrs, obtenerPqrsPorPerfil } from "../../utils/pqrs";
 import useSearch from "../../hooks/useSearch";
 import usePagination from "../../hooks/usePagination";
@@ -54,6 +56,7 @@ const formVacio = {
 
 function PQRS() {
     const { puede, user } = useAuth();
+    const toast = useToast();
     const puedeGestionar = puede("gestionar_solicitudes") || puede("actualizar_estados");
 
     const [filtroTipo, setFiltroTipo] = useState("Todos");
@@ -63,6 +66,7 @@ function PQRS() {
 
     const [gestionAbierto, setGestionAbierto] = useState(false);
     const [detalleAbierto, setDetalleAbierto] = useState(false);
+    const [confirmEliminarAbierto, setConfirmEliminarAbierto] = useState(false);
     const [seleccionada, setSeleccionada] = useState(null);
     const [form, setForm] = useState(formVacio);
     const [aviso, setAviso] = useState("");
@@ -166,15 +170,17 @@ function PQRS() {
     };
 
     const handleEliminar = (item) => {
-        const confirmar = window.confirm(
-            `¿Eliminar la PQRS ${item.id}? Esta acción no se puede deshacer.`
-        );
-        if (!confirmar) return;
+        setSeleccionada(item);
+        setConfirmEliminarAbierto(true);
+    };
+
+    const confirmarEliminar = () => {
+        if (!seleccionada) return;
         const todas = obtenerPqrs();
-        const nuevas = todas.filter((p) => p.id !== item.id);
+        const nuevas = todas.filter((p) => p.id !== seleccionada.id);
         guardarPqrs(nuevas);
         setItems(obtenerPqrsPorPerfil(user?.rol));
-        mostrarAviso("PQRS eliminada.");
+        toast.success("PQRS eliminada correctamente.");
         cerrarModales();
     };
 
@@ -638,6 +644,24 @@ function PQRS() {
                     </div>
                 )}
             </Modal>
+
+            <ConfirmModal
+                isOpen={confirmEliminarAbierto}
+                title="Eliminar PQRS"
+                message={
+                    seleccionada
+                        ? `¿Eliminar la PQRS ${seleccionada.id}? Esta acción no se puede deshacer.`
+                        : ""
+                }
+                confirmText="Eliminar"
+                cancelText="Cancelar"
+                variant="danger"
+                onConfirm={confirmarEliminar}
+                onClose={() => {
+                    setConfirmEliminarAbierto(false);
+                    setSeleccionada(null);
+                }}
+            />
         </div>
     );
 }
