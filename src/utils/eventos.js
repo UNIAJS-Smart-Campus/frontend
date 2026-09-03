@@ -17,6 +17,50 @@ function generarParticipantesIniciales(n) {
     return resultado;
 }
 
+const INSCRITOS_SEED = {
+    1: [4, 9, 10, 16, 22, 11, 14, 17, 6, 19, 24, 13, 23, 15, 20, 21, 25, 12, 18],
+    2: [9, 14, 22, 24, 18, 11, 21],
+    3: [6, 11, 13, 15, 17, 19, 23, 25, 9, 10, 12, 18, 20, 21, 22, 24, 16, 4, 14],
+    4: [4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 16, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
+    5: [4, 9, 14, 16, 22, 24, 10, 20, 12, 18, 11, 21, 6, 13, 19, 23, 25, 15, 17, 4, 9, 14, 16, 22, 24, 10, 20, 12, 18, 11, 21, 6, 13, 19, 23, 25, 15, 17, 4, 9, 14, 16, 22, 24, 10, 20, 12, 18, 11, 21],
+    6: [4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
+};
+
+function lookupNombre(usuarioId) {
+    if (usuarioId == null) return "Inscrito";
+    const map = {
+        4: "Andrés Torres",
+        6: "Valentina Morales",
+        9: "Camila Restrepo",
+        10: "Santiago Pérez",
+        11: "Daniela Ortiz",
+        12: "Mateo Salazar",
+        13: "Isabella Vargas",
+        14: "Sebastián Castro",
+        15: "Mariana López",
+        16: "Tomás Herrera",
+        17: "Luciana Ramírez",
+        18: "Joaquín Morales",
+        19: "Sara Quintero",
+        20: "Felipe Mendoza",
+        21: "Juliana Ríos",
+        22: "David Ospina",
+        23: "Paula Aguilar",
+        24: "Andrés Felipe Duarte",
+        25: "Manuela Cabrera"
+    };
+    return map[usuarioId] || `Inscrito #${usuarioId}`;
+}
+
+function generarParticipantesPorEvento(eventoId) {
+    const ids = INSCRITOS_SEED[eventoId] || [];
+    return ids.map((uid) => ({
+        usuarioId: uid,
+        nombre: lookupNombre(uid),
+        fecha: "2026-08-30"
+    }));
+}
+
 function migrarEvento(ev) {
     if (!ev || typeof ev !== "object") return ev;
     if (Array.isArray(ev.participantes)) return ev;
@@ -38,7 +82,7 @@ const eventos = [
         descripcion: "Jornada académica con expertos en IA aplicada, innovación y transformación digital.",
         estado: "Activo",
         cupo: 150,
-        participantes: generarParticipantesIniciales(118),
+        participantes: generarParticipantesPorEvento(1),
         ponente: "Dra. Ana María López",
         modalidad: "Presencial"
     },
@@ -52,7 +96,7 @@ const eventos = [
         descripcion: "Sesión práctica para desarrollar modelos de negocio, pitch y trabajo en equipo.",
         estado: "Activo",
         cupo: 45,
-        participantes: generarParticipantesIniciales(36),
+        participantes: generarParticipantesPorEvento(2),
         ponente: "Daniel Ruiz",
         modalidad: "Híbrido"
     },
@@ -66,7 +110,7 @@ const eventos = [
         descripcion: "Proyección, conversación y análisis del papel de la cultura en la vida universitaria.",
         estado: "Activo",
         cupo: 90,
-        participantes: generarParticipantesIniciales(58),
+        participantes: generarParticipantesPorEvento(3),
         ponente: "Colectivo cultural UAJS",
         modalidad: "Presencial"
     },
@@ -80,7 +124,7 @@ const eventos = [
         descripcion: "Encuentro con empresas, programas de prácticas y oportunidades de empleo para estudiantes.",
         estado: "Activo",
         cupo: 220,
-        participantes: generarParticipantesIniciales(187),
+        participantes: generarParticipantesPorEvento(4),
         ponente: "Vicerrectoría de bienestar y empleabilidad",
         modalidad: "Presencial"
     },
@@ -94,7 +138,7 @@ const eventos = [
         descripcion: "Presentación de proyectos de investigación y resultados de trabajo de grado.",
         estado: "Activo",
         cupo: 60,
-        participantes: generarParticipantesIniciales(49),
+        participantes: generarParticipantesPorEvento(5),
         ponente: "Dra. Carolina Ruiz",
         modalidad: "Virtual"
     },
@@ -108,7 +152,7 @@ const eventos = [
         descripcion: "Actividades de acompañamiento, sensibilización y bienestar para la comunidad universitaria.",
         estado: "Activo",
         cupo: 180,
-        participantes: generarParticipantesIniciales(142),
+        participantes: generarParticipantesPorEvento(6),
         ponente: "Bienestar institucional",
         modalidad: "Híbrido"
     }
