@@ -88,7 +88,7 @@ function Eventos() {
     const [error, setError] = useState("");
 
     const [detalleAbierto, setDetalleAbierto] = useState(null);
-    const [verInscritosAbierto, setVerInscritosAbierto] = useState(false);
+    const [verInscritosDe, setVerInscritosDe] = useState(null);
     const [aviso, setAviso] = useState("");
 
     const normalizar = (texto) =>
@@ -781,7 +781,8 @@ function Eventos() {
                                 <button
                                     className="eventos__admin-btn"
                                     onClick={() => {
-                                        setVerInscritosAbierto(true);
+                                        const fresco = items.find((i) => i.id === detalle.id);
+                                        setVerInscritosDe(fresco || detalle);
                                         setDetalleAbierto(null);
                                     }}
                                     disabled={contarInscritos(detalle) === 0}
@@ -841,10 +842,10 @@ function Eventos() {
                 </div>
             )}
 
-            {verInscritosAbierto && (
+            {verInscritosDe && (
                 <div
                     className="eventos__overlay"
-                    onClick={() => setVerInscritosAbierto(false)}
+                    onClick={() => setVerInscritosDe(null)}
                 >
                     <div
                         className="eventos__modal"
@@ -853,16 +854,11 @@ function Eventos() {
                         <div className="eventos__modal-header">
                             <div>
                                 <h2>Inscritos</h2>
-                                <p>
-                                    {detalleAbierto
-                                        ? items.find((i) => i.id === detalleAbierto.id)?.nombre ||
-                                          ""
-                                        : ""}
-                                </p>
+                                <p>{verInscritosDe.nombre || ""}</p>
                             </div>
                             <button
                                 className="eventos__modal-close"
-                                onClick={() => setVerInscritosAbierto(false)}
+                                onClick={() => setVerInscritosDe(null)}
                             >
                                 ×
                             </button>
@@ -870,11 +866,8 @@ function Eventos() {
 
                         <div className="eventos__inscritos">
                             {(() => {
-                                const detalle = detalleAbierto
-                                    ? items.find((i) => i.id === detalleAbierto.id)
-                                    : null;
-                                const lista = Array.isArray(detalle?.participantes)
-                                    ? detalle.participantes
+                                const lista = Array.isArray(verInscritosDe.participantes)
+                                    ? verInscritosDe.participantes
                                     : [];
                                 if (lista.length === 0) {
                                     return (
@@ -884,29 +877,42 @@ function Eventos() {
                                     );
                                 }
                                 return (
-                                    <ul className="eventos__inscritos-list">
-                                        {lista.map((p, i) => (
-                                            <li
-                                                className="eventos__inscrito"
-                                                key={`${p.usuarioId || "anon"}-${i}`}
-                                            >
-                                                <span className="eventos__inscrito-avatar">
-                                                    {(p.nombre || "U")
-                                                        .split(" ")
-                                                        .map((s) => s[0])
-                                                        .join("")
-                                                        .slice(0, 2)
-                                                        .toUpperCase()}
-                                                </span>
-                                                <span className="eventos__inscrito-name">
-                                                    {p.nombre || "Inscrito"}
-                                                </span>
-                                                <span className="eventos__inscrito-fecha">
-                                                    {p.fecha || ""}
-                                                </span>
-                                            </li>
-                                        ))}
-                                    </ul>
+                                    <>
+                                        <div className="eventos__inscritos-meta">
+                                            {lista.length} {lista.length === 1 ? "inscrito" : "inscritos"}
+                                            {verInscritosDe.cupo
+                                                ? ` · cupo ${verInscritosDe.cupo}`
+                                                : ""}
+                                        </div>
+                                        <ul className="eventos__inscritos-list">
+                                            {lista.map((p, i) => (
+                                                <li
+                                                    className="eventos__inscrito"
+                                                    key={`${p.usuarioId || "anon"}-${i}`}
+                                                >
+                                                    <span className="eventos__inscrito-avatar">
+                                                        {(p.nombre || "U")
+                                                            .split(" ")
+                                                            .map((s) => s[0])
+                                                            .join("")
+                                                            .slice(0, 2)
+                                                            .toUpperCase()}
+                                                    </span>
+                                                    <span className="eventos__inscrito-name">
+                                                        {p.nombre || "Inscrito"}
+                                                    </span>
+                                                    {p.usuarioId != null && (
+                                                        <span className="eventos__inscrito-id">
+                                                            ID #{p.usuarioId}
+                                                        </span>
+                                                    )}
+                                                    <span className="eventos__inscrito-fecha">
+                                                        {p.fecha || ""}
+                                                    </span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </>
                                 );
                             })()}
                         </div>
