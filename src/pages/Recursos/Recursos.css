@@ -185,26 +185,32 @@
 }
 
 .recursos__filter-button {
-    height: 40px;
-    padding: 0 18px;
+    height: 32px;
+    padding: 0 14px;
     border: none;
     border-radius: 7px;
     background: linear-gradient(90deg, var(--color-accent-dark), var(--color-accent));
-    color: var(--color-primary-800);
+    color: #fff;
     cursor: pointer;
     font-size: 11px;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
+    white-space: nowrap;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .recursos__filter-button .icon {
     display: block;
+    color: #fff;
 }
 
 .recursos__filter-button:hover {
     box-shadow: var(--shadow-sm);
+    opacity: 0.92;
 }
 
 .filters--recursos .filters__grid {
@@ -263,7 +269,7 @@
     font-size: 46px;
 }
 
-.recursos__resource-image.blue-bg { background: linear-gradient(135deg, #e9f3ff, #d7e8fb); color: var(--color-primary-600); }
+.recursos__resource-image.blue-bg { background: linear-gradient(135deg, #d0ecf1, #b9dfe8); color: var(--color-primary-600); }
 .recursos__resource-image.green-bg { background: linear-gradient(135deg, #e7f8ee, #d4efdf); color: #199b5b; }
 .recursos__resource-image.orange-bg { background: linear-gradient(135deg, #fff5e1, #ffe8bc); color: #d99000; }
 .recursos__resource-image.purple-bg { background: linear-gradient(135deg, #f0eaff, #e2d9ff); color: #7547d6; }
@@ -659,4 +665,29 @@
     .filters--recursos .filters__grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* ── Badge de categoría Escenario / Objeto ── */
+.recursos__resource-categoria {
+    margin-bottom: 4px;
+}
+
+.recursos__categoria-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.recursos__categoria-badge--escenario {
+    background: var(--color-primary-50, #ede9fe);
+    color: var(--color-primary, #7c3aed);
+}
+
+.recursos__categoria-badge--objeto {
+    background: var(--color-accent-50, #fff7ed);
+    color: var(--color-accent-dark, #c2410c);
 }

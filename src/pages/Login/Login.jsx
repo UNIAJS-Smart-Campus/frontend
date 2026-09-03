@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../context/useAuth";
+import BrandLogo from "../../components/BrandLogo/BrandLogo";
 import "./Login.css";
 
 const CREDENCIALES = [
@@ -22,7 +23,10 @@ function Login() {
     const location = useLocation();
     const desde = location.state?.from?.pathname || "/dashboard";
 
-    const handleLogin = async () => {
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError("");
         try {
             const resultado = await login(identificacion, password);
             if (!resultado?.ok) {
@@ -32,24 +36,16 @@ function Login() {
             navigate(desde, { replace: true });
         } catch {
             setError("Error inesperado. Inténtalo de nuevo.");
-            setLoading(false);
         } finally {
             setLoading(false);
         }
     };
 
-const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    handleLogin();  // ✅ se encarga de setLoading(false)
-};
-
-const fillCredentials = (identificacion, pass) => {
-    setIdentificacion(identificacion);
-    setPassword(pass);
-    setError("");
-};
+    const fillCredentials = (id, pass) => {
+        setIdentificacion(id);
+        setPassword(pass);
+        setError("");
+    };
 
     return (
         <div className="login">
@@ -90,7 +86,10 @@ const fillCredentials = (identificacion, pass) => {
                     </div>
                     <div className="login__aside-inner">
                         <div className="login__brand">
-                            <img src="/Logo_Light_UAJS.png" alt="UniAJS - Corporación Universitaria Antonio José de Sucre" className="login__brand-logo" />
+                            <BrandLogo
+                                className="login__brand-logo"
+                                alt="UniAJS - Corporación Universitaria Antonio José de Sucre"
+                            />
                         </div>
 
                         <div className="login__hero">

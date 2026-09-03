@@ -1,55 +1,68 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
-import solicitudes from "../../utils/solicitudes";
-import notificaciones from "../../utils/notificaciones";
-import eventos from "../../utils/eventos";
-import services from "../../utils/services";
 import useAuth from "../../context/useAuth";
 import useSearch from "../../hooks/useSearch";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
+import { obtenerSolicitudes, ESTADOS_FINALES, ETIQUETA_ESTADO, ESTADO_COLOR } from "../../utils/solicitudes";
+import { obtenerReservas } from "../../utils/reservas";
+import { obtenerNotificacionesPorPerfil } from "../../utils/notificaciones";
+import { obtenerEventosPorPerfil } from "../../utils/eventos";
+import services from "../../utils/services";
 import "./Dashboard.css";
-
-const ESTADO_CLASE = {
-    "En proceso": "status-blue",
-    "En revisión": "status-yellow",
-    "Registrada": "status-yellow",
-    Asignada: "status-purple",
-    Resuelta: "status-green",
-    Cerrada: "status-gray"
-};
-
-const PROGRESS_STATES = [
-    "Registrada",
-    "En revisión",
-    "Asignada",
-    "En proceso",
-    "Resuelta",
-    "Cerrada"
-];
 
 function capitalizar(texto) {
     return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : texto;
 }
 
+// Ajusta getDay() de domingo=0 a lunes=0
+function primerDiaLunes(fecha) {
+    return (fecha.getDay() + 6) % 7;
+}
+
 function Dashboard() {
-    const { user } = useAuth();
+    const { user, tienePermiso } = useAuth();
     const primerNombre = (user?.nombre || "Usuario").split(" ")[0];
 
-    const [query, setQuery] = useState("");
+    const [query, setQuery]       = useState("");
     const [busqueda, setBusqueda] = useState("");
 
-    const serviciosEncontrados = useSearch(services, busqueda, ["name", "category"]);
+    // TAREA 8: estado para posición del tooltip del calendario
+    const [tooltip, setTooltip] = useState(null); // { dia, x, y, eventos }
 
     const hoy = new Date();
-    const [mesVista, setMesVista] = useState(hoy.getMonth());
+    const [mesVista, setMesVista]   = useState(hoy.getMonth());
     const [anioVista, setAnioVista] = useState(hoy.getFullYear());
 
-    const nombreMes = capitalizar(
-        hoy.toLocaleDateString("es-CO", { month: "long", day: "numeric", year: "numeric" })
+    // TAREA 6: dependencia en user para que se recalcule si cambie la sesión
+    // Las funciones siempre leen localStorage en el momento de llamarse
+    const solicitudes = useMemo(() => obtenerSolicitudes(), [user]);
+    const misReservas = useMemo(() => obtenerReservas(), [user]);
+
+    // TAREA 3 + 4: notificaciones filtradas por perfil, desde función (no array estático)
+    const notificaciones = useMemo(
+        () => obtenerNotificacionesPorPerfil(user?.rol),
+        [user?.rol]
     );
-    const diaSemana = capitalizar(
-        hoy.toLocaleDateString("es-CO", { weekday: "long" })
+
+    // TAREA 3: eventos desde función (no array estático importado)
+    const eventos = useMemo(
+        () => obtenerEventosPorPerfil(user?.rol),
+        [user?.rol]
+    );
+
+    // TAREA 5: filtrar servicios por permiso del usuario
+    const serviciosFiltrados = useMemo(
+        () => services.filter((s) => tienePermiso(s.path.replace("/", ""))),
+        [tienePermiso]
+    );
+
+    const serviciosEncontrados = useSearch(serviciosFiltrados, busqueda, ["name", "category"]);
+
+    // TAREA 1: formato correcto sin duplicar día de la semana
+    const diaSemana = capitalizar(hoy.toLocaleDateString("es-CO", { weekday: "long" }));
+    const fechaFormateada = capitalizar(
+        hoy.toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" })
     );
 
     const cambiarMes = (delta) => {
@@ -59,42 +72,90 @@ function Dashboard() {
     };
 
     const mesVistaLabel = capitalizar(
-        new Date(anioVista, mesVista, 1).toLocaleDateString("es-CO", {
-            month: "long"
-        })
+        new Date(anioVista, mesVista, 1).toLocaleDateString("es-CO", { month: "long" })
     );
 
-    const misSolicitudes = solicitudes.slice(0, 5);
-    const noLeidas = notificaciones.filter((item) => !item.leida);
-    const proximosEventos = eventos.filter(
-        (evento) => new Date(evento.fecha + "T00:00:00") >= hoy
-    );
-    const eventosProximosCount = proximosEventos.length;
-    const reservas = solicitudes.filter((sol) => sol.servicio === "Reservas");
+    // Alcance: Admin/Administrativo ven métricas globales del campus; Docente/Estudiante ven solo lo propio.
+    const esVistaGlobal =
+        user?.rol === "Administrador" || user?.rol === "Administrativo";
 
-    const primerDia = new Date(anioVista, mesVista, 1).getDay();
-    const diasEnMes = new Date(anioVista, mesVista + 1, 0).getDate();
+    const solicitudesPersonales = useMemo(
+        () =>
+            esVistaGlobal
+                ? solicitudes
+                : solicitudes.filter(
+                      (s) =>
+                          s.usuario?.id === user?.id ||
+                          (user?.id != null && s.usuario?.id == null)
+                  ),
+        [solicitudes, user, esVistaGlobal]
+    );
+
+    const reservasPersonales = useMemo(
+        () =>
+            esVistaGlobal
+                ? misReservas
+                : misReservas.filter((r) => r.usuarioId === user?.id),
+        [misReservas, user, esVistaGlobal]
+    );
+
+    const misSolicitudes = solicitudesPersonales.slice(0, 5);
+
+    const noLeidas            = notificaciones.filter((n) => !n.leida);
+    const proximosEventos     = eventos.filter(
+        (e) => new Date(e.fecha + "T00:00:00") >= hoy
+    );
+    const reservasConfirmadas = reservasPersonales.filter((r) => r.estado === "Confirmada");
+
+    // TAREA 2: solo solicitudes NO finalizadas
+    const solicitudesActivas = solicitudesPersonales.filter(
+        (s) => !ESTADOS_FINALES.includes(s.estado)
+    );
+
+    // Calendario
+    const primerDia   = primerDiaLunes(new Date(anioVista, mesVista, 1));
+    const diasEnMes   = new Date(anioVista, mesVista + 1, 0).getDate();
     const diasAnterior = new Date(anioVista, mesVista, 0).getDate();
 
-    const eventosPorDia = new Map();
-    eventos.forEach((evento) => {
-        const fechaEvento = new Date(evento.fecha + "T00:00:00");
-        if (
-            fechaEvento.getMonth() === mesVista &&
-            fechaEvento.getFullYear() === anioVista
-        ) {
-            const dia = fechaEvento.getDate();
-            if (!eventosPorDia.has(dia)) eventosPorDia.set(dia, []);
-            eventosPorDia.get(dia).push(evento);
-        }
-    });
+    const eventosPorDia = useMemo(() => {
+        const mapa = new Map();
+        eventos.forEach((evento) => {
+            const d = new Date(evento.fecha + "T00:00:00");
+            if (d.getMonth() === mesVista && d.getFullYear() === anioVista) {
+                const dia = d.getDate();
+                if (!mapa.has(dia)) mapa.set(dia, []);
+                mapa.get(dia).push(evento);
+            }
+        });
+        return mapa;
+    }, [eventos, mesVista, anioVista]);
 
-    const diasSemana = ["LUN", "MAR", "MI", "JUE", "VIE", "SÁB", "DOM"];
+    const diasSemana = ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"];
+
+    // TAREA 8: manejador de hover con posición del cursor para tooltip con position:fixed
+    const handleDiaMouseEnter = useCallback((e, dia, eventosDelDia) => {
+        if (!eventosDelDia.length) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        setTooltip({
+            dia,
+            eventos: eventosDelDia,
+            x: rect.left + rect.width / 2,
+            y: rect.top
+        });
+    }, []);
+
+    const handleDiaMouseLeave = useCallback(() => {
+        setTooltip(null);
+    }, []);
+
     const celdas = [];
 
     for (let i = 0; i < primerDia; i++) {
         celdas.push(
-            <span className="dashboard__calendar-day dashboard__calendar-day--muted" key={`prev-${i}`}>
+            <span
+                className="dashboard__calendar-day dashboard__calendar-day--muted"
+                key={`prev-${i}`}
+            >
                 {diasAnterior - primerDia + 1 + i}
             </span>
         );
@@ -106,6 +167,7 @@ function Dashboard() {
             mesVista === hoy.getMonth() &&
             anioVista === hoy.getFullYear();
         const eventosDelDia = eventosPorDia.get(dia) || [];
+
         celdas.push(
             <span
                 className={
@@ -114,126 +176,117 @@ function Dashboard() {
                     (eventosDelDia.length ? " dashboard__calendar-day--event" : "")
                 }
                 key={dia}
+                onMouseEnter={(e) => handleDiaMouseEnter(e, dia, eventosDelDia)}
+                onMouseLeave={handleDiaMouseLeave}
             >
                 {dia}
-                {eventosDelDia.length > 0 && (
-                    <span className="dashboard__calendar-tooltip">
-                        {eventosDelDia.map((evento) => (
-                            <span className="dashboard__calendar-tooltip-item" key={evento.id}>
-                                <strong>{evento.nombre}</strong>
-                                <span>
-                                    {evento.hora} · {evento.lugar}
-                                </span>
-                            </span>
-                        ))}
-                    </span>
-                )}
             </span>
         );
     }
 
-    const siguientesDias = 7 - ((primerDia + diasEnMes) % 7 || 7);
+    const totalCeldas    = primerDia + diasEnMes;
+    const siguientesDias = totalCeldas % 7 === 0 ? 0 : 7 - (totalCeldas % 7);
     for (let i = 1; i <= siguientesDias; i++) {
         celdas.push(
-            <span className="dashboard__calendar-day dashboard__calendar-day--muted" key={`next-${i}`}>
+            <span
+                className="dashboard__calendar-day dashboard__calendar-day--muted"
+                key={`next-${i}`}
+            >
                 {i}
             </span>
         );
     }
 
-    const estadoActual = misSolicitudes[0]?.estado || "Registrada";
-    const pasoActual = PROGRESS_STATES.findIndex(
-        (estado) => estado === estadoActual
-    );
-    const progresoPorcentaje = (pasoActual / (PROGRESS_STATES.length - 1)) * 100;
-
     const stats = [
         {
-            icono: "solicitudes",
-            numero: solicitudes.length,
+            icono:  "solicitudes",
+            // TAREA 2: solo solicitudes activas (no finalizadas)
+            numero: solicitudesActivas.length,
             titulo: "Solicitudes activas",
-            enlace: "Ver todas",
-            clase: "blue"
+            clase:  "blue"
         },
         {
-            icono: "reservas",
-            numero: reservas.length,
+            icono:  "reservas",
+            numero: reservasConfirmadas.length,
             titulo: "Reservas confirmadas",
-            enlace: "Ver mis reservas",
-            clase: "green"
+            clase:  "green"
         },
         {
-            icono: "notificaciones",
+            icono:  "notificaciones",
             numero: noLeidas.length,
             titulo: "Nuevas notificaciones",
-            enlace: "Ver todas",
-            clase: "purple"
+            clase:  "purple"
         },
         {
-            icono: "eventos",
-            numero: eventosProximosCount,
+            icono:  "eventos",
+            numero: proximosEventos.length,
             titulo: "Eventos próximos",
-            enlace: "Ver calendario",
-            clase: "yellow"
+            clase:  "yellow"
         }
     ];
 
-    const actividades = [
-        {
-            icono: "solicitudes",
-            titulo: `Se actualizó el estado de tu solicitud ${misSolicitudes[0]?.id}`,
-            tiempo: "Hace 15 minutos",
-            clase: "blue",
-            etiqueta: "EN PROCESO",
-            estadoClase: "status-blue"
-        },
-        {
-            icono: "reservas",
-            titulo: "Reserva confirmada: Auditorio principal",
-            tiempo: "Hace 1 hora",
-            clase: "green"
-        },
-        {
-            icono: "notificaciones",
-            titulo: "Nueva notificación recibida",
-            tiempo: "Hace 3 horas",
-            clase: "purple"
-        },
-        {
-            icono: "eventos",
-            titulo: "Inscripción confirmada: Taller de UX",
-            tiempo: "Hace 5 horas",
-            clase: "green"
-        },
-        {
-            icono: "solicitudes",
-            titulo: "Solicitud de certificado aprobada",
-            tiempo: "Hace 1 día",
-            clase: "blue"
-        }
-    ];
+    const actividades = useMemo(() => {
+        const items = [];
+
+        solicitudesPersonales.slice(0, 2).forEach((sol) => {
+            items.push({
+                icono:       sol.servicio === "Reservas" ? "reservas" : "solicitudes",
+                titulo:      `Solicitud ${sol.id} — ${sol.tipo}`,
+                tiempo:      new Date(sol.fecha + "T00:00:00").toLocaleDateString("es-CO", {
+                    day: "numeric", month: "short"
+                }),
+                clase:       "blue",
+                etiqueta:    ETIQUETA_ESTADO[sol.estado] || sol.estado,
+                estadoClase: `status-${ESTADO_COLOR[sol.estado] || "gray"}`
+            });
+        });
+
+        notificaciones.slice(0, 2).forEach((n) => {
+            items.push({
+                icono:  n.icono,
+                titulo: n.mensaje,
+                tiempo: new Date(n.fecha + "T00:00:00").toLocaleDateString("es-CO", {
+                    day: "numeric", month: "short"
+                }),
+                clase: "purple"
+            });
+        });
+
+        proximosEventos.slice(0, 1).forEach((e) => {
+            items.push({
+                icono:  "eventos",
+                titulo: `Próximo evento: ${e.nombre}`,
+                tiempo: new Date(e.fecha + "T00:00:00").toLocaleDateString("es-CO", {
+                    day: "numeric", month: "short"
+                }),
+                clase: "yellow"
+            });
+        });
+
+        return items.slice(0, 5);
+    }, [solicitudesPersonales, notificaciones, proximosEventos]);
 
     return (
         <div className="page">
+            {/* ── HEADER ── */}
             <div className="page__header">
                 <div className="page__title">
                     <h1>Hola, {primerNombre} 👋</h1>
-                    <p>Bienvenido a Smart Campus UNIAJS: tu panel central de servicios universitarios.</p>
+                    <p>Bienvenido a Smart Campus UAJS: tu panel central de servicios universitarios.</p>
                 </div>
 
+                {/* TAREA 1: formato corregido — diaSemana y fechaFormateada sin duplicar */}
+                {/* TAREA 7: reemplazado Icon name='calendar' por 'reservas' */}
                 <div className="dashboard__date-card">
-                    <Icon name="calendar" size={20} />
+                    <Icon name="reservas" size={20} />
                     <div>
-                        <div className="dashboard__date-main">
-                            {diaSemana}, {nombreMes}
-                        </div>
-                        <div className="dashboard__date-sub">
-                            {hoy.getDate()}
-                        </div>
+                        <div className="dashboard__date-main">{diaSemana}</div>
+                        <div className="dashboard__date-sub">{fechaFormateada}</div>
                     </div>
                 </div>
             </div>
 
+            {/* ── SERVICIOS ── */}
             <section className="dashboard__services">
                 <div className="dashboard__services-header">
                     <h2 className="dashboard__services-title">Servicios disponibles</h2>
@@ -243,14 +296,14 @@ function Dashboard() {
                 </div>
 
                 <div className="dashboard__search-container">
-<SearchBar
+                    <SearchBar
                         id="dashboard-search"
                         placeholder="Buscar servicios, reservas, recursos…"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         onSearch={() => setBusqueda(query)}
-                        suggestions={services.flatMap((s) => [s.name, s.category])}
-/>
+                        suggestions={serviciosFiltrados.flatMap((s) => [s.name, s.category])}
+                    />
                 </div>
 
                 {serviciosEncontrados.length === 0 ? (
@@ -280,10 +333,11 @@ function Dashboard() {
                 )}
             </section>
 
+            {/* ── KPIs ── */}
             <section className="summary">
                 {stats.map((stat) => (
                     <article className="summary__card" key={stat.titulo}>
-                        <div className={`dashboard__stat-icon ${stat.clase}`}>
+                        <div className={`dashboard__stat-icon dashboard__stat-icon--${stat.clase}`}>
                             <Icon name={stat.icono} size={21} />
                         </div>
                         <div>
@@ -294,6 +348,7 @@ function Dashboard() {
                 ))}
             </section>
 
+            {/* ── GRID: Solicitudes + Notificaciones ── */}
             <section className="dashboard__grid">
                 <div className="card">
                     <div className="card__header">
@@ -301,56 +356,32 @@ function Dashboard() {
                         <Link to="/solicitudes" className="dashboard__card-view">Ver todas →</Link>
                     </div>
 
-                    {misSolicitudes.map((sol) => (
-                        <div className="dashboard__request" key={sol.id}>
-                            <div className="dashboard__request-icon">
-                                <Icon name={sol.servicio === "Reservas" ? "reservas" : "solicitudes"} size={16} />
-                            </div>
-                            <div className="dashboard__request-info">
-                                <div className="dashboard__request-name">{sol.tipo}</div>
-                                <div className="dashboard__request-id">ID: {sol.id}</div>
-                            </div>
-                            <span className={`status ${ESTADO_CLASE[sol.estado] || "status-gray"}`}>
-                                {sol.estado.toUpperCase()}
-                            </span>
-                            <div className="dashboard__request-date">
-                                {new Date(sol.fecha + "T00:00:00").toLocaleDateString("es-CO", {
-                                    day: "2-digit",
-                                    month: "2-digit",
-                                    year: "numeric"
-                                })}
-                            </div>
-                        </div>
-                    ))}
-
-                    <div className="dashboard__progress-title">
-                        Estados de una solicitud
-                    </div>
-
-                    <div className="dashboard__progress">
-                        <div className="dashboard__progress-track" />
-                        <div
-                            className="dashboard__progress-line"
-                            style={{ width: `${progresoPorcentaje}%` }}
-                        />
-                        {PROGRESS_STATES.map((estado, idx) => {
-                            const esActivo = idx < pasoActual;
-                            const esActual = idx === pasoActual;
-                            return (
-                                <div
-                                    className={
-                                        "dashboard__step" +
-                                        (esActivo ? " dashboard__step--active" : "") +
-                                        (esActual ? " dashboard__step--current" : "")
-                                    }
-                                    key={estado}
-                                >
-                                    <div className="dashboard__step-circle" />
-                                    <span>{estado.toUpperCase()}</span>
+                    {misSolicitudes.length === 0 ? (
+                        <div className="empty">No tienes solicitudes registradas.</div>
+                    ) : (
+                        misSolicitudes.map((sol) => (
+                            <div className="dashboard__request" key={sol.id}>
+                                <div className="dashboard__request-icon">
+                                    <Icon
+                                        name={sol.servicio === "Reservas" ? "reservas" : "solicitudes"}
+                                        size={16}
+                                    />
                                 </div>
-                            );
-                        })}
-                    </div>
+                                <div className="dashboard__request-info">
+                                    <div className="dashboard__request-name">{sol.tipo}</div>
+                                    <div className="dashboard__request-id">ID: {sol.id}</div>
+                                </div>
+                                <span className={`status status-${ESTADO_COLOR[sol.estado] || "gray"}`}>
+                                    {ETIQUETA_ESTADO[sol.estado] || sol.estado}
+                                </span>
+                                <div className="dashboard__request-date">
+                                    {new Date(sol.fecha + "T00:00:00").toLocaleDateString("es-CO", {
+                                        day: "2-digit", month: "2-digit", year: "numeric"
+                                    })}
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
 
                 <div className="card">
@@ -361,33 +392,37 @@ function Dashboard() {
 
                     <div className="dashboard__notification-list">
                         {notificaciones.slice(0, 5).map((notificacion) => (
-                            <div className="dashboard__notification" key={notificacion.id}>
+                            <div
+                                className={`dashboard__notification${!notificacion.leida ? " dashboard__notification--unread" : ""}`}
+                                key={notificacion.id}
+                            >
                                 <div className="dashboard__notification-top">
-                                    <span
-                                        className={`dashboard__notification-dot dashboard__notification-dot--${notificacion.icono.toLowerCase()}`}
-                                    />
+                                    <span className={`dashboard__notification-dot dashboard__notification-dot--${notificacion.icono}`} />
                                     <div>
                                         <div className="dashboard__notification-title">{notificacion.tipo}</div>
                                         <div className="dashboard__notification-text">{notificacion.mensaje}</div>
                                         <div className="dashboard__notification-time">
                                             {new Date(notificacion.fecha + "T00:00:00").toLocaleDateString("es-CO", {
-                                                day: "numeric",
-                                                month: "short"
+                                                day: "numeric", month: "short"
                                             })}
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         ))}
+                        {notificaciones.length === 0 && (
+                            <div className="empty">No tienes notificaciones.</div>
+                        )}
                     </div>
                 </div>
             </section>
 
+            {/* ── BOTTOM GRID: Calendario + Actividad reciente ── */}
             <section className="dashboard__bottom-grid">
                 <div className="card">
                     <div className="card__header">
                         <h2>Calendario</h2>
-                        <Link to="/eventos" className="dashboard__card-view">Ver calendario →</Link>
+                        <Link to="/eventos" className="dashboard__card-view">Ver eventos →</Link>
                     </div>
 
                     <div className="dashboard__calendar-header">
@@ -424,29 +459,52 @@ function Dashboard() {
                 <div className="card">
                     <div className="card__header">
                         <h2>Actividad reciente</h2>
-                        <Link to="/eventos" className="dashboard__card-view">Ver toda →</Link>
+                        <Link to="/solicitudes" className="dashboard__card-view">Ver todo →</Link>
                     </div>
 
                     <div className="dashboard__activity-list">
-                        {actividades.slice(0, 5).map((actividad, idx) => (
-                            <div className="dashboard__activity" key={idx}>
-                                <div className={`dashboard__activity-icon ${actividad.clase}`}>
-                                    <Icon name={actividad.icono} size={15} />
+                        {actividades.length === 0 ? (
+                            <div className="empty">Sin actividad reciente.</div>
+                        ) : (
+                            actividades.map((actividad, idx) => (
+                                <div className="dashboard__activity" key={idx}>
+                                    <div className={`dashboard__activity-icon dashboard__activity-icon--${actividad.clase}`}>
+                                        <Icon name={actividad.icono} size={15} />
+                                    </div>
+                                    <div className="dashboard__activity-info">
+                                        <div className="dashboard__activity-title">{actividad.titulo}</div>
+                                        <div className="dashboard__activity-time">{actividad.tiempo}</div>
+                                    </div>
+                                    {actividad.etiqueta && (
+                                        <span className={`status ${actividad.estadoClase}`}>
+                                            {actividad.etiqueta}
+                                        </span>
+                                    )}
                                 </div>
-                                <div className="dashboard__activity-info">
-                                    <div className="dashboard__activity-title">{actividad.titulo}</div>
-                                    <div className="dashboard__activity-time">{actividad.tiempo}</div>
-                                </div>
-                                {actividad.etiqueta && (
-                                    <span className={`status ${actividad.estadoClase}`}>
-                                        {actividad.etiqueta}
-                                    </span>
-                                )}
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 </div>
             </section>
+
+            {/* TAREA 8: tooltip del calendario renderizado fuera del grid con position:fixed */}
+            {tooltip && (
+                <div
+                    className="dashboard__calendar-tooltip-portal"
+                    style={{
+                        left: tooltip.x,
+                        top:  tooltip.y - 8,
+                        transform: "translate(-50%, -100%)"
+                    }}
+                >
+                    {tooltip.eventos.map((evento) => (
+                        <span className="dashboard__calendar-tooltip-item" key={evento.id}>
+                            <strong>{evento.nombre}</strong>
+                            <span>{evento.hora} · {evento.lugar}</span>
+                        </span>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

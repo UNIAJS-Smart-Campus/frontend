@@ -1,12 +1,14 @@
 import { useState } from "react";
 import Icon from "../../components/Icon/Icon";
-import notificaciones from "../../utils/notificaciones";
+import useAuth from "../../context/useAuth";
+import { obtenerNotificacionesPorPerfil, guardarNotificaciones } from "../../utils/notificaciones";
 import "./Notificaciones.css";
 
 const TIPOS = ["Todas", "Solicitud", "Reserva", "Evento", "PQRS"];
 
 function Notificaciones() {
-    const [items, setItems] = useState(notificaciones);
+    const { user } = useAuth();
+    const [items, setItems] = useState(() => obtenerNotificacionesPorPerfil(user?.rol));
     const [filtro, setFiltro] = useState("Todas");
 
     const noLeidas = items.filter((item) => !item.leida).length;
@@ -20,29 +22,32 @@ function Notificaciones() {
         tipo === "Todas" ? items.length : items.filter((i) => i.tipo === tipo).length;
 
     const marcarLeida = (id) => {
-        setItems((prev) =>
-            prev.map((item) =>
-                item.id === id ? { ...item, leida: true } : item
-            )
-        );
+        setItems((prev) => {
+            const nueva = prev.map((item) => (item.id === id ? { ...item, leida: true } : item));
+            guardarNotificaciones(nueva);
+            return nueva;
+        });
     };
 
     const marcarTodasLeidas = () => {
-        setItems((prev) => prev.map((item) => ({ ...item, leida: true })));
+        setItems((prev) => {
+            const nueva = prev.map((item) => ({ ...item, leida: true }));
+            guardarNotificaciones(nueva);
+            return nueva;
+        });
     };
 
     const nuevaNoLeida = (item) => {
-        let dias = 0;
         try {
-            dias = Math.floor(
-                (new Date(2026, 7, 27) - new Date(item.fecha)) / 86400000
+            const dias = Math.floor(
+                (new Date() - new Date(item.fecha + "T00:00:00")) / 86400000
             );
+            if (dias <= 0) return "Hoy";
+            if (dias === 1) return "Ayer";
+            return `Hace ${dias} días`;
         } catch {
-            dias = 0;
+            return "";
         }
-        if (dias <= 0) return "Hoy";
-        if (dias === 1) return "Ayer";
-        return `Hace ${dias} días`;
     };
 
     return (

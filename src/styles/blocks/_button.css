@@ -78,7 +78,7 @@
 .button--secondary {
     background-color: var(--color-primary-100);
     color: var(--color-primary-600);
-    border: 1px solid rgba(42, 101, 193, 0.12);
+    border: 1px solid rgba(2, 94, 115, 0.12);
 }
 
 .button--secondary:hover:not(:disabled) {
@@ -100,11 +100,11 @@
 .button--outline {
     background-color: transparent;
     color: var(--color-primary-600);
-    border: 1.5px solid rgba(42, 101, 193, 0.5);
+    border: 1.5px solid rgba(2, 94, 115, 0.5);
 }
 
 .button--outline:hover:not(:disabled) {
-    background: linear-gradient(180deg, rgba(42, 101, 193, 0.04), rgba(42, 101, 193, 0.08));
+    background: linear-gradient(180deg, rgba(2, 94, 115, 0.04), rgba(2, 94, 115, 0.08));
 }
 
 .button--ghost {

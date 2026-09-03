@@ -1,19 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../../../components/Icon/Icon";
-import { TIPOS_PQRS } from "../../../utils/pqrs";
+import useAuth from "../../../context/useAuth";
+import { TIPOS_PQRS, obtenerPqrs, guardarPqrs } from "../../../utils/pqrs";
 import "./NuevaPQRS.css";
 
-const STORAGE_KEY = "uajs_pqrs";
-
-const TIPO_ICONO = {
-    Petición: "solicitudes",
-    Queja: "pqrs",
-    Reclamo: "info",
-    Sugerencia: "eventos"
-};
-
 function NuevaPQRS() {
+    const { user } = useAuth();
     const [form, setForm] = useState({
         tipo: TIPOS_PQRS[0],
         descripcion: ""
@@ -27,24 +20,19 @@ function NuevaPQRS() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-
-        const numero = `PQRS-2026-${String(15 + Math.floor(Math.random() * 900)).padStart(3, "0")}`;
-
+        const numero = `PQRS-2026-${String(Date.now()).slice(-3)}`;
         const nueva = {
             id: numero,
             tipo: form.tipo,
             fecha: new Date().toISOString().slice(0, 10),
             estado: "Registrada",
-            descripcion: form.descripcion
+            descripcion: form.descripcion,
+            solicitante: user?.nombre || "Anónimo",
+            usuarioId: user?.id ?? null
         };
-
-        try {
-            const actuales = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-            localStorage.setItem(STORAGE_KEY, JSON.stringify([nueva, ...actuales]));
-        } catch {
-            // si localStorage no está disponible se ignora
-        }
-
+        const lista = obtenerPqrs();
+        lista.unshift(nueva);
+        guardarPqrs(lista);
         setConfirmacion(
             `Tu ${form.tipo.toLowerCase()} fue registrada con el número ${numero}.`
         );

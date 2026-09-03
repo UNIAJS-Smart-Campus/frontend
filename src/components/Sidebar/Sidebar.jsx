@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import menuSections from "../../utils/menu";
 import useAuth from "../../context/useAuth";
 import Icon from "../Icon/Icon";
+import BrandLogo from "../BrandLogo/BrandLogo";
 import "./Sidebar.css";
 
 function Sidebar({ collapsed }) {
@@ -21,7 +22,7 @@ function Sidebar({ collapsed }) {
   return (
     <nav className={classes}>
       <div className="sidebar__brand">
-        <img src="/Logo_Light_UAJS.png" alt="Logo UAJS Smart Campus" className="sidebar__logo" />
+        <BrandLogo className="sidebar__logo" />
       </div>
 
       <div className="sidebar__menu">

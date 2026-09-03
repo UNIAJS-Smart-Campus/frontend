@@ -3,7 +3,12 @@ import Icon from "../../components/Icon/Icon";
 import Modal from "../../components/Modal/Modal";
 import Input from "../../components/Input/Input";
 import SearchBar from "../../components/SearchBar/SearchBar";
+import Pagination from "../../components/Pagination/Pagination";
 import recursos from "../../utils/recursos";
+import { esEscenario } from "../../utils/recursos";
+import { obtenerReservas, guardarReservas } from "../../utils/reservas";
+import useAuth from "../../context/useAuth";
+import usePagination from "../../hooks/usePagination";
 import "./Reservas.css";
 
 const TIPO_VARIANT = {
@@ -14,36 +19,6 @@ const TIPO_VARIANT = {
 };
 
 const DIAS_SEMANA = ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"];
-
-const RESERVAS_INICIALES = [
-    {
-        id: "RES-INICIAL-1",
-        recurso: "Salón 101",
-        fecha: "2026-08-31",
-        horaInicio: "10:00",
-        horaFin: "12:00",
-        proposito: "Reunión de grupo",
-        estado: "Confirmada"
-    },
-    {
-        id: "RES-INICIAL-2",
-        recurso: "Laboratorio de informática 1",
-        fecha: "2026-09-01",
-        horaInicio: "14:00",
-        horaFin: "16:00",
-        proposito: "Práctica de programación",
-        estado: "Pendiente"
-    },
-    {
-        id: "RES-INICIAL-3",
-        recurso: "Auditorio principal",
-        fecha: "2026-09-03",
-        horaInicio: "08:00",
-        horaFin: "09:00",
-        proposito: "Asamblea estudiantil",
-        estado: "Confirmada"
-    }
-];
 
 const ESTADO_CLASE = {
     Confirmada: "confirmed",
@@ -67,13 +42,14 @@ function formatearHora(hora24) {
 }
 
 function Reservas() {
+    const { user } = useAuth();
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");
     const [tipo, setTipo] = useState("Todos");
     const [fecha, setFecha] = useState("");
     const [hora, setHora] = useState("Cualquier hora");
     const [recursoSeleccionado, setRecursoSeleccionado] = useState(null);
-    const [misReservas, setMisReservas] = useState(RESERVAS_INICIALES);
+    const [misReservas, setMisReservas] = useState(() => obtenerReservas());
     const [modalAbierto, setModalAbierto] = useState(false);
     const [form, setForm] = useState({
         fecha: "",
@@ -86,7 +62,7 @@ function Reservas() {
     const [busquedaAlerta, setBusquedaAlerta] = useState(false);
 
     const hoy = new Date();
-    const hoyStr = hoy.toISOString().split("T")[0];
+    const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
 
     const disponibles = useMemo(() => {
         return recursos
@@ -105,8 +81,18 @@ function Reservas() {
                     return false;
                 }
                 return true;
+            })
+            .filter((recurso) => {
+                if (!fecha) return true;
+                const tieneReserva = misReservas.some(
+                    (r) =>
+                        r.recurso === recurso.nombre &&
+                        r.fecha === fecha &&
+                        r.estado !== "Cancelada"
+                );
+                return !tieneReserva;
             });
-    }, [busqueda, tipo]);
+    }, [busqueda, tipo, fecha, misReservas]);
 
     const refrescar = () => {
         if (busquedaAlerta) {
@@ -143,6 +129,7 @@ function Reservas() {
             const conflicto = misReservas.find((reserva) => {
                 if (reserva.recurso !== recursoSeleccionado.nombre) return false;
                 if (reserva.fecha !== form.fecha) return false;
+                if (reserva.estado === "Cancelada") return false;
                 return (
                     form.horaInicio < reserva.horaFin &&
                     reserva.horaInicio < form.horaFin
@@ -183,11 +170,18 @@ function Reservas() {
         const nueva = {
             id: `RES-${Date.now()}`,
             recurso: recursoSeleccionado.nombre,
+            tipoRecurso: recursoSeleccionado.tipo ?? "",
+            usuarioId: user?.id ?? null,
+            usuario: user?.nombre ?? "",
             ...form,
             estado: "Pendiente"
         };
 
-        setMisReservas((prev) => [nueva, ...prev]);
+        setMisReservas((prev) => {
+            const actualizadas = [nueva, ...prev];
+            guardarReservas(actualizadas);
+            return actualizadas;
+        });
         setConfirmacion(
             `Reserva de "${recursoSeleccionado.nombre}" registrada correctamente.`
         );
@@ -195,13 +189,14 @@ function Reservas() {
     };
 
     const cancelarReserva = (id) => {
-        setMisReservas((prev) =>
-            prev.map((reserva) =>
-                reserva.id === id
-                    ? { ...reserva, estado: "Cancelada" }
-                    : reserva
-            )
-        );
+        if (!window.confirm("¿Estás seguro de que deseas cancelar esta reserva?")) return;
+        setMisReservas((prev) => {
+            const actualizadas = prev.map((reserva) =>
+                reserva.id === id ? { ...reserva, estado: "Cancelada" } : reserva
+            );
+            guardarReservas(actualizadas);
+            return actualizadas;
+        });
     };
 
     const buscarRecursos = () => {
@@ -223,20 +218,39 @@ function Reservas() {
     const inicioSemana = new Date(fechaReferencia);
     inicioSemana.setDate(fechaReferencia.getDate() - fechaReferencia.getDay() + 1);
 
+    const misReservasFiltradas = useMemo(() => {
+        if (!user) return misReservas;
+        return misReservas.filter(
+            (r) => r.usuarioId === user.id || r.usuarioId == null
+        );
+    }, [misReservas, user]);
+
+    // Ordenar por fecha descendente (más recientes primero) y paginar 10 por página
+    const misReservasOrdenadas = useMemo(
+        () =>
+            [...misReservasFiltradas].sort(
+                (a, b) =>
+                    new Date(b.fecha + "T" + (b.horaInicio || "00:00")) -
+                    new Date(a.fecha + "T" + (a.horaInicio || "00:00"))
+            ),
+        [misReservasFiltradas]
+    );
+
+    const {
+        pagina: paginaReservas,
+        setPagina: setPaginaReservas,
+        totalPaginas: totalPaginasReservas,
+        itemsPagina: itemsPaginaReservas,
+        desde: desdeReservas,
+        hasta: hastaReservas
+    } = usePagination(misReservasOrdenadas, 10);
+
     return (
         <div className="page">
             <div className="page__header">
                 <div className="page__title">
                     <p>Reserva espacios y recursos disponibles del campus.</p>
                 </div>
-
-                <button
-                    className="button button--accent button--md"
-                    onClick={() => abrirModal(null)}
-                >
-                    <Icon name="configuracion" size={13} />
-                    Nueva reserva
-                </button>
             </div>
 
             <div className="filters">
@@ -253,6 +267,7 @@ function Reservas() {
                             }}
                             onSearch={buscarRecursos}
                             suggestions={sugerencias}
+                            description=""
                         />
                     </div>
 
@@ -343,7 +358,7 @@ function Reservas() {
                                         className="reservas__reserve-button"
                                         onClick={() => abrirModal(recurso)}
                                     >
-                                        Reservar espacio
+                                        {esEscenario(recurso) ? "Reservar espacio" : "Solicitar equipo"}
                                     </button>
                                 </div>
                             </div>
@@ -359,63 +374,81 @@ function Reservas() {
             <div className="card">
                 <div className="card__header">
                     <h2>Mis reservas</h2>
-                    <span className="dashboard__card-view">Ver historial →</span>
+                    {misReservasOrdenadas.length > 0 && (
+                        <span className="dashboard__card-view">
+                            {desdeReservas}–{hastaReservas} de {misReservasOrdenadas.length} reservas
+                        </span>
+                    )}
                 </div>
 
-                {misReservas.length > 0 ? (
-                    misReservas.map((reserva) => (
-                        <div className="reservas__reservation" key={reserva.id}>
-                            <div className="reservas__reservation-icon">
-                                <Icon name={reserva.recurso.includes("Laboratorio") ? "recursos" : "reservas"} size={17} />
-                            </div>
-
-                            <div className="reservas__reservation-info">
-                                <div className="reservas__reservation-name">{reserva.recurso}</div>
-                                <div className="reservas__reservation-details">
-                                    <span>
-                                        <Icon name="reservas" size={10} />
-                                        {new Date(reserva.fecha + "T00:00:00").toLocaleDateString("es-CO", {
-                                            weekday: "long",
-                                            day: "numeric",
-                                            month: "long"
-                                        })}
-                                    </span>
-                                    <span>
-                                        <Icon name="eventos" size={10} />
-                                        {formatearHora(reserva.horaInicio)} - {formatearHora(reserva.horaFin)}
-                                    </span>
-                                    <span>
-                                        <Icon name="solicitudes" size={10} />
-                                        {reserva.proposito}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <span className={`reservas__reservation-status ${ESTADO_CLASE[reserva.estado] || "pending"}`}>
-                                {reserva.estado.toUpperCase()}
-                            </span>
-
-                            {reserva.estado !== "Cancelada" && (
-                                <div className="reservas__reservation-actions">
-                                    <button
-                                        className="reservas__action-button"
-                                        title="Editar"
-                                    >
-                                        <Icon name="configuracion" size={13} />
-                                    </button>
-                                    <button
-                                        className="reservas__action-button reservas__action-button--delete"
-                                        title="Cancelar"
-                                        onClick={() => cancelarReserva(reserva.id)}
-                                    >
-                                        <Icon name="eventos" size={13} />
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    ))
-                ) : (
+                {misReservasOrdenadas.length === 0 ? (
                     <div className="empty">Aún no tienes reservas.</div>
+                ) : (
+                    <>
+                        {itemsPaginaReservas.map((reserva) => {
+                            const fechaReserva = new Date(reserva.fecha + "T00:00:00");
+                            const hoyMedianoche = new Date(hoyStr + "T00:00:00");
+                            const esPasada = fechaReserva < hoyMedianoche;
+                            return (
+                                <div
+                                    className={`reservas__reservation${esPasada ? " reservas__reservation--past" : ""}`}
+                                    key={reserva.id}
+                                >
+                                    <div className="reservas__reservation-icon">
+                                        <Icon name={reserva.recurso.includes("Laboratorio") ? "recursos" : "reservas"} size={17} />
+                                    </div>
+
+                                    <div className="reservas__reservation-info">
+                                        <div className="reservas__reservation-name">{reserva.recurso}</div>
+                                        <div className="reservas__reservation-details">
+                                            <span>
+                                                <Icon name="reservas" size={10} />
+                                                {fechaReserva.toLocaleDateString("es-CO", {
+                                                    weekday: "long",
+                                                    day: "numeric",
+                                                    month: "long"
+                                                })}
+                                            </span>
+                                            <span>
+                                                <Icon name="eventos" size={10} />
+                                                {formatearHora(reserva.horaInicio)} - {formatearHora(reserva.horaFin)}
+                                            </span>
+                                            <span>
+                                                <Icon name="solicitudes" size={10} />
+                                                {reserva.proposito}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <span className={`reservas__reservation-status ${ESTADO_CLASE[reserva.estado] || "pending"}`}>
+                                        {reserva.estado.toUpperCase()}
+                                    </span>
+
+                                    {!esPasada && reserva.estado !== "Cancelada" && (
+                                        <div className="reservas__reservation-actions">
+                                            <button
+                                                type="button"
+                                                className="reservas__action-button reservas__action-button--delete"
+                                                title="Cancelar reserva"
+                                                onClick={() => cancelarReserva(reserva.id)}
+                                            >
+                                                <Icon name="eventos" size={13} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+
+                        <Pagination
+                            pagina={paginaReservas}
+                            totalPaginas={totalPaginasReservas}
+                            onChange={setPaginaReservas}
+                            desde={desdeReservas}
+                            hasta={hastaReservas}
+                            total={misReservasOrdenadas.length}
+                        />
+                    </>
                 )}
             </div>
 
@@ -434,7 +467,7 @@ function Reservas() {
                             fechaDia.getMonth() === hoy.getMonth() &&
                             fechaDia.getFullYear() === hoy.getFullYear();
 
-                        const reservasDia = misReservas.filter(
+                        const reservasDia = misReservasFiltradas.filter(
                             (r) =>
                                 new Date(r.fecha + "T00:00:00").toDateString() ===
                                 fechaDia.toDateString()

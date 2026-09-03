@@ -13,7 +13,8 @@ export const ROLES = [
             "reportes",
             "perfil",
             "configuracion",
-            "info_academica"
+            "info_academica",
+            "gestion_pqrs"
         ],
         acciones: [
             "registrar_solicitudes",
@@ -46,7 +47,9 @@ export const ROLES = [
             "pqrs",
             "perfil",
             "reportes",
-            "configuracion"
+            "configuracion",
+            "info_academica",
+            "gestion_pqrs"
         ],
         acciones: [
             "consultar_solicitudes",
@@ -209,7 +212,9 @@ export const STORAGE_KEY = "uajs_users";
 export function obtenerUsuarios() {
     try {
         const guardados = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-        return guardados.length > 0 ? guardados : usuarios;
+        if (guardados.length > 0) return guardados;
+        guardarUsuarios(usuarios);
+        return usuarios;
     } catch {
         return usuarios;
     }
@@ -223,13 +228,25 @@ export function guardarUsuarios(lista) {
     }
 }
 
+function buscarRol(rol) {
+    if (!rol) return null;
+    const exacto = ROLES.find((item) => item.nombre === rol);
+    if (exacto) return exacto;
+    const objetivo = String(rol).trim().toLowerCase();
+    return (
+        ROLES.find(
+            (item) => String(item.nombre).trim().toLowerCase() === objetivo
+        ) || null
+    );
+}
+
 export function permisosDeRol(rol) {
-    const encontrado = ROLES.find((item) => item.nombre === rol);
+    const encontrado = buscarRol(rol);
     return encontrado ? encontrado.permisos : [];
 }
 
 export function accionesDeRol(rol) {
-    const encontrado = ROLES.find((item) => item.nombre === rol);
+    const encontrado = buscarRol(rol);
     return encontrado ? encontrado.acciones : [];
 }
 

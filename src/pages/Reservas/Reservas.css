@@ -233,7 +233,7 @@
 .reservas__resource-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 22px 38px rgba(15, 23, 42, 0.12), 0 10px 18px rgba(15, 23, 42, 0.05);
-    border-color: rgba(42, 101, 193, 0.34);
+    border-color: rgba(2, 94, 115, 0.34);
 }
 
 .reservas__resource-image {
@@ -244,11 +244,11 @@
     color: var(--color-primary-600);
     font-size: 42px;
     position: relative;
-    background: linear-gradient(135deg, #e9f3ff, #d8e8fb);
+    background: linear-gradient(135deg, #d0ecf1, #b9dfe8);
 }
 
 .reservas__resource-image.blue-bg {
-    background: linear-gradient(135deg, #e9f3ff, #d8e8fb);
+    background: linear-gradient(135deg, #d0ecf1, #b9dfe8);
     color: var(--color-primary-600);
 }
 
@@ -342,7 +342,7 @@
 
 .reservas__reserve-button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 12px 24px rgba(95, 117, 255, 0.18);
+    box-shadow: 0 12px 24px rgba(2, 94, 115, 0.16);
     filter: saturate(1.08);
 }
 
@@ -373,6 +373,20 @@
 
 .reservas__reservation:last-child {
     border-bottom: none;
+}
+
+.reservas__reservation--past {
+    opacity: 0.72;
+    background-color: var(--color-surface-alt, #f7f9fc);
+}
+
+.reservas__reservation--past .reservas__reservation-name {
+    color: var(--color-text-muted);
+}
+
+.reservas__reservation--past .reservas__reservation-icon {
+    background: var(--color-hover, #eef2f7);
+    color: var(--color-text-muted);
 }
 
 .reservas__reservation-icon {
@@ -754,7 +768,7 @@
 
 /* ============ RESPONSIVE ============ */
 @media (max-width: 1150px) {
-    .reservas__filters {
+    .filters__grid {
         grid-template-columns: 1fr 1fr;
     }
 
@@ -764,6 +778,10 @@
 }
 
 @media (max-width: 850px) {
+    .filters__grid {
+        grid-template-columns: 1fr;
+    }
+
     .reservas__resources {
         grid-template-columns: 1fr;
     }
@@ -778,10 +796,6 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 15px;
-    }
-
-    .reservas__filters {
-        grid-template-columns: 1fr;
     }
 
     .reservas__reservation {

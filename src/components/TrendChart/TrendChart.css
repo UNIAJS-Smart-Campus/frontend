@@ -1,24 +1,103 @@
+/* ==========================================
+   TrendChart — gráfico de barras con línea de tendencia
+   ========================================== */
+
 .trend {
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+    position: relative;
 }
 
-.trend__chart {
+/* Cuadrícula de referencia */
+.trend__grid-lines {
+    position: absolute;
+    inset: 0 0 28px 32px; /* bottom = label, left = labels de eje */
+    pointer-events: none;
+    z-index: 0;
+}
+
+.trend__grid-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px dashed var(--color-border);
     display: flex;
     align-items: flex-end;
-    gap: 8px;
-    height: 180px;
-    padding-top: var(--space-2);
 }
 
+.trend__grid-line:first-child {
+    border-color: transparent; /* línea del 0 — invisible */
+}
+
+.trend__grid-label {
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    transform: translateX(calc(-100% - 6px)) translateY(50%);
+    white-space: nowrap;
+    opacity: 0.6;
+}
+
+/* Área del chart */
+.trend__chart {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 200px;
+    padding: 12px 0 0 36px; /* espacio para labels del eje Y */
+    z-index: 1;
+}
+
+/* SVG de líneas de tendencia — superpuesto */
+.trend__lines-svg {
+    position: absolute;
+    inset: 12px 0 0 36px;
+    width: calc(100% - 36px);
+    height: calc(100% - 12px);
+    pointer-events: none;
+    z-index: 2;
+    overflow: visible;
+}
+
+.trend__line {
+    vector-effect: non-scaling-stroke;
+}
+
+.trend__line--solicitudes {
+    stroke-dasharray: 400;
+    stroke-dashoffset: 400;
+    animation: trend-draw 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
+}
+
+.trend__line--reservas {
+    stroke-dasharray: 400;
+    stroke-dashoffset: 400;
+    animation: trend-draw 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.55s forwards;
+}
+
+@keyframes trend-draw {
+    to { stroke-dashoffset: 0; }
+}
+
+/* Grupos de barras */
 .trend__group {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     min-width: 0;
+    position: relative;
+    z-index: 3;
+    border-radius: 6px 6px 0 0;
+    transition: background var(--transition-fast);
+    cursor: crosshair;
+}
+
+.trend__group--active {
+    background: var(--color-hover);
 }
 
 .trend__cols {
@@ -28,58 +107,197 @@
     align-items: flex-end;
     justify-content: center;
     gap: 3px;
+    padding: 0 2px;
 }
 
+/* Wrapper de cada barra — para el valor encima */
+.trend__col-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 1;
+    height: 100%;
+    min-width: 0;
+    position: relative;
+}
+
+/* Valor encima de la barra — visible solo en hover */
+.trend__col-value {
+    font-size: 7px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 2px;
+    opacity: 0;
+    transform: translateY(3px);
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.trend__group--active .trend__col-value {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.trend__col-value--sol { color: var(--color-primary-600); }
+.trend__col-value--res { color: var(--color-accent-dark); }
+
+/* Barras */
 .trend__col {
-    width: 8px;
-    border-radius: 3px 3px 0 0;
-    min-height: 2px;
-    transition: height var(--transition-base);
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    min-height: 3px;
+    transform-origin: bottom;
+    animation: trend-bar-grow 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 .trend__col--solicitudes {
-    background: var(--color-primary-600);
+    background: linear-gradient(180deg, var(--color-primary-500), var(--color-primary-700));
+    box-shadow: 0 -2px 8px rgba(30, 95, 159, 0.3);
 }
 
 .trend__col--reservas {
-    background: var(--color-accent);
+    background: linear-gradient(180deg, #f9d74a, #d4a400);
+    box-shadow: 0 -2px 8px rgba(212, 164, 0, 0.25);
 }
 
+/* Animación de entrada en cascada */
+@keyframes trend-bar-grow {
+    from {
+        transform: scaleY(0);
+        opacity: 0;
+    }
+    to {
+        transform: scaleY(1);
+        opacity: 1;
+    }
+}
+
+/* Delay escalonado para cada grupo */
+.trend__group:nth-child(1) .trend__col  { animation-delay: 0.05s; }
+.trend__group:nth-child(2) .trend__col  { animation-delay: 0.10s; }
+.trend__group:nth-child(3) .trend__col  { animation-delay: 0.15s; }
+.trend__group:nth-child(4) .trend__col  { animation-delay: 0.20s; }
+.trend__group:nth-child(5) .trend__col  { animation-delay: 0.25s; }
+.trend__group:nth-child(6) .trend__col  { animation-delay: 0.30s; }
+.trend__group:nth-child(7) .trend__col  { animation-delay: 0.35s; }
+.trend__group:nth-child(8) .trend__col  { animation-delay: 0.40s; }
+.trend__group:nth-child(9) .trend__col  { animation-delay: 0.45s; }
+.trend__group:nth-child(10) .trend__col { animation-delay: 0.50s; }
+.trend__group:nth-child(11) .trend__col { animation-delay: 0.55s; }
+.trend__group:nth-child(12) .trend__col { animation-delay: 0.60s; }
+
+/* Label del eje X */
 .trend__label {
     font-size: 9px;
     font-weight: 600;
     color: var(--color-text-muted);
     white-space: nowrap;
+    transition: color var(--transition-fast);
 }
 
+.trend__group--active .trend__label {
+    color: var(--color-text);
+    font-weight: 700;
+}
+
+/* ==========================================
+   Tooltip flotante
+   ========================================== */
+.trend__tooltip {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    transform: translateX(-50%);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    min-width: 130px;
+    box-shadow: var(--shadow-md);
+    pointer-events: none;
+    z-index: 100;
+    animation: tooltip-pop 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes tooltip-pop {
+    from { opacity: 0; transform: translateX(-50%) scale(0.92) translateY(4px); }
+    to   { opacity: 1; transform: translateX(-50%) scale(1)    translateY(0);   }
+}
+
+.trend__tooltip-mes {
+    display: block;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--color-text);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.trend__tooltip-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    padding: 2px 0;
+}
+
+.trend__tooltip-row strong {
+    margin-left: auto;
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.trend__tooltip-key {
+    flex: 1;
+}
+
+.trend__tooltip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.trend__tooltip-dot--sol { background: var(--color-primary-600); }
+.trend__tooltip-dot--res { background: var(--color-accent-dark); }
+
+/* ==========================================
+   Leyenda
+   ========================================== */
 .trend__legend {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-4);
+    gap: var(--space-6);
     flex-wrap: wrap;
+    padding-top: 2px;
 }
 
 .trend__legend-item {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font-size: 10px;
+    gap: 7px;
+    font-size: 11px;
     font-weight: 600;
-    color: var(--color-text-muted);
+    color: var(--color-text-secondary);
 }
 
 .trend__legend-item::before {
     content: "";
-    width: 10px;
-    height: 10px;
-    border-radius: 3px;
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
 }
 
 .trend__legend-item--solicitudes::before {
-    background: var(--color-primary-600);
+    background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700));
 }
 
 .trend__legend-item--reservas::before {
-    background: var(--color-accent);
+    background: linear-gradient(135deg, #f9d74a, #d4a400);
 }

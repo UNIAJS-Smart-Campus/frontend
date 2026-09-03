@@ -4,7 +4,7 @@ import Modal from "../../components/Modal/Modal";
 import Input from "../../components/Input/Input";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
-import { TIPOS_RECURSO, obtenerRecursos, guardarRecursos } from "../../utils/recursos";
+import { TIPOS_RECURSO, CATEGORIA_POR_TIPO, CATEGORIAS_RECURSO, obtenerRecursos, guardarRecursos } from "../../utils/recursos";
 import "./Recursos.css";
 
 const CATEGORIA_VARIANT = {
@@ -34,13 +34,6 @@ function estadoVisual(recurso) {
     return ESTADO_VARIANT.Ocupado;
 }
 
-function esReservable(recurso) {
-    return (
-        recurso.estado === "Activo" &&
-        recurso.disponibilidad === "Disponible"
-    );
-}
-
 const CATEGORIAS = [
     { valor: "all", etiqueta: "Todas" },
     { valor: "Salas", etiqueta: "Espacios" },
@@ -57,26 +50,17 @@ function obtenerEdificio(ubicacion) {
 }
 
 function Recursos() {
+    const [items, setItems] = useState(() => obtenerRecursos());
     const { puede } = useAuth();
     const puedeAdmin = puede("administrar_recursos");
 
-    const [items, setItems] = useState(obtenerRecursos);
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");
     const [categoria, setCategoria] = useState("all");
+    const [categoriaRecurso, setCategoriaRecurso] = useState("Todas");
     const [edificio, setEdificio] = useState("Todos");
     const [estado, setEstado] = useState("Todos");
-    const [recursoSeleccionado, setRecursoSeleccionado] = useState(null);
-    const [modalAbierto, setModalAbierto] = useState(false);
     const [detalleRecurso, setDetalleRecurso] = useState(null);
-    const [form, setForm] = useState({
-        fecha: "",
-        horaInicio: "10:00",
-        horaFin: "12:00",
-        motivo: ""
-    });
-    const [errores, setErrores] = useState({});
-    const [confirmacion, setConfirmacion] = useState("");
 
     const [crudAbierto, setCrudAbierto] = useState(false);
     const [editandoId, setEditandoId] = useState(null);
@@ -91,8 +75,6 @@ function Recursos() {
     });
     const [errorRecurso, setErrorRecurso] = useState("");
     const [aviso, setAviso] = useState("");
-
-    const hoyStr = new Date().toISOString().split("T")[0];
 
     const mostrarAviso = (mensaje) => {
         setAviso(mensaje);
@@ -128,6 +110,10 @@ function Recursos() {
             if (categoria !== "all" && recurso.tipo !== categoria) {
                 return false;
             }
+            if (categoriaRecurso !== "Todas") {
+                const cat = recurso.categoria ?? CATEGORIA_POR_TIPO[recurso.tipo];
+                if (cat !== categoriaRecurso) return false;
+            }
             if (
                 edificio !== "Todos" &&
                 obtenerEdificio(recurso.ubicacion) !== edificio
@@ -135,19 +121,19 @@ function Recursos() {
                 return false;
             }
             if (estado !== "Todos") {
-                if (estado === "Disponible" && !esReservable(recurso)) {
+                if (estado === "Disponible" && recurso.disponibilidad !== "Disponible") {
                     return false;
                 }
                 if (estado === "Mantenimiento" && recurso.estado !== "En mantenimiento") {
                     return false;
                 }
-                if (estado === "Reservado" && esReservable(recurso)) {
+                if (estado === "Reservado" && recurso.disponibilidad === "Disponible") {
                     return false;
                 }
             }
             return true;
         });
-    }, [busqueda, categoria, edificio, estado, items]);
+    }, [busqueda, categoria, categoriaRecurso, edificio, estado, items]);
 
     const sugerencias = [
         ...new Set(
@@ -157,54 +143,13 @@ function Recursos() {
         )
     ];
 
-    const abrirReserva = (recurso) => {
-        if (!esReservable(recurso)) return;
-        setRecursoSeleccionado(recurso);
-        setConfirmacion("");
-        setErrores({});
-        setForm({ fecha: "", horaInicio: "10:00", horaFin: "12:00", motivo: "" });
-        setModalAbierto(true);
-    };
-
-    const cerrarModal = () => {
-        setModalAbierto(false);
-        setRecursoSeleccionado(null);
-    };
-
-    const validarFormulario = () => {
-        const nuevos = {};
-        if (!form.fecha) {
-            nuevos.fecha = "La fecha es obligatoria.";
-        } else if (form.fecha < hoyStr) {
-            nuevos.fecha = "No puedes reservar en una fecha pasada.";
-        }
-        if (form.horaInicio >= form.horaFin) {
-            nuevos.horaFin = "La hora de fin debe ser posterior a la de inicio.";
-        }
-        setErrores(nuevos);
-        return Object.keys(nuevos).length === 0;
-    };
-
-    const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-        setErrores((prev) => ({ ...prev, [e.target.name]: "" }));
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (!validarFormulario()) return;
-        setConfirmacion(
-            `La solicitud de reserva de "${recursoSeleccionado.nombre}" fue registrada correctamente.`
-        );
-        setErrores({});
-    };
-
     const abrirNuevoRecurso = () => {
         setEditandoId(null);
         setFormRecurso({
             nombre: "",
             codigo: "",
             tipo: "Salas",
+            categoria: "Escenario",
             capacidad: "",
             ubicacion: "",
             estado: "Activo",
@@ -220,6 +165,7 @@ function Recursos() {
             nombre: recurso.nombre,
             codigo: recurso.codigo,
             tipo: recurso.tipo,
+            categoria: recurso.categoria ?? CATEGORIA_POR_TIPO[recurso.tipo] ?? "Escenario",
             capacidad: String(recurso.capacidad),
             ubicacion: recurso.ubicacion,
             estado: recurso.estado,
@@ -235,7 +181,16 @@ function Recursos() {
     };
 
     const handleRecursoChange = (e) => {
-        setFormRecurso({ ...formRecurso, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        if (name === "tipo") {
+            setFormRecurso((prev) => ({
+                ...prev,
+                tipo: value,
+                categoria: CATEGORIA_POR_TIPO[value] ?? prev.categoria
+            }));
+        } else {
+            setFormRecurso((prev) => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleRecursoSubmit = (e) => {
@@ -256,15 +211,11 @@ function Recursos() {
             return;
         }
 
-        const nuevoId =
-            editandoId ||
-            `R-${String(Date.now()).slice(-6)}-${Math.floor(Math.random() * 90 + 10)}`;
-
         const datos = {
-            id: nuevoId,
             nombre: formRecurso.nombre.trim(),
             codigo: formRecurso.codigo.trim(),
             tipo: formRecurso.tipo,
+            categoria: formRecurso.categoria || CATEGORIA_POR_TIPO[formRecurso.tipo] || "Escenario",
             capacidad: Number(formRecurso.capacidad) || 1,
             ubicacion: formRecurso.ubicacion.trim() || "Bloque A",
             estado: formRecurso.estado,
@@ -272,17 +223,17 @@ function Recursos() {
         };
 
         if (editandoId === null) {
-            const lista = [...items, datos];
-            setItems(lista);
-            guardarRecursos(lista);
+            const nuevo = { id: `R-${Date.now()}`, ...datos };
+            const nueva = [...items, nuevo];
+            setItems(nueva);
+            guardarRecursos(nueva);
             mostrarAviso("Recurso creado correctamente.");
         } else {
-            const lista = items.map((item) => (item.id === editandoId ? datos : item));
-            setItems(lista);
-            guardarRecursos(lista);
+            const nueva = items.map((item) => (item.id === editandoId ? { ...item, ...datos } : item));
+            setItems(nueva);
+            guardarRecursos(nueva);
             mostrarAviso("Recurso actualizado correctamente.");
         }
-
         setCrudAbierto(false);
     };
 
@@ -291,9 +242,9 @@ function Recursos() {
             `¿Eliminar el recurso "${recurso.nombre}"?`
         );
         if (!confirma) return;
-        const lista = items.filter((item) => item.id !== recurso.id);
-        setItems(lista);
-        guardarRecursos(lista);
+        const nueva = items.filter((item) => item.id !== recurso.id);
+        setItems(nueva);
+        guardarRecursos(nueva);
         mostrarAviso(`Recurso "${recurso.nombre}" eliminado.`);
     };
 
@@ -390,6 +341,20 @@ function Recursos() {
                     </div>
 
                     <div className="filters__group">
+                        <label>Tipo de recurso</label>
+                        <select
+                            className="recursos__filter-select"
+                            value={categoriaRecurso}
+                            onChange={(e) => setCategoriaRecurso(e.target.value)}
+                        >
+                            <option value="Todas">Todos</option>
+                            {CATEGORIAS_RECURSO.map((c) => (
+                                <option key={c} value={c}>{c}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="filters__group">
                         <label>Edificio</label>
                         <select
                             className="recursos__filter-select"
@@ -416,16 +381,19 @@ function Recursos() {
                         </select>
                     </div>
 
-                    <button
-                        className="recursos__filter-button"
-                        onClick={() => {
-                            setQuery("");
-                            setBusqueda("");
-                        }}
-                    >
-                        <Icon name="solicitudes" size={12} />
-                        Limpiar
-                    </button>
+                    <div className="filters__group">
+                        <label>{"\u00a0"}</label>
+                        <button
+                            className="recursos__filter-button"
+                            onClick={() => {
+                                setQuery("");
+                                setBusqueda("");
+                            }}
+                        >
+                            <Icon name="solicitudes" size={12} />
+                            Limpiar
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -440,7 +408,6 @@ function Recursos() {
                         const categoriaVar =
                             CATEGORIA_VARIANT[recurso.tipo] || CATEGORIA_VARIANT.Salas;
                         const estadoVar = estadoVisual(recurso);
-                        const reservable = esReservable(recurso);
 
                         return (
                             <div className="recursos__resource-card" key={recurso.id}>
@@ -454,6 +421,11 @@ function Recursos() {
                                 <div className="recursos__resource-content">
                                     <div className="recursos__resource-type">
                                         {categoriaVar.etiqueta}
+                                    </div>
+                                    <div className="recursos__resource-categoria">
+                                        <span className={`recursos__categoria-badge recursos__categoria-badge--${(recurso.categoria ?? CATEGORIA_POR_TIPO[recurso.tipo]) === "Escenario" ? "escenario" : "objeto"}`}>
+                                            {recurso.categoria ?? CATEGORIA_POR_TIPO[recurso.tipo]}
+                                        </span>
                                     </div>
                                     <h3>{recurso.nombre}</h3>
                                     <p className="recursos__resource-description">
@@ -482,13 +454,6 @@ function Recursos() {
                                             onClick={() => setDetalleRecurso(recurso)}
                                         >
                                             Ver detalles
-                                        </button>
-                                        <button
-                                            className="recursos__reserve-button"
-                                            disabled={!reservable}
-                                            onClick={() => abrirReserva(recurso)}
-                                        >
-                                            {reservable ? "Reservar" : "No disponible"}
                                         </button>
                                         {puedeAdmin && (
                                             <>
@@ -519,94 +484,6 @@ function Recursos() {
                     </div>
                 )}
             </div>
-
-            <Modal
-                isOpen={modalAbierto}
-                title="Reservar recurso"
-                onClose={cerrarModal}
-            >
-                {confirmacion ? (
-                    <div className="recursos__confirm">
-                        <p>{confirmacion}</p>
-                        <button className="recursos__confirm-button" onClick={cerrarModal}>
-                            Cerrar
-                        </button>
-                    </div>
-                ) : (
-                    <form className="recursos__form" onSubmit={handleSubmit}>
-                        <div className="recursos__modal-info">
-                            <strong>{recursoSeleccionado?.nombre}</strong>
-                            <span>Selecciona la fecha y horario de la reserva.</span>
-                        </div>
-
-                        <Input
-                            label="Fecha"
-                            type="date"
-                            name="fecha"
-                            value={form.fecha}
-                            onChange={handleChange}
-                            id="recurso-fecha"
-                            min={hoyStr}
-                        />
-                        {errores.fecha && (
-                            <span className="recursos__error">{errores.fecha}</span>
-                        )}
-
-                        <div className="recursos__form-row">
-                            <div>
-                                <Input
-                                    label="Hora de inicio"
-                                    type="time"
-                                    name="horaInicio"
-                                    value={form.horaInicio}
-                                    onChange={handleChange}
-                                    id="recurso-inicio"
-                                />
-                            </div>
-                            <div>
-                                <Input
-                                    label="Hora de finalización"
-                                    type="time"
-                                    name="horaFin"
-                                    value={form.horaFin}
-                                    onChange={handleChange}
-                                    id="recurso-fin"
-                                />
-                                {errores.horaFin && (
-                                    <span className="recursos__error">{errores.horaFin}</span>
-                                )}
-                            </div>
-                        </div>
-
-                        <Input
-                            label="Motivo de la reserva"
-                            type="text"
-                            name="motivo"
-                            placeholder="Ej. Trabajo grupal"
-                            value={form.motivo}
-                            onChange={handleChange}
-                            id="recurso-motivo"
-                        />
-
-                        <div className="recursos__modal-footer">
-                            <button
-                                className="recursos__cancel-button"
-                                type="button"
-                                onClick={cerrarModal}
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                className="recursos__confirm-button recursos__confirm-button--primary"
-                                type="submit"
-                                disabled={!form.fecha}
-                            >
-                                Confirmar reserva
-                            </button>
-                        </div>
-                    </form>
-                )}
-            </Modal>
 
             <Modal
                 isOpen={detalleRecurso !== null}
@@ -691,6 +568,22 @@ function Recursos() {
                             </select>
                         </div>
                         <div>
+                            <label className="recursos__field-label">Categoría</label>
+                            <select
+                                className="recursos__filter-select"
+                                name="categoria"
+                                value={formRecurso.categoria}
+                                onChange={handleRecursoChange}
+                            >
+                                {CATEGORIAS_RECURSO.map((c) => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="recursos__form-row">
+                        <div>
                             <label className="recursos__field-label">Capacidad</label>
                             <input
                                 className="recursos__filter-input"
@@ -755,7 +648,9 @@ function Recursos() {
                             type="submit"
                             disabled={!formRecurso.nombre.trim() || !formRecurso.codigo.trim()}
                         >
-                            {editandoId === null ? "Crear recurso" : "Guardar cambios"}
+                            {editandoId === null
+                                ? "Crear recurso"
+                                : "Guardar cambios"}
                         </button>
                     </div>
                 </form>

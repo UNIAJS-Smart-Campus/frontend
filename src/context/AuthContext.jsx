@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { AuthContext } from "./auth-context";
-import { permisosDeRol, accionesDeRol } from "../utils/users";
-import usuarios from "../utils/users";
+import { permisosDeRol, accionesDeRol, obtenerUsuarios } from "../utils/users";
 
 const SESSION_KEY = "uajs_session";
 
@@ -29,7 +28,7 @@ function AuthProvider({ children }) {
 
     const login = async (identificacion, password) => {
         try {
-            const usuario = usuarios.find(
+            const usuario = obtenerUsuarios().find(
                 (u) =>
                     u.usuario === identificacion &&
                     u.password === password

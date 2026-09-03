@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import notificaciones from "../../utils/notificaciones";
+import { obtenerNotificaciones, STORAGE_KEY } from "../../utils/notificaciones";
 import { getModuleName } from "../../utils/menu";
 import useAuth from "../../context/useAuth";
 import { useTheme } from "../../context/ThemeContext";
 import { getAvatarStyle, getUserInitials, getUserPhoto } from "../../utils/avatar";
 import Icon from "../Icon/Icon";
+import FontSizeToggle from "../FontSizeToggle/FontSizeToggle";
 import "./Navbar.css";
 
 function Navbar({ onToggle }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [noLeidas, setNoLeidas] = useState(() =>
+        obtenerNotificaciones().filter((n) => !n.leida).length
+    );
     const { darkMode, toggleTheme } = useTheme();
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
@@ -17,7 +21,22 @@ function Navbar({ onToggle }) {
     const { user, logout } = useAuth();
 
     const moduleName = getModuleName(location.pathname);
-    const noLeidas = notificaciones.filter((item) => !item.leida).length;
+
+    // Sincronizar el badge cuando cambia el localStorage (ej. al marcar leídas)
+    useEffect(() => {
+        const actualizarBadge = () => {
+            setNoLeidas(obtenerNotificaciones().filter((n) => !n.leida).length);
+        };
+
+        // Escuchar cambios de storage (pestañas distintas) y un evento custom para la misma pestaña
+        window.addEventListener("storage", actualizarBadge);
+        window.addEventListener("notificaciones-actualizadas", actualizarBadge);
+
+        return () => {
+            window.removeEventListener("storage", actualizarBadge);
+            window.removeEventListener("notificaciones-actualizadas", actualizarBadge);
+        };
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -56,6 +75,8 @@ function Navbar({ onToggle }) {
             </div>
 
             <div className="navbar__right">
+                <FontSizeToggle />
+
                 <Link to="/notificaciones" className="navbar__notification">
                     <Icon name="notificaciones" size={20} />
                     {noLeidas > 0 && (

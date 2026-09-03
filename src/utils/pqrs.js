@@ -5,6 +5,8 @@ export const TIPOS_PQRS = [
     "Sugerencia"
 ];
 
+export const STORAGE_KEY = "uajs_pqrs";
+
 const pqrs = [
     {
         id: "PQRS-2026-014",
@@ -43,6 +45,25 @@ const pqrs = [
     }
 ];
 
+export function obtenerPqrs() {
+    try {
+        const guardados = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        if (guardados.length > 0) return guardados;
+        guardarPqrs(pqrs);
+        return pqrs;
+    } catch {
+        return pqrs;
+    }
+}
+
+export function guardarPqrs(lista) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+    } catch {
+        // si localStorage no está disponible se ignora
+    }
+}
+
 export const PQRS_POR_PERFIL = {
     Administrador: pqrs,
     Administrativo: pqrs.filter((item) => ["Queja", "Reclamo", "Petición"].includes(item.tipo)),
@@ -50,8 +71,18 @@ export const PQRS_POR_PERFIL = {
     Estudiante: pqrs.filter((item) => ["Queja", "Petición", "Sugerencia"].includes(item.tipo))
 };
 
+const PERFILES_TIPOS = {
+    Administrador: null,
+    Administrativo: ["Queja", "Reclamo", "Petición"],
+    Docente: ["Petición", "Sugerencia"],
+    Estudiante: ["Queja", "Petición", "Sugerencia"]
+};
+
 export function obtenerPqrsPorPerfil(rol = "Estudiante") {
-    return PQRS_POR_PERFIL[rol] || PQRS_POR_PERFIL.Estudiante;
+    const lista = obtenerPqrs();
+    const tipos = PERFILES_TIPOS[rol] || PERFILES_TIPOS.Estudiante;
+    if (!tipos) return lista;
+    return lista.filter((item) => tipos.includes(item.tipo));
 }
 
 export default pqrs;

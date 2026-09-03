@@ -73,7 +73,7 @@ function AppRoutes() {
           <Route
             path="/solicitudes/:id"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute permiso="solicitudes">
                 <SolicitudDetalle />
               </ProtectedRoute>
             }
@@ -118,15 +118,15 @@ function AppRoutes() {
               </ProtectedRoute>
             }
           />
-          <Route
+<Route
             path="/pqrs/nueva"
             element={
-              <ProtectedRoute permiso="pqrs">
-                <NuevaPQRS />
-              </ProtectedRoute>
+                <ProtectedRoute permiso="pqrs">
+                    <NuevaPQRS />
+                </ProtectedRoute>
             }
-          />
-          <Route
+        />
+        <Route
             path="/perfil"
             element={
               <ProtectedRoute permiso="perfil">

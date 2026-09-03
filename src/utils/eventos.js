@@ -91,15 +91,39 @@ const eventos = [
     }
 ];
 
-export const EVENTOS_POR_PERFIL = {
-    Administrador: eventos,
-    Administrativo: eventos.filter((evento) => ["Institucional", "Académico"].includes(evento.categoria)),
-    Docente: eventos.filter((evento) => ["Académico", "Formación"].includes(evento.categoria)),
-    Estudiante: eventos.filter((evento) => ["Académico", "Cultural", "Formación"].includes(evento.categoria))
+export const STORAGE_KEY = "uajs_eventos";
+
+export function obtenerEventos() {
+    try {
+        const guardados = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        if (guardados.length > 0) return guardados;
+        guardarEventos(eventos);
+        return eventos;
+    } catch {
+        return eventos;
+    }
+}
+
+export function guardarEventos(lista) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+    } catch {
+        // si localStorage no está disponible se ignora
+    }
+}
+
+const CATEGORIAS_POR_ROL = {
+    Administrador: null,
+    Administrativo: ["Institucional", "Académico"],
+    Docente: ["Académico", "Formación"],
+    Estudiante: ["Académico", "Cultural", "Formación"]
 };
 
 export function obtenerEventosPorPerfil(rol = "Estudiante") {
-    return EVENTOS_POR_PERFIL[rol] || EVENTOS_POR_PERFIL.Estudiante;
+    const todos = obtenerEventos();
+    const cats = CATEGORIAS_POR_ROL[rol];
+    if (!cats) return todos;
+    return todos.filter((evento) => cats.includes(evento.categoria));
 }
 
 export default eventos;

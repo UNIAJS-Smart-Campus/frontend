@@ -5,8 +5,8 @@
     top: 0;
     left: 0;
     background:
-        linear-gradient(180deg, rgba(7, 26, 49, 0.96) 0%, rgba(12, 38, 64, 0.98) 36%, rgba(10, 23, 39, 0.99) 100%),
-        linear-gradient(135deg, var(--sidebar-bg-1, var(--color-primary-800)) 0%, var(--sidebar-bg-2, var(--color-primary)) 45%, var(--sidebar-bg-3, #0B3A66) 100%);
+        linear-gradient(180deg, rgba(2, 28, 52, 0.96) 0%, rgba(2, 48, 77, 0.98) 36%, rgba(2, 40, 55, 0.99) 100%),
+        linear-gradient(135deg, var(--sidebar-bg-1, var(--color-primary-800)) 0%, var(--sidebar-bg-2, var(--color-primary)) 45%, var(--sidebar-bg-3, #023059) 100%);
     color: var(--sidebar-text, #e2e8f0);
     display: flex;
     flex-direction: column;

@@ -1,92 +1,29 @@
 /* ============================================================
-   UAJS SMART CAMPUS - Theme Variables (Light & Dark)
+   UAJS SMART CAMPUS - Entry CSS
+   Nota: tokens de diseño y estilos base están en styles/main.css
    ============================================================ */
 
-/* ==========================================
-   Mode: Light (default)
-   ========================================== */
-:root {
-    --bg-primary: #f5f7fa;
-    --bg-secondary: #ffffff;
-    --bg-tertiary: #eef3f8;
-
-    --text-primary: #10233a;
-    --text-secondary: #64748b;
-    --text-muted: #94a3b8;
-
-    --border-color: #dce4ec;
-
-    --uajs-blue: #0b416f;
-    --uajs-blue-dark: #062b4c;
-    --uajs-yellow: #f4c400;
-
-    --success: #16a36a;
-    --danger: #dc4c4c;
-
-    --shadow-card: 0 2px 8px rgba(15, 35, 60, 0.05);
-}
-
-/* ==========================================
-   Mode: Dark
-   ========================================== */
-html.dark {
-    --bg-primary: #111827;
-    --bg-secondary: #1f2937;
-    --bg-tertiary: #273449;
-
-    --text-primary: #f8fafc;
-    --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
-
-    --border-color: #374151;
-
-    --uajs-blue: #164f7d;
-    --uajs-blue-dark: #071f36;
-    --uajs-yellow: #f4c400;
-
-    --success: #34d399;
-    --danger: #f87171;
-
-    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.25);
-}
-
-/* ==========================================
-   Base Styles
-   ========================================== */
-body {
-    margin: 0;
-    background: var(--color-bg);
-    color: var(--color-text);
-    transition:
-        background-color 0.25s ease,
-        color 0.25s ease;
-}
-
-/* ==========================================
-   App Container
-   ========================================== */
+/* App Container */
 #root {
     width: 100%;
     min-height: 100vh;
 }
 
-/* ==========================================
-   Custom Scrollbar
-   ========================================== */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
+    background: var(--color-surface);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--border-color);
+    background: var(--color-border);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
+    background: var(--color-text-muted);
 }

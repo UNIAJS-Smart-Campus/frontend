@@ -2,7 +2,7 @@ import { useState } from "react";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
-import eventos, { CATEGORIAS_EVENTO, ESTADOS_EVENTO, MODALIDADES_EVENTO } from "../../utils/eventos";
+import { CATEGORIAS_EVENTO, ESTADOS_EVENTO, MODALIDADES_EVENTO, obtenerEventos, guardarEventos } from "../../utils/eventos";
 import "./Eventos.css";
 
 const CATEGORIA_CLASE = {
@@ -60,10 +60,10 @@ function formatearHora(hora) {
 }
 
 function Eventos() {
-    const { user } = useAuth();
-    const esAdmin = user?.rol === "Administrador";
+    const [items, setItems] = useState(() => obtenerEventos());
+    const { user, puede } = useAuth();
+    const esAdmin = puede("publicar_eventos");
 
-    const [items, setItems] = useState(eventos);
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");
     const [categoria, setCategoria] = useState("");
@@ -176,32 +176,33 @@ function Eventos() {
 
         if (editandoId === null) {
             const nuevo = { id: Date.now(), ...form, inscritos: 0 };
-            setItems([nuevo, ...items]);
+            const nueva = [nuevo, ...items];
+            setItems(nueva);
+            guardarEventos(nueva);
             mostrarAviso("Evento creado correctamente.");
         } else {
-            setItems(
-                items.map((item) =>
-                    item.id === editandoId ? { ...item, ...form } : item
-                )
-            );
+            const nueva = items.map((item) => (item.id === editandoId ? { ...item, ...form } : item));
+            setItems(nueva);
+            guardarEventos(nueva);
             mostrarAviso("Evento actualizado correctamente.");
         }
-
         setModalAbierto(false);
     };
 
     const eliminarEvento = (ev) => {
-        setItems(items.filter((item) => item.id !== ev.id));
+        const nueva = items.filter((item) => item.id !== ev.id);
+        setItems(nueva);
+        guardarEventos(nueva);
         setDetalleAbierto(null);
         mostrarAviso(`Evento "${ev.nombre}" eliminado.`);
     };
 
     const cambiarEstado = (ev, nuevoEstado) => {
-        setItems(
-            items.map((item) =>
-                item.id === ev.id ? { ...item, estado: nuevoEstado } : item
-            )
+        const nueva = items.map((item) =>
+            item.id === ev.id ? { ...item, estado: nuevoEstado } : item
         );
+        setItems(nueva);
+        guardarEventos(nueva);
         setDetalleAbierto({ ...ev, estado: nuevoEstado });
         mostrarAviso(`Estado del evento actualizado a "${nuevoEstado}".`);
     };
@@ -211,13 +212,11 @@ function Eventos() {
             mostrarAviso("El evento ya alcanzó su cupo máximo.");
             return;
         }
-        setItems((prev) =>
-            prev.map((item) =>
-                item.id === ev.id
-                    ? { ...item, inscritos: item.inscritos + 1 }
-                    : item
-            )
+        const nueva = items.map((item) =>
+            item.id === ev.id ? { ...item, inscritos: item.inscritos + 1 } : item
         );
+        setItems(nueva);
+        guardarEventos(nueva);
         setDetalleAbierto((prev) =>
             prev && prev.id === ev.id
                 ? { ...prev, inscritos: prev.inscritos + 1 }
@@ -757,8 +756,8 @@ function Eventos() {
                                 {detalle.estado !== "Activo"
                                     ? `No disponible (${detalle.estado})`
                                     : cuposDisponibles(detalle) === 0
-                                      ? "Cupo agotado"
-                                      : "Inscribirme"}
+                                        ? "Cupo agotado"
+                                        : "Inscribirme"}
                             </button>
                         )}
                     </div>

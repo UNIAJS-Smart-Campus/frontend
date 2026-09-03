@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import useAuth from "../../context/useAuth";
+import { useTheme } from "../../context/ThemeContext";
 import Icon from "../../components/Icon/Icon";
 import "./Configuracion.css";
 
@@ -23,14 +24,13 @@ const MODULOS_NOTIFICACION = [
     { id: "info_academica", etiqueta: "Información académica" }
 ];
 
+// configBase ya NO incluye idioma/zona/fecha en "cuenta" —
+// esos campos viven únicamente en "preferencias".
 const configBase = {
     cuenta: {
         correo: "",
         telefono: "",
-        foto: "",
-        idioma: "Español",
-        zonaHoraria: "Bogotá (CO) — GMT-5",
-        formatoFecha: "DD/MM/YYYY"
+        foto: ""
     },
     seguridad: {
         cerrarSesiones: false,
@@ -127,30 +127,66 @@ function normalizarConfiguracion(base, extra) {
         };
     }
 
+    // Eliminar campos de idioma/zona/fecha que antes vivían en "cuenta"
+    if (merged?.cuenta) {
+        delete merged.cuenta.idioma;
+        delete merged.cuenta.zonaHoraria;
+        delete merged.cuenta.formatoFecha;
+    }
+
     return merged;
 }
 
 function Configuracion() {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
+    const { tema, setTema } = useTheme();
 
     const [config, setConfig] = useState(() => {
         try {
             const guardada = JSON.parse(localStorage.getItem(STORAGE_KEY));
-            return guardada ? normalizarConfiguracion(configBase, guardada) : configBase;
+            // Inicializar correo desde la sesión si el config guardado está vacío
+            const base = {
+                ...configBase,
+                cuenta: {
+                    ...configBase.cuenta,
+                    correo: user?.correo || ""
+                }
+            };
+            return guardada ? normalizarConfiguracion(base, guardada) : base;
         } catch {
-            return configBase;
+            return {
+                ...configBase,
+                cuenta: {
+                    ...configBase.cuenta,
+                    correo: user?.correo || ""
+                }
+            };
         }
     });
 
     const [seccion, setSeccion] = useState("cuenta");
     const [guardado, setGuardado] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
+    // Estado local del formulario de cuenta (se sincroniza con config.cuenta al guardar)
     const [correoEditable, setCorreoEditable] = useState(
-        user?.correo || ""
+        () => config.cuenta.correo || user?.correo || ""
     );
     const [telefonoEditable, setTelefonoEditable] = useState(
-        user?.telefono || ""
+        () => config.cuenta.telefono || ""
     );
+
+    // Estado del formulario de contraseña con validación
+    const [pwdForm, setPwdForm] = useState({
+        actual: "",
+        nueva: "",
+        confirmar: ""
+    });
+    const [pwdError, setPwdError] = useState("");
+    const [pwdOk, setPwdOk] = useState(false);
+
+    // Estado de confirmación para acciones de Zona de peligro
+    const [confirmando, setConfirmando] = useState(null); // "sesiones" | "desactivar"
 
     const inicialesUsuario =
         (user?.nombre || "Usuario")
@@ -160,10 +196,12 @@ function Configuracion() {
             .map((parte) => parte[0]?.toUpperCase() || "")
             .join("") || "U";
 
+    // Persistir en localStorage cada vez que cambia config
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
     }, [config]);
 
+    // Auto-ocultar el aviso de guardado
     useEffect(() => {
         let timer;
         if (guardado) {
@@ -203,8 +241,17 @@ function Configuracion() {
         marcarGuardado();
     };
 
+    // Guardar cuenta: persiste correo y teléfono en config.cuenta
     const guardarCuenta = (e) => {
         e.preventDefault();
+        setConfig((prev) => ({
+            ...prev,
+            cuenta: {
+                ...prev.cuenta,
+                correo: correoEditable.trim(),
+                telefono: telefonoEditable.trim()
+            }
+        }));
         marcarGuardado();
     };
 
@@ -216,13 +263,9 @@ function Configuracion() {
         lector.onload = (e) => {
             const dataUrl = e.target?.result;
             if (!dataUrl) return;
-
             setConfig((prev) => ({
                 ...prev,
-                cuenta: {
-                    ...prev.cuenta,
-                    foto: dataUrl
-                }
+                cuenta: { ...prev.cuenta, foto: dataUrl }
             }));
             marcarGuardado();
         };
@@ -236,16 +279,47 @@ function Configuracion() {
     const eliminarFoto = () => {
         setConfig((prev) => ({
             ...prev,
-            cuenta: {
-                ...prev.cuenta,
-                foto: ""
-            }
+            cuenta: { ...prev.cuenta, foto: "" }
         }));
         marcarGuardado();
     };
 
+    // Cambiar contraseña con validación
     const actualizarPassword = (e) => {
         e.preventDefault();
+        setPwdError("");
+        setPwdOk(false);
+
+        if (!pwdForm.actual.trim()) {
+            setPwdError("Ingresa tu contraseña actual.");
+            return;
+        }
+        if (pwdForm.nueva.length < 8) {
+            setPwdError("La nueva contraseña debe tener al menos 8 caracteres.");
+            return;
+        }
+        if (!/[0-9]/.test(pwdForm.nueva)) {
+            setPwdError("La nueva contraseña debe incluir al menos un número.");
+            return;
+        }
+        if (pwdForm.nueva !== pwdForm.confirmar) {
+            setPwdError("La nueva contraseña y la confirmación no coinciden.");
+            return;
+        }
+        if (pwdForm.nueva === pwdForm.actual) {
+            setPwdError("La nueva contraseña no puede ser igual a la actual.");
+            return;
+        }
+
+        // Aquí iría la llamada real a la API; por ahora es simulación
+        setPwdForm({ actual: "", nueva: "", confirmar: "" });
+        setPwdOk(true);
+        setTimeout(() => setPwdOk(false), 3000);
+    };
+
+    // Selector de tema (conectado al ThemeContext)
+    const aplicarTema = (valor) => {
+        setTema(valor);
         marcarGuardado();
     };
 
@@ -254,6 +328,33 @@ function Configuracion() {
         { valor: "oscuro", etiqueta: "Oscuro", icono: "recursos" },
         { valor: "sistema", etiqueta: "Sistema", icono: "servicios" }
     ];
+
+    // Handlers de Zona de peligro
+    const cerrarTodasSesiones = () => {
+        if (confirmando === "sesiones") {
+            logout();
+        } else {
+            setConfirmando("sesiones");
+        }
+    };
+
+    const solicitarDesactivacion = () => {
+        if (confirmando === "desactivar") {
+            // Aquí iría la llamada a la API de desactivación
+            marcarGuardado();
+            setConfirmando(null);
+        } else {
+            setConfirmando("desactivar");
+        }
+    };
+
+    const cancelarConfirmacion = () => setConfirmando(null);
+
+    // Cerrar sesión individual en un dispositivo
+    const cerrarSesionDispositivo = (dispositivo) => {
+        // Simulación: en producción llamaría a /api/auth/sessions DELETE
+        marcarGuardado();
+    };
 
     return (
         <div className="page">
@@ -293,14 +394,14 @@ function Configuracion() {
                 <div className="config__content">
                     {/* ============ CUENTA ============ */}
                     {seccion === "cuenta" && (
-                        <section className="card">
-                            <div className="card__header">
+                        <section className="config__card">
+                            <div className="config__card-header">
                                 <div className="config__card-header-icon">
                                     <Icon name="perfil" size={17} />
                                 </div>
                                 <div>
                                     <h2>Cuenta</h2>
-                                    <p>Preferencias generales de tu cuenta.</p>
+                                    <p>Información de contacto de tu cuenta.</p>
                                 </div>
                             </div>
 
@@ -350,6 +451,7 @@ function Configuracion() {
                                             type="email"
                                             value={correoEditable}
                                             onChange={(e) => setCorreoEditable(e.target.value)}
+                                            placeholder="correo@uajs.edu.co"
                                         />
                                     </div>
 
@@ -357,69 +459,12 @@ function Configuracion() {
                                         <label htmlFor="cfg-telefono">Teléfono</label>
                                         <input
                                             id="cfg-telefono"
-                                            type="text"
+                                            type="tel"
                                             value={telefonoEditable}
                                             onChange={(e) => setTelefonoEditable(e.target.value)}
+                                            placeholder="ej. 3001234567"
                                         />
                                     </div>
-                                </div>
-
-                                <div className="config__form-group">
-                                    <label htmlFor="cfg-idioma">Idioma</label>
-                                    <select
-                                        id="cfg-idioma"
-                                        value={config.cuenta.idioma}
-                                        onChange={cambiar("cuenta.idioma")}
-                                        className="config__select"
-                                    >
-                                        <option>Español</option>
-                                        <option>English</option>
-                                    </select>
-                                </div>
-
-                                <div className="config__form-group">
-                                    <label htmlFor="cfg-zona">Zona horaria</label>
-                                    <select
-                                        id="cfg-zona"
-                                        value={config.cuenta.zonaHoraria}
-                                        onChange={cambiar("cuenta.zonaHoraria")}
-                                        className="config__select"
-                                    >
-                                        <option>Bogotá (CO) — GMT-5</option>
-                                        <option>Lima (PE) — GMT-5</option>
-                                        <option>Quito (EC) — GMT-5</option>
-                                    </select>
-                                </div>
-
-                                <div className="config__form-group">
-                                    <label htmlFor="cfg-fecha">Formato de fecha</label>
-                                    <select
-                                        id="cfg-fecha"
-                                        value={config.cuenta.formatoFecha}
-                                        onChange={cambiar("cuenta.formatoFecha")}
-                                        className="config__select"
-                                    >
-                                        <option>DD/MM/YYYY</option>
-                                        <option>MM/DD/YYYY</option>
-                                        <option>YYYY-MM-DD</option>
-                                    </select>
-                                </div>
-
-                                <div className="config__row config__row--inset">
-                                    <div className="config__row-icon">
-                                        <Icon name="usuarios" size={16} />
-                                    </div>
-                                    <div className="config__row-info">
-                                        <div className="config__row-title">
-                                            Cerrar sesión en todos los dispositivos
-                                        </div>
-                                        <div className="config__row-desc">
-                                            Finaliza tu sesión activa en todos los equipos conectados.
-                                        </div>
-                                    </div>
-                                    <button className="config__outline-button" onClick={marcarGuardado}>
-                                        Cerrar sesión
-                                    </button>
                                 </div>
 
                                 <div className="config__form-actions">
@@ -446,12 +491,27 @@ function Configuracion() {
                                 </div>
 
                                 <form className="config__form" onSubmit={actualizarPassword}>
+                                    {pwdError && (
+                                        <p className="config__pwd-error">{pwdError}</p>
+                                    )}
+                                    {pwdOk && (
+                                        <p className="config__pwd-ok">
+                                            <Icon name="info" size={13} />
+                                            Contraseña actualizada correctamente.
+                                        </p>
+                                    )}
+
                                     <div className="config__form-group">
-                                        <label>Contraseña actual</label>
+                                        <label htmlFor="pwd-actual">Contraseña actual</label>
                                         <div className="config__password">
                                             <input
+                                                id="pwd-actual"
                                                 type={showPassword ? "text" : "password"}
                                                 placeholder="••••••••"
+                                                value={pwdForm.actual}
+                                                onChange={(e) =>
+                                                    setPwdForm((p) => ({ ...p, actual: e.target.value }))
+                                                }
                                             />
                                             <button
                                                 type="button"
@@ -465,21 +525,46 @@ function Configuracion() {
 
                                     <div className="config__form-grid">
                                         <div className="config__form-group">
-                                            <label>Nueva contraseña</label>
-                                            <input type="password" placeholder="••••••••" />
+                                            <label htmlFor="pwd-nueva">Nueva contraseña</label>
+                                            <input
+                                                id="pwd-nueva"
+                                                type="password"
+                                                placeholder="••••••••"
+                                                value={pwdForm.nueva}
+                                                onChange={(e) =>
+                                                    setPwdForm((p) => ({ ...p, nueva: e.target.value }))
+                                                }
+                                            />
                                         </div>
                                         <div className="config__form-group">
-                                            <label>Confirmar contraseña</label>
-                                            <input type="password" placeholder="••••••••" />
+                                            <label htmlFor="pwd-confirmar">Confirmar contraseña</label>
+                                            <input
+                                                id="pwd-confirmar"
+                                                type="password"
+                                                placeholder="••••••••"
+                                                value={pwdForm.confirmar}
+                                                onChange={(e) =>
+                                                    setPwdForm((p) => ({ ...p, confirmar: e.target.value }))
+                                                }
+                                            />
                                         </div>
                                     </div>
 
                                     <div className="config__password-hint">
-                                        Usa al menos 8 caracteres con números, letras y símbolos.
+                                        Usa al menos 8 caracteres con números y letras. No puede
+                                        ser igual a la contraseña actual.
                                     </div>
 
                                     <div className="config__form-actions">
-                                        <button type="submit" className="config__submit">
+                                        <button
+                                            type="submit"
+                                            className="config__submit"
+                                            disabled={
+                                                !pwdForm.actual ||
+                                                !pwdForm.nueva ||
+                                                !pwdForm.confirmar
+                                            }
+                                        >
                                             Actualizar contraseña
                                         </button>
                                     </div>
@@ -517,7 +602,7 @@ function Configuracion() {
                                             {!acceso.actual && (
                                                 <button
                                                     className="config__outline-button"
-                                                    onClick={marcarGuardado}
+                                                    onClick={() => cerrarSesionDispositivo(acceso.dispositivo)}
                                                 >
                                                     Cerrar
                                                 </button>
@@ -610,7 +695,6 @@ function Configuracion() {
                                             label="Correo electrónico"
                                         />
                                     </div>
-
                                 </div>
                             </section>
 
@@ -665,17 +749,11 @@ function Configuracion() {
                                         key={tema.valor}
                                         type="button"
                                         className={
-                                            config.apariencia.tema === tema.valor
+                                            tema === tema.valor
                                                 ? "config__theme config__theme--active"
                                                 : "config__theme"
                                         }
-                                        onClick={() => {
-                                            setConfig((prev) => ({
-                                                ...prev,
-                                                apariencia: { tema: tema.valor }
-                                            }));
-                                            marcarGuardado();
-                                        }}
+                                        onClick={() => aplicarTema(tema.valor)}
                                     >
                                         <span className="config__theme-icon">
                                             <Icon name={tema.icono} size={20} />
@@ -684,6 +762,12 @@ function Configuracion() {
                                     </button>
                                 ))}
                             </div>
+
+                            <p className="config__privacy-text">
+                                <strong>Sistema</strong> sigue la preferencia de tu sistema
+                                operativo. <strong>Claro</strong> u <strong>Oscuro</strong> aplican
+                                el tema de forma permanente independientemente del SO.
+                            </p>
                         </section>
                     )}
 
@@ -695,12 +779,12 @@ function Configuracion() {
                                     <Icon name="servicios" size={17} />
                                 </div>
                                 <div>
-                                    <h2>Preferencias</h2>
-                                    <p>Personaliza tu experiencia en la plataforma.</p>
+                                    <h2>Preferencias regionales</h2>
+                                    <p>Idioma, zona horaria y formatos de fecha y hora.</p>
                                 </div>
                             </div>
 
-                            <form className="config__form" onSubmit={guardarCuenta}>
+                            <form className="config__form" onSubmit={(e) => { e.preventDefault(); marcarGuardado(); }}>
                                 <div className="config__form-group">
                                     <label htmlFor="pref-idioma">Idioma</label>
                                     <select
@@ -724,6 +808,7 @@ function Configuracion() {
                                     >
                                         <option>Bogotá (CO) — GMT-5</option>
                                         <option>Lima (PE) — GMT-5</option>
+                                        <option>Quito (EC) — GMT-5</option>
                                     </select>
                                 </div>
 
@@ -812,7 +897,7 @@ function Configuracion() {
 
                                     <div className="config__row">
                                         <div className="config__row-icon">
-                                            <Icon name="estudiante" size={16} />
+                                            <Icon name="info" size={16} />
                                         </div>
                                         <div className="config__row-info">
                                             <div className="config__row-title">Mostrar información académica en mi perfil</div>
@@ -861,10 +946,11 @@ function Configuracion() {
                                 </div>
                                 <div>
                                     <h2>Zona de peligro</h2>
-                                    <p>Estas acciones requieren confirmación.</p>
+                                    <p>Estas acciones son irreversibles y requieren confirmación.</p>
                                 </div>
                             </div>
 
+                            {/* Cerrar todas las sesiones */}
                             <div className="config__row">
                                 <div className="config__row-info">
                                     <div className="config__row-title">
@@ -872,13 +958,37 @@ function Configuracion() {
                                     </div>
                                     <div className="config__row-desc">
                                         Finaliza tu sesión activa en todos los equipos conectados.
+                                        Serás redirigido al login.
                                     </div>
+                                    {confirmando === "sesiones" && (
+                                        <div className="config__confirm-inline">
+                                            <span>¿Confirmas cerrar todas las sesiones?</span>
+                                            <button
+                                                className="config__danger-button"
+                                                onClick={cerrarTodasSesiones}
+                                            >
+                                                Sí, cerrar sesiones
+                                            </button>
+                                            <button
+                                                className="config__outline-button"
+                                                onClick={cancelarConfirmacion}
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                                <button className="config__danger-button">
-                                    Cerrar sesiones
-                                </button>
+                                {confirmando !== "sesiones" && (
+                                    <button
+                                        className="config__danger-button"
+                                        onClick={cerrarTodasSesiones}
+                                    >
+                                        Cerrar sesiones
+                                    </button>
+                                )}
                             </div>
 
+                            {/* Solicitar desactivación */}
                             <div className="config__row">
                                 <div className="config__row-info">
                                     <div className="config__row-title">
@@ -888,10 +998,32 @@ function Configuracion() {
                                         Solicita la desactivación temporal de tu cuenta. La
                                         administración revisará la solicitud.
                                     </div>
+                                    {confirmando === "desactivar" && (
+                                        <div className="config__confirm-inline">
+                                            <span>¿Confirmas enviar la solicitud de desactivación?</span>
+                                            <button
+                                                className="config__danger-button config__danger-button--delete"
+                                                onClick={solicitarDesactivacion}
+                                            >
+                                                Sí, solicitar
+                                            </button>
+                                            <button
+                                                className="config__outline-button"
+                                                onClick={cancelarConfirmacion}
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                                <button className="config__danger-button config__danger-button--delete">
-                                    Solicitar desactivación
-                                </button>
+                                {confirmando !== "desactivar" && (
+                                    <button
+                                        className="config__danger-button config__danger-button--delete"
+                                        onClick={solicitarDesactivacion}
+                                    >
+                                        Solicitar desactivación
+                                    </button>
+                                )}
                             </div>
                         </section>
                     )}

@@ -67,7 +67,7 @@
 .summary__card:hover {
     transform: translateY(-3px);
     box-shadow: 0 22px 44px rgba(15, 23, 42, 0.12), 0 10px 22px rgba(15, 23, 42, 0.07);
-    border-color: rgba(42, 101, 193, 0.35);
+    border-color: rgba(2, 94, 115, 0.35);
     filter: saturate(1.06);
 }
 
@@ -225,88 +225,18 @@
     color: var(--color-text-muted);
 }
 
-/* Modal overlay */
+/* Modal overlay legacy — usado por Usuarios.jsx y Solicitudes.jsx
+   Los modales nuevos deben usar el componente <Modal> y _modal.css */
 .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.45);
+    background: rgba(15, 23, 42, 0.55);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 100;
-    padding: var(--space-5);
-}
-
-.modal {
-    width: 100%;
-    max-width: 600px;
-    background-color: var(--color-surface);
-    border-radius: var(--radius-lg);
+    z-index: 1000;
     padding: var(--space-6);
-    box-shadow: var(--shadow-lg);
-    animation: modal-in 0.2s ease;
-}
-
-.modal--sm { max-width: 400px; }
-.modal--lg { max-width: 800px; }
-.modal--xl { max-width: 1000px; }
-
-@keyframes modal-in {
-    from { opacity: 0; transform: translateY(10px) scale(0.98); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.modal__header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-3);
-    margin-bottom: var(--space-5);
-}
-
-.modal__title {
-    margin: 0 0 4px;
-    font-family: var(--font-heading);
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--color-text);
-}
-
-.modal__subtitle {
-    margin: 0;
-    font-size: 11px;
-    color: var(--color-text-muted);
-}
-
-.modal__close {
-    width: 32px;
-    height: 32px;
-    border: none;
-    background: var(--color-hover);
-    color: var(--color-text-muted);
-    border-radius: var(--radius-sm);
-    font-size: 18px;
-    line-height: 1;
-    cursor: pointer;
-    flex-shrink: 0;
-}
-
-.modal__close:hover {
-    background: var(--color-border-strong);
-    color: var(--color-text);
-}
-
-.modal__body {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.modal__footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 0;
+    box-sizing: border-box;
 }
 
 /* Form grid */
@@ -316,7 +246,6 @@
     gap: 16px;
 }
 
-.modal__body label,
 .form-grid label {
     display: block;
     font-size: 12px;
@@ -325,18 +254,15 @@
     margin-bottom: 8px;
 }
 
-.modal__body input,
-.modal__body select,
-.modal__body textarea,
 .form-grid input,
 .form-grid select,
 .form-grid textarea {
     width: 100%;
     box-sizing: border-box;
     min-height: 44px;
-    border: 1px solid rgba(148, 163, 184, 0.28);
-    border-radius: 12px;
-    background: linear-gradient(180deg, var(--color-input-bg), rgba(255,255,255,0.6));
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background-color: var(--color-input-bg);
     color: var(--color-text);
     font-size: 13px;
     font-family: inherit;
@@ -344,21 +270,17 @@
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
 }
 
-.modal__body textarea,
 .form-grid textarea {
     min-height: 120px;
     resize: vertical;
     line-height: 1.5;
 }
 
-.modal__body input:focus,
-.modal__body select:focus,
-.modal__body textarea:focus,
 .form-grid input:focus,
 .form-grid select:focus,
 .form-grid textarea:focus {
-    border-color: rgba(42, 101, 193, 0.7);
-    box-shadow: 0 0 0 4px rgba(42, 101, 193, 0.08);
+    border-color: var(--color-primary-600);
+    box-shadow: 0 0 0 4px rgba(2, 94, 115, 0.08);
     background-color: var(--color-surface);
     outline: none;
 }

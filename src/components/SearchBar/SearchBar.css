@@ -7,7 +7,7 @@
 .searchbar {
     position: relative;
     border-radius: var(--radius-sm);
-    overflow: visible;
+    overflow: hidden;
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--color-border);
     background: var(--color-surface);
@@ -29,7 +29,8 @@
 /* Input de búsqueda - ocupa todo el ancho */
 .searchbar__input {
     width: 100%;
-    height: 40px;
+    height: 42px;
+    box-sizing: border-box;
     border: none;
     border-radius: var(--radius-sm);
     padding: 0 34px 0 36px; /* espacio para icono izquierdo y botón limpiar */
@@ -50,6 +51,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
     width: 26px;
     height: 26px;
     padding: 0;
@@ -59,6 +61,13 @@
     color: var(--color-text-muted);
     cursor: pointer;
     transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.searchbar__clear .icon {
+    display: block;
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
 }
 
 .searchbar__clear:hover {

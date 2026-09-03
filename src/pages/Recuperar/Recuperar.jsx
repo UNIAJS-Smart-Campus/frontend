@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { obtenerUsuarios } from "../../utils/users";
+import BrandLogo from "../../components/BrandLogo/BrandLogo";
 import "../Login/Login.css";
 
 function Recuperar() {
@@ -64,7 +65,10 @@ function Recuperar() {
                     </div>
                     <div className="login__aside-inner">
                         <div className="login__brand">
-                            <img src="/Logo_Light_UAJS.png" alt="UniAJS - Corporación Universitaria Antonio José de Sucre" className="login__brand-logo" />
+                            <BrandLogo
+                                className="login__brand-logo"
+                                alt="UniAJS - Corporación Universitaria Antonio José de Sucre"
+                            />
                         </div>
 
                         <div className="login__hero">
