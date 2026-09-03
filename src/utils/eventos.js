@@ -17,14 +17,34 @@ function generarParticipantesIniciales(n) {
     return resultado;
 }
 
-const INSCRITOS_SEED = {
-    1: [4, 9, 10, 16, 22, 11, 14, 17, 6, 19, 24, 13, 23, 15, 20, 21, 25, 12, 18],
-    2: [9, 14, 22, 24, 18, 11, 21],
-    3: [6, 11, 13, 15, 17, 19, 23, 25, 9, 10, 12, 18, 20, 21, 22, 24, 16, 4, 14],
-    4: [4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 16, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
-    5: [4, 9, 14, 16, 22, 24, 10, 20, 12, 18, 11, 21, 6, 13, 19, 23, 25, 15, 17, 4, 9, 14, 16, 22, 24, 10, 20, 12, 18, 11, 21, 6, 13, 19, 23, 25, 15, 17, 4, 9, 14, 16, 22, 24, 10, 20, 12, 18, 11, 21],
-    6: [4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
+const ESTUDIANTES_ACTIVOS = [
+    4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+    27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 39, 40, 41, 42, 43, 44,
+    45, 46, 47, 48, 50, 51, 52, 53, 54, 55, 56
+];
+
+const CUPO_POR_EVENTO = {
+    1: 47,
+    2: 35,
+    3: 47,
+    4: 187,
+    5: 47,
+    6: 142
 };
+
+const INSCRITOS_SEED = Object.fromEntries(
+    Object.entries(CUPO_POR_EVENTO).map(([eventoId, cupo]) => {
+        const total = Math.min(cupo, ESTUDIANTES_ACTIVOS.length);
+        const ronda = [];
+        let i = 0;
+        while (ronda.length < total) {
+            const id = ESTUDIANTES_ACTIVOS[i % ESTUDIANTES_ACTIVOS.length];
+            ronda.push(id);
+            i += 1;
+        }
+        return [eventoId, ronda];
+    })
+);
 
 function lookupNombre(usuarioId) {
     if (usuarioId == null) return "Inscrito";
@@ -47,7 +67,35 @@ function lookupNombre(usuarioId) {
         22: "David Ospina",
         23: "Paula Aguilar",
         24: "Andrés Felipe Duarte",
-        25: "Manuela Cabrera"
+        25: "Manuela Cabrera",
+        27: "Ana Sofía Castillo",
+        28: "Juan Pablo Ramírez",
+        29: "María Camila Vega",
+        30: "Carlos Andrés Pinilla",
+        31: "Laura Daniela Forero",
+        32: "Andrés Mauricio León",
+        33: "Valentina Espinosa",
+        34: "Diego Alejandro Soto",
+        35: "Catalina Mejía",
+        36: "Jorge Eduardo Bernal",
+        37: "Natalia Cardona",
+        39: "Sofía Alexandra Ruiz",
+        40: "Luis Fernando Castaño",
+        41: "Daniela Fernanda Núñez",
+        42: "Mauricio Ortiz",
+        43: "Alejandra Torres",
+        44: "Sergio Iván Montenegro",
+        45: "Ximena Alexandra Lara",
+        46: "Bryan Stiven Ortiz",
+        47: "Tatiana Andrea Ríos",
+        48: "Kevin Andrés Saldarriaga",
+        50: "Hernán Darío Zapata",
+        51: "Laura Melissa Gutiérrez",
+        52: "Julián Andrés Cárdenas",
+        53: "María José Pacheco",
+        54: "Camilo Ernesto Restrepo",
+        55: "Melissa Andrea Torres",
+        56: "Iván Darío Salazar"
     };
     return map[usuarioId] || `Inscrito #${usuarioId}`;
 }
