@@ -4,7 +4,7 @@ const services = [
         icon: "solicitudes",
         category: "Académico",
         path: "/solicitudes",
-        description: "Registra y da seguimiento a tus solicitudes de servicios académicos.",
+        description: "Gestiona trámites académicos y servicios institucionales del Smart Campus UNIAJS.",
         resources: [
             "Constancias académicas",
             "Certificados de estudio",
@@ -22,7 +22,7 @@ const services = [
         icon: "reservas",
         category: "Infraestructura",
         path: "/reservas",
-        description: "Reserva salones, laboratorios, auditorios y equipos del campus.",
+        description: "Consulta y reserva espacios, aulas, laboratorios y equipos del campus inteligente.",
         resources: [
             "Salones de clase",
             "Laboratorios de informática",
@@ -40,7 +40,7 @@ const services = [
         icon: "recursos",
         category: "Infraestructura",
         path: "/recursos",
-        description: "Consulta los recursos disponibles de la universidad.",
+        description: "Explora el catálogo de recursos universitarios disponibles para la comunidad.",
         resources: [
             "Espacios físicos",
             "Equipos de laboratorio",
@@ -58,7 +58,7 @@ const services = [
         icon: "eventos",
         category: "Cultura",
         path: "/eventos",
-        description: "Descubre las actividades y eventos organizados por la comunidad.",
+        description: "Descubre actividades académicas, culturales y comunitarias de la universidad.",
         resources: [
             "Seminarios académicos",
             "Talleres y conferencias",
@@ -76,7 +76,7 @@ const services = [
         icon: "notificaciones",
         category: "Comunicación",
         path: "/notificaciones",
-        description: "Recibe avisos de cambios de estado, reservas y eventos.",
+        description: "Recibe avisos relevantes sobre solicitudes, reservas, eventos y comunicaciones institucionales.",
         resources: [
             "Cambios de estado de solicitudes",
             "Confirmaciones de reserva",
@@ -94,7 +94,7 @@ const services = [
         icon: "pqrs",
         category: "Atención",
         path: "/pqrs",
-        description: "Presenta peticiones, quejas, reclamos y sugerencias.",
+        description: "Presenta peticiones, quejas, reclamos y sugerencias para mejorar la experiencia universitaria.",
         resources: [
             "Peticiones",
             "Quejas",

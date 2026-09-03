@@ -99,6 +99,26 @@ const paths = {
     ),
     admin: (
         <path d="M14.7 6.3a4 4 0 0 0-5.2 5.2L4 17l3 3 5.5-5.5a4 4 0 0 0 5.2-5.2l-2.6 2.6-2.1-2.1z" />
+    ),
+    servicios: (
+        <>
+            <path d="M4 4h16v16H4z" />
+            <path d="M4 9h16" />
+            <path d="M9 4v16" />
+        </>
+    ),
+    info: (
+        <>
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4" />
+            <path d="M12 8h.01" />
+        </>
+    ),
+    buscar: (
+        <>
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.3-4.3" />
+        </>
     )
 };
 

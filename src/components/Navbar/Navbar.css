@@ -1,139 +1,128 @@
 .navbar {
-    height: 70px;
+    height: var(--navbar-height);
     width: 100%;
-
-    background-color: var(--color-surface);
+    background: linear-gradient(180deg, var(--color-surface), var(--color-surface-elevated));
     border-bottom: 1px solid var(--color-border);
-
     display: flex;
     align-items: center;
     justify-content: space-between;
-
-    padding: 0 24px;
-
+    padding: 0 var(--space-6);
     box-sizing: border-box;
-
     position: sticky;
     top: 0;
     z-index: 90;
-
-    box-shadow: 0 1px 2px rgba(20, 48, 77, 0.04);
+    box-shadow: 0 8px 22px rgba(15, 35, 60, 0.05);
 }
 
-/* Lado izquierdo */
 .navbar__left {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: var(--space-4);
+}
+
+.navbar__module {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.navbar__module-kicker {
+    font-size: 9px;
+    line-height: 1;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    font-weight: 700;
 }
 
 .navbar__menu {
     width: 40px;
     height: 40px;
-
     border: none;
     border-radius: var(--radius-sm);
     background-color: transparent;
-
     font-size: 22px;
     cursor: pointer;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
-    transition: background-color 0.2s ease;
+    transition: background-color var(--transition-fast);
+    color: var(--color-text-muted);
 }
 
 .navbar__menu:hover {
     background-color: var(--color-hover);
+    color: var(--color-text);
 }
 
 .navbar__title {
     margin: 0;
-
     font-family: var(--font-heading);
     font-size: 20px;
     font-weight: 700;
     color: var(--color-text);
-
     border-left: 3px solid var(--color-accent);
-    padding-left: 14px;
+    padding-left: var(--space-4);
+    line-height: 1.2;
 }
 
-/* Lado derecho */
 .navbar__right {
     display: flex;
     align-items: center;
-    gap: 20px;
-
+    gap: var(--space-2);
     position: relative;
 }
 
-/* Notificaciones */
 .navbar__notification {
     position: relative;
-
     width: 40px;
     height: 40px;
-
     border: none;
     border-radius: 50%;
     background-color: transparent;
-
     font-size: 19px;
     cursor: pointer;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     text-decoration: none;
-
-    transition: background-color 0.2s ease;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+    color: var(--color-text-muted);
 }
 
 .navbar__notification:hover {
     background-color: var(--color-hover);
+    color: var(--color-text);
 }
 
 .navbar__badge {
     position: absolute;
     top: 2px;
     right: 0;
-
     min-width: 18px;
     height: 18px;
-
     padding: 0 5px;
-
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background-color: var(--color-danger);
     color: #ffffff;
-
     font-size: 11px;
     font-weight: 700;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     box-sizing: border-box;
+    box-shadow: 0 0 0 2px var(--color-surface);
 }
 
-/* Perfil */
 .navbar__profile {
     display: flex;
     align-items: center;
-    gap: 10px;
-
+    gap: var(--space-3);
     cursor: pointer;
-
-    padding: 6px 8px;
-    border-radius: 10px;
-
-    transition: background-color 0.2s ease;
-
+    padding: 6px var(--space-3);
+    border-radius: var(--radius);
+    transition: background-color var(--transition-fast);
     position: relative;
 }
 
@@ -144,25 +133,22 @@
 .navbar__avatar {
     width: 40px;
     height: 40px;
-
     border-radius: 50%;
-    background-color: var(--color-primary);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-600));
     color: #ffffff;
-
     border: 2px solid var(--color-accent);
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     font-size: 16px;
     font-weight: 700;
+    flex-shrink: 0;
 }
 
 .navbar__user {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--space-1);
 }
 
 .navbar__name {
@@ -179,52 +165,47 @@
 .navbar__dropdown {
     border: none;
     background: transparent;
-
     font-size: 18px;
     color: var(--color-text-muted);
-
     cursor: pointer;
     padding: 4px;
+    transition: color var(--transition-fast);
 }
 
-/* Dropdown de perfil */
+.navbar__dropdown:hover {
+    color: var(--color-text);
+}
+
 .navbar__menu-dropdown {
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-
     min-width: 220px;
-
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-
     box-shadow: var(--shadow-lg);
-
-    padding: 8px;
-
+    padding: var(--space-2);
     display: flex;
     flex-direction: column;
-    gap: 4px;
-
+    gap: var(--space-1);
     z-index: 100;
+    animation: fade-in-down var(--transition-fast);
 }
 
 .navbar__dropdown-user {
     display: flex;
     flex-direction: column;
-
-    gap: 2px;
-
-    padding: 10px 12px;
-    margin-bottom: 6px;
-
+    gap: var(--space-1);
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-2);
     border-bottom: 1px solid var(--color-border);
 }
 
 .navbar__dropdown-user strong {
     font-size: 14px;
     color: var(--color-text);
+    font-weight: 600;
 }
 
 .navbar__dropdown-user span {
@@ -235,24 +216,20 @@
 .navbar__dropdown-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-
-    padding: 10px 12px;
-
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
     border: none;
     border-radius: var(--radius-sm);
     background-color: transparent;
-
     font-family: inherit;
     font-size: 14px;
     font-weight: 500;
     color: var(--color-text);
-
     text-decoration: none;
-
     cursor: pointer;
-
-    transition: background-color 0.2s ease;
+    transition: background-color var(--transition-fast);
+    width: 100%;
+    text-align: left;
 }
 
 .navbar__dropdown-item:hover {
@@ -267,10 +244,9 @@
     background-color: var(--color-danger-100);
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .navbar {
-        padding: 0 16px;
+        padding: 0 var(--space-4);
     }
 
     .navbar__title {
@@ -282,6 +258,6 @@
     }
 
     .navbar__right {
-        gap: 10px;
+        gap: var(--space-1);
     }
 }

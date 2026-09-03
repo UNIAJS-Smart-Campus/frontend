@@ -1,8 +1,7 @@
 .solicitud-detalle {
     display: flex;
     flex-direction: column;
-    gap: 28px;
-
+    gap: var(--space-8);
     max-width: 800px;
     margin: 0 auto;
 }
@@ -11,11 +10,15 @@
     font-size: 14px;
     font-weight: 600;
     color: var(--color-primary-600);
-
     text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    transition: color var(--transition-fast);
 }
 
 .solicitud-detalle__back:hover {
+    color: var(--color-primary);
     text-decoration: underline;
 }
 
@@ -23,9 +26,7 @@
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-
-    padding: 28px;
-
+    padding: var(--space-6);
     box-shadow: var(--shadow-sm);
 }
 
@@ -33,56 +34,112 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-
     flex-wrap: wrap;
-    gap: 10px;
+    gap: var(--space-3);
 }
+
+/* TAREA 2: contenedor para estado + prioridad */
+.solicitud-detalle__badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.solicitud-detalle__numero-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.solicitud-detalle__servicio-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.solicitud-detalle__servicio-icon .icon {
+    display: block;
+}
+
+.solicitud-detalle__servicio-icon--blue { background: #e8f3ff; color: var(--color-primary-600); }
+.solicitud-detalle__servicio-icon--green { background: #e7f8ee; color: #199b5b; }
+.solicitud-detalle__servicio-icon--purple { background: #eee8ff; color: #7547d6; }
+.solicitud-detalle__servicio-icon--red { background: #fff0f0; color: #d84b4b; }
+.solicitud-detalle__servicio-icon--orange { background: #fff4df; color: #d99000; }
 
 .solicitud-detalle__numero {
     margin: 0;
-
     font-family: var(--font-heading);
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 800;
     color: var(--color-primary-600);
+    line-height: 1.2;
 }
 
-.solicitud-detalle__tipo {
-    margin: 14px 0 8px;
+.solicitud-detalle__servicio {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
 
+.solicitud-detalle__status {
+    padding: 6px 11px;
+    border-radius: 6px;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.solicitud-detalle__status.blue { background: var(--color-primary-100); color: var(--color-primary-600); }
+.solicitud-detalle__status.yellow { background: var(--color-accent-50); color: var(--color-accent-dark); }
+.solicitud-detalle__status.purple { background: var(--color-primary-50); color: var(--color-primary-600); }
+.solicitud-detalle__status.green { background: var(--color-success-100); color: var(--color-success); }
+.solicitud-detalle__status.gray { background: var(--color-hover); color: var(--color-text-muted); }
+.solicitud-detalle__status.red { background: var(--color-danger-50); color: var(--color-danger, #c0392b); }
+
+.solicitud-detalle__tipo {
+    margin: var(--space-3) 0 var(--space-2);
+    font-family: var(--font-heading);
     font-size: 20px;
     font-weight: 700;
     color: var(--color-text);
+    line-height: 1.3;
 }
 
 .solicitud-detalle__descripcion {
-    margin: 0 0 20px;
-
+    margin: 0 0 var(--space-5);
     font-size: 15px;
-    line-height: 1.6;
+    line-height: 1.7;
     color: var(--color-text-muted);
 }
 
 .solicitud-detalle__meta {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-
-    padding-top: 20px;
+    gap: var(--space-5);
+    padding-top: var(--space-5);
     border-top: 1px solid var(--color-border);
 }
 
 .solicitud-detalle__meta-item {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--space-1);
 }
 
 .solicitud-detalle__meta-label {
     font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
-    color: var(--color-text-faint);
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
 }
 
 .solicitud-detalle__meta-value {
@@ -91,20 +148,16 @@
     color: var(--color-text);
 }
 
-/* Timeline */
 .solicitud-detalle__timeline {
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-
-    padding: 28px;
-
+    padding: var(--space-6);
     box-shadow: var(--shadow-sm);
 }
 
 .solicitud-detalle__timeline-title {
-    margin: 0 0 24px;
-
+    margin: 0 0 var(--space-6);
     font-family: var(--font-heading);
     font-size: 18px;
     font-weight: 700;
@@ -113,30 +166,24 @@
 
 .solicitud-detalle__steps {
     list-style: none;
-
     margin: 0;
     padding: 0;
-
     position: relative;
 }
 
 .solicitud-detalle__step {
     display: flex;
-    gap: 16px;
-
-    padding-bottom: 24px;
-
+    gap: var(--space-4);
+    padding-bottom: var(--space-6);
     position: relative;
 }
 
 .solicitud-detalle__step:not(:last-child)::before {
     content: "";
-
     position: absolute;
     left: 15px;
     top: 34px;
     bottom: 0;
-
     width: 2px;
     background-color: var(--color-border);
 }
@@ -148,43 +195,50 @@
 .solicitud-detalle__step-marker {
     width: 32px;
     height: 32px;
-
     border-radius: 50%;
-
     background-color: var(--color-hover);
     border: 2px solid var(--color-border-strong);
-
     color: var(--color-text);
     font-size: 14px;
     font-weight: 700;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     flex-shrink: 0;
 }
 
 .solicitud-detalle__step--done .solicitud-detalle__step-marker {
     background-color: var(--color-success);
     border-color: var(--color-success);
-    color: #ffffff;
+    color: var(--color-text-inverse);
 }
 
 .solicitud-detalle__step--current .solicitud-detalle__step-marker {
-    background-color: var(--color-primary-600);
-    border-color: var(--color-primary-600);
-    color: #ffffff;
+    background-color: var(--color-accent-dark);
+    border-color: var(--color-accent-dark);
+    color: var(--color-primary-800);
+    box-shadow: 0 0 0 4px rgba(247, 208, 0, 0.25);
+}
 
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+.solicitud-detalle__step--rejected .solicitud-detalle__step-marker {
+    background-color: var(--color-danger, #c0392b);
+    border-color: var(--color-danger, #c0392b);
+    color: var(--color-text-inverse);
+}
+
+.solicitud-detalle__step--rejected:not(:last-child)::before {
+    background-color: var(--color-danger, #c0392b);
+}
+
+.solicitud-detalle__step--rejected .solicitud-detalle__step-name {
+    color: var(--color-danger, #c0392b);
 }
 
 .solicitud-detalle__step-body {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-
-    padding-top: 4px;
+    gap: var(--space-1);
+    padding-top: var(--space-1);
 }
 
 .solicitud-detalle__step-name {
@@ -195,6 +249,10 @@
 
 .solicitud-detalle__step--current .solicitud-detalle__step-name {
     color: var(--color-primary-600);
+}
+
+.solicitud-detalle__step--current .solicitud-detalle__step-detail {
+    color: var(--color-text);
 }
 
 .solicitud-detalle__step--done .solicitud-detalle__step-name {
@@ -209,8 +267,292 @@
 
 .solicitud-detalle__step-detail {
     margin: 0;
-
     font-size: 13px;
     line-height: 1.6;
     color: var(--color-text-muted);
+}
+
+@media (max-width: 768px) {
+    .solicitud-detalle__meta {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============ ACCIONES DEL DETALLE (TAREA 8) ============ */
+.solicitud-detalle__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: var(--space-5);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border);
+}
+
+/* Reutilizar badges de prioridad del módulo de solicitudes */
+.sols__item-priority {
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.sols__item-priority--alta { background: var(--color-danger-50); color: var(--color-danger); }
+.sols__item-priority--media { background: var(--color-accent-50); color: var(--color-accent-dark); }
+.sols__item-priority--baja { background: var(--color-success-100); color: var(--color-success); }
+
+/* ============ PROGRESS BAR (DETAIL) ============ */
+.sol-det__progress-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: var(--space-5);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border);
+}
+
+.sol-det__progress-bar {
+    flex: 1;
+    height: 8px;
+    background-color: var(--color-hover);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.sol-det__progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-accent-dark), var(--color-accent));
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+.sol-det__progress-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+/* ============ STEP CHIPS ============ */
+.sol-det__steps {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: var(--space-4);
+}
+
+.sol-det__step-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 600;
+    background-color: var(--color-hover);
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+}
+
+.sol-det__step-chip--done {
+    background-color: var(--color-success-100);
+    color: var(--color-success);
+    border-color: var(--color-success);
+}
+
+.sol-det__step-chip--current {
+    background-color: var(--color-primary-100);
+    color: var(--color-primary-600);
+    border-color: var(--color-primary-600);
+}
+
+.sol-det__step-check {
+    font-size: 10px;
+    font-weight: 800;
+}
+
+/* ============ TIMELINE (HISTORY) ============ */
+.sol-det__timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.sol-det__timeline-item {
+    display: flex;
+    gap: var(--space-4);
+    padding-bottom: var(--space-5);
+    position: relative;
+}
+
+.sol-det__timeline-item:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: 15px;
+    top: 34px;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--color-border);
+}
+
+.sol-det__timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.sol-det__timeline-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 700;
+    background-color: var(--color-hover);
+    border: 2px solid var(--color-border);
+    color: var(--color-text);
+}
+
+.sol-det__timeline-icon--green {
+    background-color: var(--color-success-100);
+    border-color: var(--color-success);
+    color: var(--color-success);
+}
+
+.sol-det__timeline-icon--blue {
+    background-color: var(--color-primary-100);
+    border-color: var(--color-primary-600);
+    color: var(--color-primary-600);
+}
+
+.sol-det__timeline-icon--gray {
+    background-color: var(--color-hover);
+    border-color: var(--color-border);
+    color: var(--color-text-muted);
+}
+
+.sol-det__timeline-icon--purple {
+    background-color: var(--color-primary-50);
+    border-color: #7547d6;
+    color: #7547d6;
+}
+
+.sol-det__timeline-icon--red {
+    background-color: var(--color-danger-50);
+    border-color: var(--color-danger, #c0392b);
+    color: var(--color-danger, #c0392b);
+}
+
+.sol-det__timeline-icon--yellow {
+    background-color: var(--color-accent-50);
+    border-color: var(--color-accent-dark);
+    color: var(--color-accent-dark);
+}
+
+.sol-det__timeline-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding-top: var(--space-1);
+}
+
+.sol-det__timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.sol-det__timeline-type {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.sol-det__timeline-date {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-faint);
+    white-space: nowrap;
+}
+
+.sol-det__timeline-user {
+    font-size: 11px;
+    color: var(--color-text-muted);
+}
+
+.sol-det__timeline-desc {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+}
+
+/* Estilos de modal form reutilizados desde Solicitudes.css */
+.sols__modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.sols__form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sols__form-group label {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    font-weight: 700;
+}
+
+.sols__form-group textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    background-color: var(--color-input-bg);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    min-height: 100px;
+    resize: vertical;
+    line-height: 1.5;
+    transition: border-color var(--transition-fast);
+}
+
+.sols__form-group textarea:focus {
+    border-color: var(--color-primary-600);
+    box-shadow: 0 0 0 4px rgba(2, 94, 115, 0.08);
+}
+
+/* ── Aviso de prioridad alta en modal de rechazo ── */
+.sols__modal-warning {
+    margin: 8px 0 0;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: #fff8e1;
+    border-left: 3px solid #f59e0b;
+    font-size: 0.85rem;
+    color: #92400e;
+}
+
+/* ── Texto de confirmación en modales ── */
+.sols__modal-confirm-text {
+    margin: 0 0 16px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--color-text, #333);
 }

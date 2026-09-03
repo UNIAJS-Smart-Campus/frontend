@@ -1,0 +1,123 @@
+/* ==========================================
+   Block: Modal
+   BEM: .modal, .modal--modifier, .modal__element
+   ========================================== */
+
+/* Overlay */
+.modal {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(15, 23, 42, 0.55); /* overlay semitransparente — sin token de opacidad en el sistema */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-6);
+    z-index: 1000;
+    box-sizing: border-box;
+    animation: fade-in var(--transition-fast);
+}
+
+/* Backdrop clickable (capa invisible sobre el overlay para cerrar) */
+.modal__backdrop {
+    position: absolute;
+    inset: 0;
+}
+
+/* Contenedor del diálogo */
+.modal__content {
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    z-index: 1;
+    animation: scale-in var(--transition-base);
+}
+
+/* Modificadores de ancho */
+.modal__content--sm {
+    max-width: 420px;
+}
+
+.modal__content--lg {
+    max-width: 680px;
+}
+
+.modal__content--full {
+    max-width: calc(100vw - var(--space-16));
+    height: calc(100vh - var(--space-16));
+    max-height: calc(100vh - var(--space-16));
+}
+
+/* Encabezado */
+.modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-6) var(--space-6) var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* Título */
+.modal__title {
+    margin: 0 0 var(--space-1);
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1.3;
+}
+
+/* Subtítulo opcional bajo el título */
+.modal__subtitle {
+    margin: 0;
+    font-size: 12px;
+    color: var(--color-text-muted);
+    line-height: 1.4;
+}
+
+/* Botón cerrar */
+.modal__close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background-color: transparent;
+    font-size: 18px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.modal__close:hover {
+    color: var(--color-text);
+    background-color: var(--color-hover);
+}
+
+/* Cuerpo */
+.modal__body {
+    padding: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+/* Pie (opcional) */
+.modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-6);
+    border-top: 1px solid var(--color-border);
+    background-color: var(--color-bg-alt);
+}

@@ -38,11 +38,22 @@ const menuSections = [
                 permiso: "eventos"
             },
             {
+                name: "Info Académica",
+                path: "/info-academica",
+                icon: "info",
+                permiso: "info_academica"
+            },
+            {
                 name: "Usuarios",
                 path: "/usuarios",
                 icon: "usuarios",
                 permiso: "usuarios"
-            },
+            }
+        ]
+    },
+    {
+        label: "Reportes",
+        items: [
             {
                 name: "Reportes",
                 path: "/reportes",
@@ -96,8 +107,16 @@ export function getModuleName(pathname) {
         return "Gestión de usuarios";
     }
 
+    if (pathname === "/info-academica") {
+        return "Información Académica";
+    }
+
     if (pathname.startsWith("/solicitudes/")) {
         return "Detalle de solicitud";
+    }
+
+    if (pathname === "/servicios") {
+        return "Servicios";
     }
 
     if (pathname.startsWith("/servicio/")) {

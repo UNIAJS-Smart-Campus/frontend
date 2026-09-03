@@ -1,0 +1,87 @@
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.truncate-1 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.truncate-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+    .respond-to-sm {
+        display: block;
+    }
+}
+
+@media (max-width: 768px) {
+    .respond-to-md {
+        display: block;
+    }
+}
+
+@media (max-width: 1024px) {
+    .respond-to-lg {
+        display: block;
+    }
+}
+
+@media (max-width: 1280px) {
+    .respond-to-xl {
+        display: block;
+    }
+}
+
+@media (min-width: 640px) {
+    .respond-from-sm {
+        display: block;
+    }
+}
+
+@media (min-width: 768px) {
+    .respond-from-md {
+        display: block;
+    }
+}
+
+@media (min-width: 1024px) {
+    .respond-from-lg {
+        display: block;
+    }
+}
+
+@media (min-width: 1280px) {
+    .respond-from-xl {
+        display: block;
+    }
+}

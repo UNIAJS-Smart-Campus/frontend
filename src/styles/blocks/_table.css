@@ -1,0 +1,73 @@
+/* ==========================================
+   Block: Table (generic utility)
+   BEM: .table, .table--modifier, .table__element
+   Note: This is a generic table block. The DataTable component uses .dtable
+   (see components/DataTable/DataTable.css) for component-scoped styling.
+   ========================================== */
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    background-color: var(--color-surface);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.table__head {
+    background-color: var(--color-bg-alt);
+}
+
+.table__row {
+    border-bottom: 1px solid var(--color-border);
+    transition: background-color var(--transition-fast);
+}
+
+.table__row:last-child {
+    border-bottom: none;
+}
+
+.table__row--hoverable:hover {
+    background-color: var(--color-hover);
+}
+
+.table__row--selected {
+    background-color: var(--color-primary-50);
+}
+
+.table__cell {
+    padding: var(--space-3) var(--space-4);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.table__header {
+    padding: var(--space-3) var(--space-4);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+/* Variantes */
+.table--striped .table__row:nth-child(even) {
+    background-color: var(--color-bg-alt);
+}
+
+.table--bordered .table__cell {
+    border: 1px solid var(--color-border);
+}
+
+.table--compact .table__cell,
+.table--compact .table__header {
+    padding: var(--space-2) var(--space-3);
+}

@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import menuSections from "../../utils/menu";
 import useAuth from "../../context/useAuth";
 import Icon from "../Icon/Icon";
+import BrandLogo from "../BrandLogo/BrandLogo";
 import "./Sidebar.css";
 
 function Sidebar({ collapsed }) {
@@ -21,8 +22,7 @@ function Sidebar({ collapsed }) {
   return (
     <nav className={classes}>
       <div className="sidebar__brand">
-        <span className="sidebar__logo">U</span>
-        <h2 className="sidebar__title">UniAJS</h2>
+        <BrandLogo className="sidebar__logo" />
       </div>
 
       <div className="sidebar__menu">
@@ -50,11 +50,11 @@ function Sidebar({ collapsed }) {
             ))}
           </div>
         ))}
-      </div>
 
-      <footer className="sidebar__footer">
-        <span className="sidebar__version">UniAJS v0.1</span>
-      </footer>
+        <footer className="sidebar__footer">
+          <span className="sidebar__version">UniAJS v0.4.0</span>
+        </footer>
+      </div>
     </nav>
   );
 }

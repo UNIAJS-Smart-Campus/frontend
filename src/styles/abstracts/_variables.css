@@ -1,0 +1,256 @@
+:root {
+/* Tipografía */
+    --font-heading: "Inter", "Segoe UI", Arial, sans-serif;
+    --font-body: "Inter", "Segoe UI", Arial, sans-serif;
+
+/* Paleta institucional UAJS */
+    --color-primary: #025E73;       /* Teal principal */
+    --color-primary-800: #023059;   /* Azul oscuro - sidebar */
+    --color-primary-700: #034D62;   /* Hover/active oscuro */
+    --color-primary-600: #025E73;   /* Estado active */
+    --color-primary-500: #0E7A92;
+    --color-primary-400: #2D99B0;
+    --color-primary-300: #5CB5C9;
+    --color-primary-200: #A0D4E0;
+    --color-primary-100: #D0ECF1;
+    --color-primary-50: #EBF6F9;
+
+    --color-accent: #F2B705;        /* Amarillo dorado */
+    --color-accent-dark: #CC9B04;
+    --color-accent-light: #F7D466;
+    --color-accent-100: #FDE9A0;
+    --color-accent-50: #FEF5D6;
+
+/* Logo */
+    --logo-width: 140px;
+
+/* Superficies */
+    --color-bg: #F2F2F2;
+    --color-bg-alt: #E8EAED;
+    --color-surface: #FFFFFF;
+    --color-surface-elevated: #F8FAFC;
+    --color-surface-alt: #F0F2F5;
+    --color-hover: #E8EAED;
+    --color-border: #DDE1E6;
+    --color-border-strong: #C4C9CF;
+    --color-input-bg: #FFFFFF;
+
+/* Texto */
+    --color-text: #10233A;
+    --color-text-secondary: #60748A;
+    --color-text-muted: #8890A0;
+    --color-text-faint: #A0A5B0;
+    --color-text-inverse: #FFFFFF;
+
+/* Estado */
+    --color-success: #29D967;
+    --color-success-100: #D1FADF;
+    --color-success-50: #EDFCF2;
+
+    --color-danger: #EF4444;
+    --color-danger-100: #FEE2E2;
+    --color-danger-50: #FEF2F2;
+
+    --color-warning: #F2B705;
+    --color-warning-100: #FEF3C7;
+    --color-warning-50: #FFFBEB;
+
+    --color-info: #025E73;
+    --color-info-100: #D0ECF1;
+    --color-info-50: #EBF6F9;
+
+/* Sombra */
+    --shadow-xs: 0 1px 2px rgba(2, 48, 89, 0.03);
+    --shadow-sm: 0 1px 3px rgba(2, 48, 89, 0.04), 0 1px 2px rgba(2, 48, 89, 0.02);
+    --shadow-md: 0 4px 12px rgba(2, 48, 89, 0.06);
+    --shadow-lg: 0 12px 32px rgba(2, 48, 89, 0.08);
+
+/* Transiciones */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+/* Espaciado */
+    --space-1: 2px;
+    --space-2: 6px;
+    --space-3: 8px;
+    --space-4: 12px;
+    --space-5: 16px;
+    --space-6: 20px;
+    --space-8: 24px;
+    --space-10: 32px;
+    --space-12: 40px;
+    --space-16: 48px;
+
+/* Layout */
+    --sidebar-width: 240px;
+    --sidebar-width-collapsed: 64px;
+    --navbar-height: 56px;
+    --content-max-width: 1280px;
+
+/* Border radius */
+    --radius-sm: 6px;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+    --radius-full: 9999px;
+
+/* Sidebar theme */
+    --sidebar-bg-1: var(--color-primary-800);
+    --sidebar-bg-2: var(--color-primary);
+    --sidebar-bg-3: #023059;
+    --sidebar-text: #e2e8f0;
+    --sidebar-text-secondary: #c8d4e2;
+    --sidebar-text-muted: rgba(226, 232, 240, 0.4);
+    --sidebar-text-faint: rgba(255, 255, 255, 0.3);
+    --sidebar-border: rgba(255, 255, 255, 0.08);
+    --sidebar-hover: rgba(255, 255, 255, 0.06);
+    --sidebar-active-bg: rgba(242, 183, 5, 0.12);
+    --sidebar-active-hover: rgba(242, 183, 5, 0.18);
+    --sidebar-scrollbar: rgba(255, 255, 255, 0.12);
+}
+
+/* Modo oscuro */
+[data-theme="dark"] {
+    --color-primary: #4DB8D0;
+    --color-primary-800: #1A3A4A;
+    --color-primary-700: #1F4D5E;
+    --color-primary-600: #4DB8D0;
+    --color-primary-500: #6CC8DD;
+    --color-primary-400: #8ED5E6;
+    --color-primary-300: #B0E3EF;
+    --color-primary-200: #D0ECF1;
+    --color-primary-100: #1A3A4A;
+    --color-primary-50: #142F3D;
+
+    --color-accent: #F5C842;
+    --color-accent-dark: #D9AD1A;
+    --color-accent-light: #F9DC7A;
+    --color-accent-100: #FFF1BF;
+    --color-accent-50: #FFF9E6;
+
+    --color-bg: #0A1520;
+    --color-bg-alt: #0F1D2B;
+    --color-surface: #122232;
+    --color-surface-elevated: #1A3044;
+    --color-surface-alt: #152838;
+    --color-hover: #1C3448;
+    --color-border: #2A4458;
+    --color-border-strong: #3D5E74;
+    --color-input-bg: #0D1A28;
+
+    --color-text: #EAF3FF;
+    --color-text-secondary: #B8CEE0;
+    --color-text-muted: #8AA8BE;
+    --color-text-faint: #6A8AA2;
+    --color-text-inverse: #0A1520;
+
+    --color-success: #5AE897;
+    --color-success-100: #163C2D;
+    --color-success-50: #0D2C22;
+
+    --color-danger: #FF9B9B;
+    --color-danger-100: #4D1F1F;
+    --color-danger-50: #341818;
+
+    --color-warning: #F5C842;
+    --color-warning-100: #47330F;
+    --color-warning-50: #2E220D;
+
+    --color-info: #4DB8D0;
+    --color-info-100: #1A3A4A;
+    --color-info-50: #142F3D;
+
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.38);
+    --shadow-sm: 0 3px 8px rgba(2, 6, 23, 0.48), 0 1px 3px rgba(2, 6, 23, 0.28);
+    --shadow-md: 0 10px 20px rgba(2, 6, 23, 0.56), 0 4px 10px rgba(2, 6, 23, 0.32);
+    --shadow-lg: 0 18px 36px rgba(2, 6, 23, 0.64), 0 8px 18px rgba(2, 6, 23, 0.28);
+    --shadow-xl: 0 26px 52px rgba(2, 6, 23, 0.76), 0 12px 22px rgba(2, 6, 23, 0.42);
+
+    /* Sidebar dark mode */
+    --sidebar-bg-1: #091321;
+    --sidebar-bg-2: #101E32;
+    --sidebar-bg-3: #091321;
+    --sidebar-text: #EAF3FF;
+    --sidebar-text-secondary: #B7C9E6;
+    --sidebar-text-muted: rgba(184, 204, 230, 0.52);
+    --sidebar-text-faint: rgba(184, 204, 230, 0.35);
+    --sidebar-border: rgba(148, 163, 184, 0.12);
+    --sidebar-hover: rgba(148, 163, 184, 0.08);
+    --sidebar-active-bg: rgba(245, 200, 66, 0.14);
+    --sidebar-active-hover: rgba(245, 200, 66, 0.2);
+    --sidebar-scrollbar: rgba(255, 255, 255, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --color-primary: #4DB8D0;
+        --color-primary-800: #1A3A4A;
+        --color-primary-700: #1F4D5E;
+        --color-primary-600: #4DB8D0;
+        --color-primary-500: #6CC8DD;
+        --color-primary-400: #8ED5E6;
+        --color-primary-300: #B0E3EF;
+        --color-primary-200: #D0ECF1;
+        --color-primary-100: #1A3A4A;
+        --color-primary-50: #142F3D;
+
+        --color-accent: #F5C842;
+        --color-accent-dark: #D9AD1A;
+        --color-accent-light: #F9DC7A;
+        --color-accent-100: #FFF1BF;
+        --color-accent-50: #FFF9E6;
+
+        --color-bg: #0A1520;
+        --color-bg-alt: #0F1D2B;
+        --color-surface: #122232;
+        --color-surface-elevated: #1A3044;
+        --color-surface-alt: #152838;
+        --color-hover: #1C3448;
+        --color-border: #2A4458;
+        --color-border-strong: #3D5E74;
+        --color-input-bg: #0D1A28;
+
+        --color-text: #EAF3FF;
+        --color-text-secondary: #B8CEE0;
+        --color-text-muted: #8AA8BE;
+        --color-text-faint: #6A8AA2;
+        --color-text-inverse: #0A1520;
+
+        --color-success: #5AE897;
+        --color-success-100: #163C2D;
+        --color-success-50: #0D2C22;
+
+        --color-danger: #FF9B9B;
+        --color-danger-100: #4D1F1F;
+        --color-danger-50: #341818;
+
+        --color-warning: #F5C842;
+        --color-warning-100: #47330F;
+        --color-warning-50: #2E220D;
+
+        --color-info: #4DB8D0;
+        --color-info-100: #1A3A4A;
+        --color-info-50: #142F3D;
+
+        --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.35);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.55), 0 2px 4px rgba(0, 0, 0, 0.35);
+        --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.45);
+        --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.75), 0 8px 16px rgba(0, 0, 0, 0.55);
+
+        /* Sidebar dark mode */
+        --sidebar-bg-1: #0f172a;
+        --sidebar-bg-2: #1e293b;
+        --sidebar-bg-3: #0f172a;
+        --sidebar-text: #e2e8f0;
+        --sidebar-text-secondary: #94a3b8;
+        --sidebar-text-muted: rgba(148, 163, 184, 0.5);
+        --sidebar-text-faint: rgba(148, 163, 184, 0.35);
+        --sidebar-border: rgba(255, 255, 255, 0.06);
+        --sidebar-hover: rgba(255, 255, 255, 0.04);
+        --sidebar-active-bg: rgba(245, 200, 66, 0.15);
+        --sidebar-active-hover: rgba(245, 200, 66, 0.22);
+        --sidebar-scrollbar: rgba(255, 255, 255, 0.08);
+    }
+}

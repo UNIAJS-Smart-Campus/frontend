@@ -1,0 +1,113 @@
+.servicios {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.servicios__page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.servicios__page-title h1 {
+    margin: 0 0 7px;
+    font-family: var(--font-heading);
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.servicios__page-title p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--color-text-muted);
+}
+
+.servicios__filter-card {
+    background:
+        linear-gradient(135deg, rgba(15, 35, 60, 0.04), rgba(99, 176, 255, 0.06));
+    border: 1px solid rgba(22, 84, 140, 0.12);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 14px 28px rgba(15, 35, 60, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.servicios__search {
+    width: 100%;
+}
+
+.servicios__search .searchbar-wrap {
+    max-width: 420px;
+    width: 100%;
+}
+
+.servicios__chips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.servicios__chip {
+    border: 1px solid rgba(22, 84, 140, 0.18);
+    background-color: rgba(255,255,255,0.6);
+    color: var(--color-text-muted);
+    padding: 7px 14px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), color var(--transition-fast),
+        background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.servicios__chip:hover {
+    border-color: var(--color-primary-600);
+    color: var(--color-primary-600);
+    transform: translateY(-1px);
+}
+
+.servicios__chip--active {
+    border-color: transparent;
+    background: linear-gradient(90deg, var(--color-primary-700), var(--color-primary-500));
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 10px 18px rgba(18, 82, 141, 0.18);
+}
+
+.servicios__count {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+}
+
+.servicios__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.servicios__empty {
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 14px;
+    padding: 32px 0;
+    background: var(--color-surface);
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius);
+}
+
+@media (max-width: 700px) {
+    .servicios__page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

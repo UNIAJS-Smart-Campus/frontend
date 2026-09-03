@@ -1,19 +1,152 @@
-.searchbar {
-    display: flex;
-    align-items: flex-end;
-
-    gap: 10px;
-
+.searchbar-wrap {
+    position: relative;
     width: 100%;
 }
 
-.searchbar__field {
-    flex: 1;
+/* Contenedor del search integrado */
+.searchbar {
+    position: relative;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-@media (max-width: 768px) {
-    .searchbar {
-        flex-direction: column;
-        align-items: stretch;
-    }
+/* Icono de búsqueda — siempre visible a la izquierda */
+.searchbar__icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-muted);
+    pointer-events: none;
+    z-index: 1;
+    transition: color var(--transition-fast);
+}
+
+/* Input de búsqueda - ocupa todo el ancho */
+.searchbar__input {
+    width: 100%;
+    height: 42px;
+    box-sizing: border-box;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 0 34px 0 36px; /* espacio para icono izquierdo y botón limpiar */
+    background: var(--color-input-bg);
+    outline: none;
+    font-size: 13px;
+    color: var(--color-text);
+    font-family: inherit;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* Limpiar búsqueda - visible solo cuando hay texto */
+.searchbar__clear {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--color-surface-alt);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.searchbar__clear .icon {
+    display: block;
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+}
+
+.searchbar__clear:hover {
+    background: var(--color-border-strong);
+    color: var(--color-text);
+}
+
+/* Foco del contenedor */
+.searchbar:focus-within {
+    border-color: var(--color-primary-600);
+    box-shadow: 0 0 0 3px var(--color-primary-100);
+}
+
+.searchbar:focus-within .searchbar__icon {
+    color: var(--color-primary-600);
+}
+
+/* Placeholder */
+.searchbar__input::placeholder {
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+/* Descripción debajo del input */
+.searchbar__description {
+    font-size: 10px;
+    color: var(--color-text-muted);
+    margin-top: var(--space-1);
+    margin-bottom: 0;
+    padding: 0 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Sugerencias cuando el search está abierto */
+.searchbar__suggestions {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 30;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.searchbar__suggestion {
+    display: block;
+    width: 100%;
+    padding: 9px 12px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--color-text);
+    border-radius: var(--radius-sm);
+    text-align: left;
+    transition: background-color var(--transition-fast);
+}
+
+.searchbar__suggestion:hover {
+    background-color: var(--color-hover);
+}
+
+.searchbar__suggestion--active {
+    background-color: var(--color-hover);
+}
+
+/* Término coincidente resaltado dentro de la sugerencia */
+.searchbar__match {
+    background: var(--color-accent-50);
+    color: var(--color-primary);
+    border-radius: 2px;
+    padding: 0 1px;
+    font-weight: 700;
 }

@@ -1,65 +1,66 @@
+/* ============================================================
+   PAGINATION — BEM Methodology
+   Block: .pag (Paginación)
+   Convention: block__element | block__element--modifier
+   ============================================================ */
+
 .pag {
     display: flex;
     align-items: center;
     justify-content: space-between;
-
     flex-wrap: wrap;
     gap: 12px;
+    margin-top: 16px;
+    padding: 12px 0;
+    color: var(--color-text-muted);
+    font-size: 12px;
 }
 
 .pag__info {
-    font-size: 13px;
-
+    font-size: 12px;
     color: var(--color-text-muted);
+    font-weight: 500;
 }
 
 .pag__buttons {
     display: flex;
     align-items: center;
-
     gap: 4px;
 }
 
 .pag__btn {
     min-width: 32px;
     height: 32px;
-
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-xs);
     background-color: var(--color-surface);
-
     padding: 0 8px;
-
     font-family: inherit;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-
     color: var(--color-text);
-
     cursor: pointer;
-
-    transition: background-color 0.15s ease, border-color 0.15s ease;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
 }
 
 .pag__btn:hover:not(:disabled):not(.pag__btn--active) {
-    background-color: var(--color-hover);
+    background-color: var(--color-primary-50);
+    border-color: var(--color-primary-50);
+    color: var(--color-primary-600);
 }
 
 .pag__btn--active {
-    background-color: var(--color-primary);
-    border-color: var(--color-primary);
-
-    color: #ffffff;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-600));
+    border-color: var(--color-primary-600);
+    color: var(--color-text-inverse);
 }
 
 .pag__btn:disabled {
-    opacity: 0.4;
-
+    opacity: 0.35;
     cursor: default;
 }
 
 .pag__gap {
     color: var(--color-text-faint);
-
-    padding: 0 2px;
+    padding: 0 4px;
 }

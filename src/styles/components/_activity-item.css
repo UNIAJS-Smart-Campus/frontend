@@ -1,0 +1,73 @@
+/* ==========================================
+   Component: Activity Item
+   BEM: .activity-item, .activity-item--modifier, .activity-item__element
+   ========================================== */
+
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border-radius: var(--radius);
+    transition: background-color var(--transition-fast);
+}
+
+.activity-item:hover {
+    background-color: var(--color-hover);
+}
+
+.activity-item__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.activity-item__icon--info {
+    background-color: var(--color-info-100);
+    color: var(--color-info);
+}
+
+.activity-item__icon--success {
+    background-color: var(--color-success-100);
+    color: var(--color-success);
+}
+
+.activity-item__icon--warning {
+    background-color: var(--color-warning-100);
+    color: var(--color-warning);
+}
+
+.activity-item__icon--danger {
+    background-color: var(--color-danger-100);
+    color: var(--color-danger);
+}
+
+.activity-item__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-item__title {
+    margin: 0 0 var(--space-1);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.activity-item__description {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+}
+
+.activity-item__time {
+    margin-top: var(--space-1);
+    font-size: 12px;
+    color: var(--color-text-faint);
+}

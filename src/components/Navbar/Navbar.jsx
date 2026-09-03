@@ -1,61 +1,42 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import notificaciones from "../../utils/notificaciones";
+import { obtenerNotificaciones, STORAGE_KEY } from "../../utils/notificaciones";
 import { getModuleName } from "../../utils/menu";
 import useAuth from "../../context/useAuth";
+import { useTheme } from "../../context/ThemeContext";
+import { getAvatarStyle, getUserInitials, getUserPhoto } from "../../utils/avatar";
 import Icon from "../Icon/Icon";
+import FontSizeToggle from "../FontSizeToggle/FontSizeToggle";
 import "./Navbar.css";
-
-const THEME_KEY = "uajs_theme";
-
-function getInitialTheme() {
-    try {
-        const guardado = localStorage.getItem(THEME_KEY);
-        if (guardado === "dark" || guardado === "light") {
-            return guardado;
-        }
-    } catch {
-        // si localStorage no está disponible se ignora
-    }
-
-    try {
-        if (
-            window.matchMedia &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches
-        ) {
-            return "dark";
-        }
-    } catch {
-        // si matchMedia no está disponible se ignora
-    }
-
-    return "light";
-}
 
 function Navbar({ onToggle }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [theme, setTheme] = useState(getInitialTheme);
+    const [noLeidas, setNoLeidas] = useState(() =>
+        obtenerNotificaciones().filter((n) => !n.leida).length
+    );
+    const { darkMode, toggleTheme } = useTheme();
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout } = useAuth();
 
     const moduleName = getModuleName(location.pathname);
-    const noLeidas = notificaciones.filter((item) => !item.leida).length;
 
+    // Sincronizar el badge cuando cambia el localStorage (ej. al marcar leídas)
     useEffect(() => {
-        document.documentElement.setAttribute("data-theme", theme);
+        const actualizarBadge = () => {
+            setNoLeidas(obtenerNotificaciones().filter((n) => !n.leida).length);
+        };
 
-        try {
-            localStorage.setItem(THEME_KEY, theme);
-        } catch {
-            // si localStorage no está disponible se ignora
-        }
-    }, [theme]);
+        // Escuchar cambios de storage (pestañas distintas) y un evento custom para la misma pestaña
+        window.addEventListener("storage", actualizarBadge);
+        window.addEventListener("notificaciones-actualizadas", actualizarBadge);
 
-    const toggleTheme = () => {
-        setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-    };
+        return () => {
+            window.removeEventListener("storage", actualizarBadge);
+            window.removeEventListener("notificaciones-actualizadas", actualizarBadge);
+        };
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -87,10 +68,15 @@ function Navbar({ onToggle }) {
                     ☰
                 </button>
 
-                <h1 className="navbar__title">{moduleName}</h1>
+                <div className="navbar__module">
+                    <span className="navbar__module-kicker">UAJS Smart Campus</span>
+                    <h1 className="navbar__title">{moduleName}</h1>
+                </div>
             </div>
 
             <div className="navbar__right">
+                <FontSizeToggle />
+
                 <Link to="/notificaciones" className="navbar__notification">
                     <Icon name="notificaciones" size={20} />
                     {noLeidas > 0 && (
@@ -103,8 +89,12 @@ function Navbar({ onToggle }) {
                     ref={dropdownRef}
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                 >
-                    <div className="navbar__avatar">
-                        {user?.nombre?.charAt(0) ?? "U"}
+                    <div
+                        className="navbar__avatar"
+                        style={getAvatarStyle(user?.nombre, "linear-gradient(135deg, var(--color-primary), var(--color-primary-600))")}
+                        aria-label={user?.nombre || "Usuario"}
+                    >
+                        {!getUserPhoto() && getUserInitials(user?.nombre, "U")}
                     </div>
 
                     <div className="navbar__user">
@@ -143,7 +133,7 @@ function Navbar({ onToggle }) {
                                 className="navbar__dropdown-item"
                                 onClick={toggleTheme}
                             >
-                                {theme === "dark" ? "☀️ Modo claro" : "🌙 Modo oscuro"}
+                                {darkMode ? "☀️ Modo claro" : "🌙 Modo oscuro"}
                             </button>
 
                             <button

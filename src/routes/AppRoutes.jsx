@@ -26,6 +26,8 @@ import PQRS from "../pages/PQRS/PQRS";
 import NuevaPQRS from "../pages/PQRS/NuevaPQRS/NuevaPQRS";
 import Usuarios from "../pages/Usuarios/Usuarios";
 import Reportes from "../pages/Reportes/Reportes";
+import InfoAcademica from "../pages/InfoAcademica/InfoAcademica";
+import Servicios from "../pages/Servicios/Servicios";
 
 function AppRoutes() {
   return (
@@ -53,6 +55,14 @@ function AppRoutes() {
             }
           />
           <Route
+            path="/servicios"
+            element={
+              <ProtectedRoute>
+                <Servicios />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/solicitudes"
             element={
               <ProtectedRoute permiso="solicitudes">
@@ -63,7 +73,7 @@ function AppRoutes() {
           <Route
             path="/solicitudes/:id"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute permiso="solicitudes">
                 <SolicitudDetalle />
               </ProtectedRoute>
             }
@@ -108,15 +118,15 @@ function AppRoutes() {
               </ProtectedRoute>
             }
           />
-          <Route
+<Route
             path="/pqrs/nueva"
             element={
-              <ProtectedRoute permiso="pqrs">
-                <NuevaPQRS />
-              </ProtectedRoute>
+                <ProtectedRoute permiso="pqrs">
+                    <NuevaPQRS />
+                </ProtectedRoute>
             }
-          />
-          <Route
+        />
+        <Route
             path="/perfil"
             element={
               <ProtectedRoute permiso="perfil">
@@ -145,6 +155,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute permiso="reportes">
                 <Reportes />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/info-academica"
+            element={
+              <ProtectedRoute permiso="info_academica">
+                <InfoAcademica />
               </ProtectedRoute>
             }
           />

@@ -1,76 +1,449 @@
-.solicitudes {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
+/* ============================================================
+   SOLICITUDES - Estilos específicos del módulo
+   Los estilos compartidos (page, header, filters, modal, etc.)
+   están en styles/blocks/_page.css
+   ============================================================ */
+
+/* ============ SUMMARY ============ */
+.sols__summary {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px;
 }
 
-/* Filtros */
-.solicitudes__filters {
-    display: flex;
-    gap: 12px;
+.sols__summary-card--active {
+    border-color: var(--color-accent-dark);
+    background: linear-gradient(90deg, var(--color-accent-dark), var(--color-accent));
+}
 
+/* ============ SUMMARY ICON COLORS ============ */
+.sols__summary-icon--all { background: #e8f3ff; color: var(--color-primary-600); }
+.sols__summary-icon--blue { background: #e8f3ff; color: var(--color-primary-600); }
+.sols__summary-icon--yellow { background: #fff4df; color: #d99000; }
+.sols__summary-icon--purple { background: #eee8ff; color: #7547d6; }
+.sols__summary-icon--green { background: #e7f8ee; color: #199b5b; }
+.sols__summary-icon--gray { background: var(--color-hover); color: var(--color-text-muted); }
+
+.sols__summary-card--active .summary__icon {
+    background: rgba(255, 255, 255, 0.55);
+}
+
+.sols__summary-card--active .summary__label {
+    color: rgba(30, 58, 95, 0.75);
+}
+
+.sols__summary-card--active .summary__number {
+    color: var(--color-primary-800);
+}
+
+/* ============ FILTERS ============ */
+.sols__filter-select {
+    height: 40px;
+    border: 1px solid var(--color-border);
+    border-radius: 7px;
+    padding: 0 12px;
+    background-color: var(--color-input-bg);
+    outline: none;
+    font-size: 11px;
+    color: var(--color-text);
+    min-width: 180px;
+}
+
+.sols__filter-select:focus {
+    border-color: var(--color-primary-600);
+}
+
+/* ============ LIST ============ */
+.sols__list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sols__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 11px;
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition-base), border-color var(--transition-fast);
+}
+
+.sols__item:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary-600);
+}
+
+.sols__item-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 9px;
+    display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+}
 
+.sols__item-icon .icon {
+    display: block;
+}
+
+.sols__item-icon--blue { background: #e8f3ff; color: var(--color-primary-600); }
+.sols__item-icon--green { background: #e7f8ee; color: #199b5b; }
+.sols__item-icon--purple { background: #eee8ff; color: #7547d6; }
+.sols__item-icon--red { background: #fff0f0; color: #d84b4b; }
+.sols__item-icon--orange { background: #fff4df; color: #d99000; }
+
+.sols__item-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.sols__item-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 5px;
+}
+
+.sols__item-id {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--color-primary-600);
+    letter-spacing: 0.02em;
+}
+
+.sols__item-status {
+    padding: 4px 9px;
+    border-radius: 6px;
+    font-size: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.sols__item-status.blue { background: var(--color-primary-100); color: var(--color-primary-600); }
+.sols__item-status.yellow { background: var(--color-accent-50); color: var(--color-accent-dark); }
+.sols__item-status.purple { background: var(--color-primary-50); color: var(--color-primary-600); }
+.sols__item-status.green { background: var(--color-success-100); color: var(--color-success); }
+.sols__item-status.gray { background: var(--color-hover); color: var(--color-text-muted); }
+.sols__item-status.red { background: var(--color-danger-50); color: var(--color-danger, #c0392b); }
+
+.sols__item-priority {
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.sols__item-priority--alta { background: var(--color-danger-50); color: var(--color-danger); }
+.sols__item-priority--media { background: var(--color-accent-50); color: var(--color-accent-dark); }
+.sols__item-priority--baja { background: var(--color-success-100); color: var(--color-success); }
+
+.sols__item-body h3 {
+    margin: 0 0 4px;
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.sols__item-desc {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+}
+
+.sols__item-sub {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     flex-wrap: wrap;
 }
 
-.solicitudes__search {
-    width: 100%;
-    max-width: 460px;
-}
-
-.solicitudes__select {
-    padding: 12px 16px;
-
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-sm);
-
-    font-family: inherit;
-    font-size: 14px;
-    color: var(--color-text);
-
-    background-color: var(--color-input-bg);
-
-    cursor: pointer;
-}
-
-/* Enlace de detalle (usado dentro de DataTable) */
-.solicitudes__link {
-    font-size: 14px;
-    font-weight: 600;
+.sols__item-chip {
+    font-size: 9px;
+    font-weight: 700;
     color: var(--color-primary-600);
-
-    text-decoration: none;
-
-    transition: color 0.2s ease;
+    background: var(--color-primary-100);
+    padding: 3px 8px;
+    border-radius: 5px;
 }
 
-.solicitudes__link:hover {
-    color: var(--color-primary);
-    text-decoration: underline;
+.sols__item-sol {
+    font-size: 10px;
+    color: var(--color-text-muted);
 }
 
-.solicitudes__form {
+.sols__item-date {
+    font-size: 10px;
+    color: var(--color-text-faint);
+}
+
+.sols__item-actions {
     display: flex;
     flex-direction: column;
+    gap: 10px;
+    flex-shrink: 0;
+    min-width: 140px;
+}
+
+.sols__details-button {
+    flex: 1;
+    height: 50px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    color: var(--color-text-muted);
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.sols__details-button:hover {
+    border-color: var(--color-primary-600);
+    color: var(--color-primary-600);
+}
+
+.sols__advance-button {
+    flex: 1;
+    height: 50px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: linear-gradient(90deg, var(--color-accent-dark), var(--color-accent));
+    color: var(--color-primary-800);
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: box-shadow var(--transition-fast);
+}
+
+.sols__advance-button:hover {
+    box-shadow: var(--shadow-sm);
+}
+
+.sols__reject-button {
+    flex: 1;
+    height: 50px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-danger, #c0392b);
+    background-color: var(--color-surface);
+    color: var(--color-danger, #c0392b);
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+
+.sols__reject-button:hover {
+    background-color: var(--color-danger-50, #fdecec);
+    box-shadow: var(--shadow-sm);
+}
+
+.sols__note-button {
+    flex: 1;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border);
+    background-color: transparent;
+    color: var(--color-text-muted);
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.sols__note-button:hover {
+    border-color: var(--color-primary-600);
+    color: var(--color-primary-600);
+}
+
+/* ============ RESPONSIBLE ============ */
+.sols__item-responsible {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--color-text-muted);
+}
+
+.sols__item-responsible-label {
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+/* ============ PROGRESS BAR ============ */
+.sols__progress {
+    margin-top: 8px;
+    height: 6px;
+    background-color: var(--color-hover);
+    border-radius: 3px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.sols__progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-accent-dark), var(--color-accent));
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+/* ============ MODAL FORM ============ */
+.sols__modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.sols__form-grid {
     gap: 16px;
 }
 
-.solicitudes__form-row {
+.sols__form-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
-.solicitudes__label {
-    font-size: 13px;
-    font-weight: 600;
+.sols__form-group label {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    font-weight: 700;
+}
+
+.sols__form-group input,
+.sols__form-group select,
+.sols__form-group textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    background-color: var(--color-input-bg);
     color: var(--color-text);
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
 }
 
-@media (max-width: 768px) {
-    .solicitudes__title {
-        font-size: 24px;
+.sols__form-group select {
+    cursor: pointer;
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--color-text-muted) 50%), linear-gradient(135deg, var(--color-text-muted) 50%, transparent 50%);
+    background-position: calc(100% - 16px) calc(50% - 2px), calc(100% - 11px) calc(50% - 2px);
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 38px;
+}
+
+.sols__form-group textarea {
+    min-height: 120px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.sols__form-group input:focus,
+.sols__form-group select:focus,
+.sols__form-group textarea:focus {
+    border-color: var(--color-primary-600);
+    box-shadow: 0 0 0 4px rgba(2, 94, 115, 0.08);
+    background-color: var(--color-surface);
+}
+
+.sols__modal-form .modal__footer {
+    margin-top: 0;
+    padding: 0;
+    border-top: none;
+    background: transparent;
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 1200px) {
+    .sols__summary {
+        grid-template-columns: repeat(4, 1fr);
     }
+}
+
+@media (max-width: 900px) {
+    .sols__summary {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 700px) {
+    .sols__summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .sols__item {
+        flex-wrap: wrap;
+    }
+
+    .sols__item-actions {
+        width: 100%;
+        flex-direction: row;
+        min-width: 0;
+    }
+}
+
+/* ── Validación de formulario ── */
+.sols__field-error {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.78rem;
+    color: var(--color-danger, #e53e3e);
+}
+
+.sols__field-hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.78rem;
+    color: var(--color-text-muted, #888);
+}
+
+.sols__input--error {
+    border-color: var(--color-danger, #e53e3e) !important;
+    outline-color: var(--color-danger, #e53e3e) !important;
+}
+
+/* ── Aviso de prioridad alta en modal de rechazo ── */
+.sols__modal-warning {
+    margin: 8px 0 0;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: #fff8e1;
+    border-left: 3px solid #f59e0b;
+    font-size: 0.85rem;
+    color: #92400e;
+}
+
+/* ── Texto de confirmación en modales ── */
+.sols__modal-confirm-text {
+    margin: 0 0 16px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--color-text, #333);
 }

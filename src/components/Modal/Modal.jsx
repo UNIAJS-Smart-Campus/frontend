@@ -1,18 +1,23 @@
-import "./Modal.css";
+import { createPortal } from "react-dom";
 
-function Modal({ isOpen, title, onClose, children }) {
+function Modal({ isOpen, title, subtitle, onClose, children }) {
     if (!isOpen) {
         return null;
     }
 
-    return (
+    return createPortal(
         <div className="modal" onClick={onClose}>
             <div
                 className="modal__content"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="modal__header">
-                    <h3 className="modal__title">{title}</h3>
+                    <div>
+                        <h3 className="modal__title">{title}</h3>
+                        {subtitle && (
+                            <p className="modal__subtitle">{subtitle}</p>
+                        )}
+                    </div>
 
                     <button className="modal__close" onClick={onClose}>
                         ✕
@@ -21,7 +26,8 @@ function Modal({ isOpen, title, onClose, children }) {
 
                 <div className="modal__body">{children}</div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 

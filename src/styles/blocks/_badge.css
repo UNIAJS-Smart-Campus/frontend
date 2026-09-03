@@ -1,0 +1,83 @@
+/* ==========================================
+   Block: Badge
+   BEM: .badge, .badge--modifier, .badge__element
+   ========================================== */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+/* Variantes de estado */
+.badge--default {
+    background-color: var(--color-bg-alt);
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+}
+
+.badge--primary {
+    background-color: var(--color-primary-100);
+    color: var(--color-primary-600);
+}
+
+.badge--secondary {
+    background-color: var(--color-bg-alt);
+    color: var(--color-text-secondary);
+}
+
+.badge--success {
+    background-color: var(--color-success-100);
+    color: var(--color-success);
+}
+
+.badge--danger {
+    background-color: var(--color-danger-100);
+    color: var(--color-danger);
+}
+
+.badge--warning {
+    background-color: var(--color-warning-100);
+    color: var(--color-warning);
+}
+
+.badge--info {
+    background-color: var(--color-info-100);
+    color: var(--color-info);
+}
+
+/* Tamaños */
+.badge--sm {
+    padding: 2px 8px;
+    font-size: 11px;
+}
+
+.badge--lg {
+    padding: 5px 14px;
+    font-size: 13px;
+}
+
+/* Elemento dot */
+.badge__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: currentColor;
+    flex-shrink: 0;
+}
+
+.badge--sm .badge__dot {
+    width: 5px;
+    height: 5px;
+}
+
+.badge--lg .badge__dot {
+    width: 7px;
+    height: 7px;
+}
