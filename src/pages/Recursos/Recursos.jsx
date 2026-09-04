@@ -1,10 +1,12 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Icon from "../../components/Icon/Icon";
 import Modal from "../../components/Modal/Modal";
 import Input from "../../components/Input/Input";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
-import { TIPOS_RECURSO, CATEGORIA_POR_TIPO, CATEGORIAS_RECURSO, obtenerRecursos, guardarRecursos } from "../../utils/recursos";
+import useToast from "../../context/ToastContext";
+import { TIPOS_RECURSO, CATEGORIA_POR_TIPO, CATEGORIAS_RECURSO } from "../../utils/recursos";
+import { resourcesApi } from "../../utils/api";
 import "./Recursos.css";
 
 const CATEGORIA_VARIANT = {
@@ -50,9 +52,28 @@ function obtenerEdificio(ubicacion) {
 }
 
 function Recursos() {
-    const [items, setItems] = useState(() => obtenerRecursos());
+    const toast = useToast();
+    const [items, setItems] = useState([]);
+    const [cargando, setCargando] = useState(true);
     const { puede } = useAuth();
     const puedeAdmin = puede("administrar_recursos");
+
+    const cargar = async () => {
+        setCargando(true);
+        try {
+            const data = await resourcesApi.list();
+            setItems(Array.isArray(data) ? data : []);
+        } catch (err) {
+            toast.error(err.message || "No se pudieron cargar los recursos.");
+            setItems([]);
+        } finally {
+            setCargando(false);
+        }
+    };
+
+    useEffect(() => {
+        cargar();
+    }, []);
 
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");
@@ -166,7 +187,7 @@ function Recursos() {
             codigo: recurso.codigo,
             tipo: recurso.tipo,
             categoria: recurso.categoria ?? CATEGORIA_POR_TIPO[recurso.tipo] ?? "Escenario",
-            capacidad: String(recurso.capacidad),
+            capacidad: String(recurso.capacidad ?? ""),
             ubicacion: recurso.ubicacion,
             estado: recurso.estado,
             disponibilidad: recurso.disponibilidad
@@ -193,7 +214,7 @@ function Recursos() {
         }
     };
 
-    const handleRecursoSubmit = (e) => {
+    const handleRecursoSubmit = async (e) => {
         e.preventDefault();
 
         if (!formRecurso.nombre.trim() || !formRecurso.codigo.trim()) {
@@ -203,7 +224,7 @@ function Recursos() {
 
         const duplicado = items.some(
             (item) =>
-                item.codigo.toLowerCase() === formRecurso.codigo.trim().toLowerCase() &&
+                (item.codigo || "").toLowerCase() === formRecurso.codigo.trim().toLowerCase() &&
                 item.id !== editandoId
         );
         if (duplicado) {
@@ -212,40 +233,43 @@ function Recursos() {
         }
 
         const datos = {
-            nombre: formRecurso.nombre.trim(),
+            nombre_recurso: formRecurso.nombre.trim(),
             codigo: formRecurso.codigo.trim(),
-            tipo: formRecurso.tipo,
-            categoria: formRecurso.categoria || CATEGORIA_POR_TIPO[formRecurso.tipo] || "Escenario",
-            capacidad: Number(formRecurso.capacidad) || 1,
+            tipo_recurso: formRecurso.tipo,
+            descripcion: "",
             ubicacion: formRecurso.ubicacion.trim() || "Bloque A",
+            capacidad: Number(formRecurso.capacidad) || 1,
             estado: formRecurso.estado,
             disponibilidad: formRecurso.disponibilidad
         };
 
-        if (editandoId === null) {
-            const nuevo = { id: `R-${Date.now()}`, ...datos };
-            const nueva = [...items, nuevo];
-            setItems(nueva);
-            guardarRecursos(nueva);
-            mostrarAviso("Recurso creado correctamente.");
-        } else {
-            const nueva = items.map((item) => (item.id === editandoId ? { ...item, ...datos } : item));
-            setItems(nueva);
-            guardarRecursos(nueva);
-            mostrarAviso("Recurso actualizado correctamente.");
+        try {
+            if (editandoId === null) {
+                await resourcesApi.create(datos);
+                mostrarAviso("Recurso creado correctamente.");
+            } else {
+                await resourcesApi.update(editandoId, datos);
+                mostrarAviso("Recurso actualizado correctamente.");
+            }
+            setCrudAbierto(false);
+            await cargar();
+        } catch (err) {
+            setErrorRecurso(err.message || "No se pudo guardar el recurso.");
         }
-        setCrudAbierto(false);
     };
 
-    const eliminarRecurso = (recurso) => {
+    const eliminarRecurso = async (recurso) => {
         const confirma = window.confirm(
             `¿Eliminar el recurso "${recurso.nombre}"?`
         );
         if (!confirma) return;
-        const nueva = items.filter((item) => item.id !== recurso.id);
-        setItems(nueva);
-        guardarRecursos(nueva);
-        mostrarAviso(`Recurso "${recurso.nombre}" eliminado.`);
+        try {
+            await resourcesApi.remove(recurso.id);
+            await cargar();
+            mostrarAviso(`Recurso "${recurso.nombre}" eliminado.`);
+        } catch (err) {
+            mostrarAviso(err.message || "No se pudo eliminar el recurso.");
+        }
     };
 
     return (

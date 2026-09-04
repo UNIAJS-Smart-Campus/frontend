@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import useAuth from "../../context/useAuth";
+import useToast from "../../context/ToastContext";
 import Icon from "../../components/Icon/Icon";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import Modal from "../../components/Modal/Modal";
@@ -9,11 +10,9 @@ import {
     ESTADOS_FINALES,
     ACCIONES_POR_ESTADO,
     ORDEN_ESTADOS,
-    obtenerSolicitudPorId,
-    ejecutarAccion,
     progresoDe
 } from "../../utils/solicitudes";
-import { obtenerUsuarios } from "../../utils/users";
+import { requestsApi, usersApi } from "../../utils/api";
 import "./SolicitudDetalle.css";
 
 const PRIORIDAD_CLASE = {
@@ -59,13 +58,28 @@ const ACTION_LABELS = {
 function SolicitudDetalle() {
     const { id } = useParams();
     const { user, puede } = useAuth();
+    const toast = useToast();
 
-    const [solicitud, setSolicitud] = useState(() =>
-        obtenerSolicitudPorId(id)
-    );
+    const [solicitud, setSolicitud] = useState(null);
+    const [cargando, setCargando] = useState(true);
+    const [usuarios, setUsuarios] = useState([]);
+
+    const cargarSolicitud = async (sid) => {
+        setCargando(true);
+        try {
+            const data = await requestsApi.get(sid);
+            setSolicitud(data);
+        } catch (err) {
+            toast.error(err.message || "No se pudo cargar la solicitud.");
+            setSolicitud(null);
+        } finally {
+            setCargando(false);
+        }
+    };
 
     useEffect(() => {
-        setSolicitud(obtenerSolicitudPorId(id));
+        cargarSolicitud(id);
+        usersApi.list().then((u) => setUsuarios(Array.isArray(u) ? u : [])).catch(() => {});
     }, [id]);
     const [aviso, setAviso] = useState("");
 
@@ -89,15 +103,14 @@ function SolicitudDetalle() {
 
     const responsables = useMemo(
         () =>
-            obtenerUsuarios()
+            usuarios
                 .filter(
                     (u) =>
-                        (u.rol === "Administrador" ||
-                            u.rol === "Administrativo") &&
+                        (u.rol === "Administrador" || u.rol === "Administrativo") &&
                         u.estado === "Activo"
                 )
                 .map((u) => ({ id: u.id, nombre: u.nombre })),
-        []
+        [usuarios]
     );
 
     const accionesDisponibles = useMemo(() => {
@@ -144,19 +157,66 @@ function SolicitudDetalle() {
         setTimeout(() => setAviso(""), 2500);
     };
 
-    const accionSimple = (accion, datos = {}) => {
+    const accionSimple = async (accion, datos = {}) => {
         if (!solicitud) return;
         if (!puedeGestionar) {
             mostrarAviso("No tienes permiso para realizar esta acción.");
             return;
         }
-        const act = ejecutarAccion(solicitud.id, accion, {
-            usuario: user?.nombre || "Administrador",
-            ...datos
-        });
-        if (act) {
-            setSolicitud(act);
+        try {
+            let payload;
+            switch (accion) {
+                case "revisar":
+                    payload = { ...solicitud, estado: "EN_REVISION" };
+                    break;
+                case "asignar":
+                    payload = {
+                        ...solicitud,
+                        estado: "ASIGNADA",
+                        responsable: datos.responsable || solicitud.responsable
+                    };
+                    break;
+                case "proceso":
+                    payload = { ...solicitud, estado: "EN_PROCESO" };
+                    break;
+                case "resolver":
+                    payload = { ...solicitud, estado: "RESUELTA" };
+                    break;
+                case "cerrar":
+                    payload = { ...solicitud, estado: "CERRADA" };
+                    break;
+                case "pausar":
+                    payload = { ...solicitud, estado: "PAUSADA" };
+                    break;
+                case "reanudar":
+                    payload = { ...solicitud, estado: "EN_PROCESO" };
+                    break;
+                case "rechazar":
+                    payload = {
+                        ...solicitud,
+                        estado: "RECHAZADA",
+                        respuesta: datos.descripcion || solicitud.respuesta
+                    };
+                    break;
+                case "reabrir":
+                    payload = { ...solicitud, estado: "EN_REVISION" };
+                    break;
+                case "nota":
+                    payload = {
+                        ...solicitud,
+                        respuesta: [solicitud.respuesta, datos.descripcion]
+                            .filter(Boolean)
+                            .join("\n---\n")
+                    };
+                    break;
+                default:
+                    payload = solicitud;
+            }
+            const updated = await requestsApi.update(solicitud.id, payload);
+            setSolicitud(updated);
             mostrarAviso("Acción ejecutada correctamente.");
+        } catch (err) {
+            toast.error(err.message || "No se pudo ejecutar la acción.");
         }
     };
 
@@ -263,7 +323,9 @@ function SolicitudDetalle() {
                 >
                     ← Volver a solicitudes
                 </Link>
-                <div className="empty">Solicitud no encontrada.</div>
+                <div className="empty">
+                    {cargando ? "Cargando solicitud..." : "Solicitud no encontrada."}
+                </div>
             </div>
         );
     }

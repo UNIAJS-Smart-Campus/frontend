@@ -1,15 +1,35 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Icon from "../../components/Icon/Icon";
 import useAuth from "../../context/useAuth";
-import { obtenerNotificacionesPorPerfil, guardarNotificaciones } from "../../utils/notificaciones";
+import useToast from "../../context/ToastContext";
+import { notificationsApi } from "../../utils/api";
 import "./Notificaciones.css";
 
 const TIPOS = ["Todas", "Solicitud", "Reserva", "Evento", "PQRS"];
 
 function Notificaciones() {
     const { user } = useAuth();
-    const [items, setItems] = useState(() => obtenerNotificacionesPorPerfil(user?.rol));
+    const toast = useToast();
+    const [items, setItems] = useState([]);
+    const [cargando, setCargando] = useState(true);
     const [filtro, setFiltro] = useState("Todas");
+
+    const cargar = async () => {
+        setCargando(true);
+        try {
+            const data = await notificationsApi.list(user?.id);
+            setItems(Array.isArray(data) ? data : []);
+        } catch (err) {
+            toast.error(err.message || "No se pudieron cargar las notificaciones.");
+            setItems([]);
+        } finally {
+            setCargando(false);
+        }
+    };
+
+    useEffect(() => {
+        cargar();
+    }, [user?.id]);
 
     const noLeidas = items.filter((item) => !item.leida).length;
 
@@ -21,20 +41,26 @@ function Notificaciones() {
     const conteoTipo = (tipo) =>
         tipo === "Todas" ? items.length : items.filter((i) => i.tipo === tipo).length;
 
-    const marcarLeida = (id) => {
-        setItems((prev) => {
-            const nueva = prev.map((item) => (item.id === id ? { ...item, leida: true } : item));
-            guardarNotificaciones(nueva);
-            return nueva;
-        });
+    const marcarLeida = async (id) => {
+        try {
+            await notificationsApi.markRead(id);
+            setItems((prev) =>
+                prev.map((item) => (item.id === id ? { ...item, leida: true } : item))
+            );
+            window.dispatchEvent(new Event("notificaciones-actualizadas"));
+        } catch (err) {
+            toast.error(err.message || "No se pudo marcar como leída.");
+        }
     };
 
-    const marcarTodasLeidas = () => {
-        setItems((prev) => {
-            const nueva = prev.map((item) => ({ ...item, leida: true }));
-            guardarNotificaciones(nueva);
-            return nueva;
-        });
+    const marcarTodasLeidas = async () => {
+        try {
+            await notificationsApi.markAllRead();
+            setItems((prev) => prev.map((item) => ({ ...item, leida: true })));
+            window.dispatchEvent(new Event("notificaciones-actualizadas"));
+        } catch (err) {
+            toast.error(err.message || "No se pudo marcar todas como leídas.");
+        }
     };
 
     const nuevaNoLeida = (item) => {
@@ -95,7 +121,9 @@ function Notificaciones() {
 
             {filtradas.length === 0 ? (
                 <div className="empty">
-                    No hay notificaciones {filtro !== "Todas" ? `de tipo ${filtro}` : "disponibles"}.
+                    {cargando
+                        ? "Cargando notificaciones..."
+                        : `No hay notificaciones ${filtro !== "Todas" ? `de tipo ${filtro}` : "disponibles"}.`}
                 </div>
             ) : (
                 <div className="notifs__list">

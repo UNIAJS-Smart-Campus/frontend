@@ -1,13 +1,13 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Icon from "../../components/Icon/Icon";
 import Modal from "../../components/Modal/Modal";
 import Input from "../../components/Input/Input";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import Pagination from "../../components/Pagination/Pagination";
-import recursos from "../../utils/recursos";
 import { esEscenario } from "../../utils/recursos";
-import { obtenerReservas, guardarReservas } from "../../utils/reservas";
+import { reservationsApi, resourcesApi } from "../../utils/api";
 import useAuth from "../../context/useAuth";
+import useToast from "../../context/ToastContext";
 import usePagination from "../../hooks/usePagination";
 import "./Reservas.css";
 
@@ -43,13 +43,17 @@ function formatearHora(hora24) {
 
 function Reservas() {
     const { user } = useAuth();
+    const toast = useToast();
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");
     const [tipo, setTipo] = useState("Todos");
     const [fecha, setFecha] = useState("");
     const [hora, setHora] = useState("Cualquier hora");
+    const [recursos, setRecursos] = useState([]);
+    const [cargandoRecursos, setCargandoRecursos] = useState(true);
     const [recursoSeleccionado, setRecursoSeleccionado] = useState(null);
-    const [misReservas, setMisReservas] = useState(() => obtenerReservas());
+    const [misReservas, setMisReservas] = useState([]);
+    const [cargandoReservas, setCargandoReservas] = useState(true);
     const [modalAbierto, setModalAbierto] = useState(false);
     const [form, setForm] = useState({
         fecha: "",
@@ -60,6 +64,37 @@ function Reservas() {
     const [errores, setErrores] = useState({});
     const [confirmacion, setConfirmacion] = useState("");
     const [busquedaAlerta, setBusquedaAlerta] = useState(false);
+
+    const cargarRecursos = async () => {
+        setCargandoRecursos(true);
+        try {
+            const data = await resourcesApi.list();
+            setRecursos(Array.isArray(data) ? data : []);
+        } catch (err) {
+            toast.error(err.message || "No se pudieron cargar los recursos.");
+            setRecursos([]);
+        } finally {
+            setCargandoRecursos(false);
+        }
+    };
+
+    const cargarReservas = async () => {
+        setCargandoReservas(true);
+        try {
+            const data = await reservationsApi.list();
+            setMisReservas(Array.isArray(data) ? data : []);
+        } catch (err) {
+            toast.error(err.message || "No se pudieron cargar las reservas.");
+            setMisReservas([]);
+        } finally {
+            setCargandoReservas(false);
+        }
+    };
+
+    useEffect(() => {
+        cargarRecursos();
+        cargarReservas();
+    }, []);
 
     const hoy = new Date();
     const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
@@ -163,40 +198,46 @@ function Reservas() {
         setRecursoSeleccionado(null);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validarFormulario()) return;
 
-        const nueva = {
-            id: `RES-${Date.now()}`,
-            recurso: recursoSeleccionado.nombre,
-            tipoRecurso: recursoSeleccionado.tipo ?? "",
-            usuarioId: user?.id ?? null,
-            usuario: user?.nombre ?? "",
-            ...form,
-            estado: "Pendiente"
-        };
-
-        setMisReservas((prev) => {
-            const actualizadas = [nueva, ...prev];
-            guardarReservas(actualizadas);
-            return actualizadas;
-        });
-        setConfirmacion(
-            `Reserva de "${recursoSeleccionado.nombre}" registrada correctamente.`
-        );
-        setErrores({});
+        try {
+            const nueva = await reservationsApi.create({
+                id_usuario: user?.id ?? null,
+                id_recurso: recursoSeleccionado.id,
+                fecha_reserva: form.fecha,
+                hora_inicio: form.horaInicio,
+                hora_fin: form.horaFin,
+                motivo: form.proposito,
+                estado: "Pendiente"
+            });
+            await cargarReservas();
+            setConfirmacion(
+                `Reserva de "${recursoSeleccionado.nombre}" registrada correctamente.`
+            );
+            setErrores({});
+        } catch (err) {
+            setErrores({ conflicto: err.message || "No se pudo registrar la reserva." });
+        }
     };
 
-    const cancelarReserva = (id) => {
+    const cancelarReserva = async (id) => {
         if (!window.confirm("¿Estás seguro de que deseas cancelar esta reserva?")) return;
-        setMisReservas((prev) => {
-            const actualizadas = prev.map((reserva) =>
-                reserva.id === id ? { ...reserva, estado: "Cancelada" } : reserva
-            );
-            guardarReservas(actualizadas);
-            return actualizadas;
-        });
+        try {
+            await reservationsApi.update(id, {
+                id_usuario: misReservas.find((r) => r.id === id)?.usuarioId,
+                id_recurso: misReservas.find((r) => r.id === id)?.id_recurso,
+                fecha_reserva: misReservas.find((r) => r.id === id)?.fecha,
+                hora_inicio: misReservas.find((r) => r.id === id)?.horaInicio,
+                hora_fin: misReservas.find((r) => r.id === id)?.horaFin,
+                motivo: misReservas.find((r) => r.id === id)?.motivo,
+                estado: "Cancelada"
+            });
+            await cargarReservas();
+        } catch (err) {
+            toast.error(err.message || "No se pudo cancelar la reserva.");
+        }
     };
 
     const buscarRecursos = () => {
@@ -326,7 +367,9 @@ function Reservas() {
             </div>
 
             <div className="reservas__resources">
-                {disponibles.length > 0 ? (
+                {cargandoRecursos ? (
+                    <div className="empty">Cargando recursos disponibles...</div>
+                ) : disponibles.length > 0 ? (
                     disponibles.map((recurso) => {
                         const variante = TIPO_VARIANT[recurso.tipo] || TIPO_VARIANT.Salas;
                         return (

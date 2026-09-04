@@ -5,6 +5,7 @@
 // ============================================================
 
 // Estados en código (mayúsculas). ETIQUETA_ESTADO para mostrar.
+// Incluye RECHAZADA para que el gráfico de reportes la contabilice.
 export const ESTADOS_SOLICITUD = [
     "REGISTRADA",
     "EN_REVISION",
@@ -12,7 +13,8 @@ export const ESTADOS_SOLICITUD = [
     "EN_PROCESO",
     "PAUSADA",
     "RESUELTA",
-    "CERRADA"
+    "CERRADA",
+    "RECHAZADA"
 ];
 
 // RECHAZADA es terminal y fuera de la cadena lineal.

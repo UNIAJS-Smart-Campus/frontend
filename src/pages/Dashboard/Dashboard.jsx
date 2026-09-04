@@ -1,13 +1,16 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import useAuth from "../../context/useAuth";
 import useSearch from "../../hooks/useSearch";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
-import { obtenerSolicitudes, ESTADOS_FINALES, ETIQUETA_ESTADO, ESTADO_COLOR } from "../../utils/solicitudes";
-import { obtenerReservas } from "../../utils/reservas";
-import { obtenerNotificacionesPorPerfil } from "../../utils/notificaciones";
-import { obtenerEventosPorPerfil } from "../../utils/eventos";
+import { ESTADOS_FINALES } from "../../utils/solicitudes";
+import {
+    reservationsApi,
+    notificationsApi,
+    eventsApi,
+    requestsApi
+} from "../../utils/api";
 import services from "../../utils/services";
 import "./Dashboard.css";
 
@@ -34,22 +37,17 @@ function Dashboard() {
     const [mesVista, setMesVista]   = useState(hoy.getMonth());
     const [anioVista, setAnioVista] = useState(hoy.getFullYear());
 
-    // TAREA 6: dependencia en user para que se recalcule si cambie la sesión
-    // Las funciones siempre leen localStorage en el momento de llamarse
-    const solicitudes = useMemo(() => obtenerSolicitudes(), [user]);
-    const misReservas = useMemo(() => obtenerReservas(), [user]);
+    const [solicitudes, setSolicitudes] = useState([]);
+    const [misReservas, setMisReservas] = useState([]);
+    const [notificaciones, setNotificaciones] = useState([]);
+    const [eventos, setEventos] = useState([]);
 
-    // TAREA 3 + 4: notificaciones filtradas por perfil, desde función (no array estático)
-    const notificaciones = useMemo(
-        () => obtenerNotificacionesPorPerfil(user?.rol),
-        [user?.rol]
-    );
-
-    // TAREA 3: eventos desde función (no array estático importado)
-    const eventos = useMemo(
-        () => obtenerEventosPorPerfil(user?.rol),
-        [user?.rol]
-    );
+    useEffect(() => {
+        requestsApi.list().then((d) => setSolicitudes(Array.isArray(d) ? d : [])).catch(() => setSolicitudes([]));
+        reservationsApi.list().then((d) => setMisReservas(Array.isArray(d) ? d : [])).catch(() => setMisReservas([]));
+        notificationsApi.list(user?.id).then((d) => setNotificaciones(Array.isArray(d) ? d : [])).catch(() => setNotificaciones([]));
+        eventsApi.list().then((d) => setEventos(Array.isArray(d) ? d : [])).catch(() => setEventos([]));
+    }, [user?.id]);
 
     // TAREA 5: filtrar servicios por permiso del usuario
     const serviciosFiltrados = useMemo(
@@ -235,9 +233,7 @@ function Dashboard() {
                 tiempo:      new Date(sol.fecha + "T00:00:00").toLocaleDateString("es-CO", {
                     day: "numeric", month: "short"
                 }),
-                clase:       "blue",
-                etiqueta:    ETIQUETA_ESTADO[sol.estado] || sol.estado,
-                estadoClase: `status-${ESTADO_COLOR[sol.estado] || "gray"}`
+                clase:       "blue"
             });
         });
 
@@ -371,9 +367,6 @@ function Dashboard() {
                                     <div className="dashboard__request-name">{sol.tipo}</div>
                                     <div className="dashboard__request-id">ID: {sol.id}</div>
                                 </div>
-                                <span className={`status status-${ESTADO_COLOR[sol.estado] || "gray"}`}>
-                                    {ETIQUETA_ESTADO[sol.estado] || sol.estado}
-                                </span>
                                 <div className="dashboard__request-date">
                                     {new Date(sol.fecha + "T00:00:00").toLocaleDateString("es-CO", {
                                         day: "2-digit", month: "2-digit", year: "numeric"
@@ -475,11 +468,6 @@ function Dashboard() {
                                         <div className="dashboard__activity-title">{actividad.titulo}</div>
                                         <div className="dashboard__activity-time">{actividad.tiempo}</div>
                                     </div>
-                                    {actividad.etiqueta && (
-                                        <span className={`status ${actividad.estadoClase}`}>
-                                            {actividad.etiqueta}
-                                        </span>
-                                    )}
                                 </div>
                             ))
                         )}

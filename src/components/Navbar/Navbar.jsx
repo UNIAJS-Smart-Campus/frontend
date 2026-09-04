@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { obtenerNotificaciones, STORAGE_KEY } from "../../utils/notificaciones";
+import { notificationsApi } from "../../utils/api";
 import { getModuleName } from "../../utils/menu";
 import useAuth from "../../context/useAuth";
 import { useTheme } from "../../context/ThemeContext";
@@ -11,9 +11,7 @@ import "./Navbar.css";
 
 function Navbar({ onToggle }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [noLeidas, setNoLeidas] = useState(() =>
-        obtenerNotificaciones().filter((n) => !n.leida).length
-    );
+    const [noLeidas, setNoLeidas] = useState(0);
     const { darkMode, toggleTheme } = useTheme();
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
@@ -22,21 +20,42 @@ function Navbar({ onToggle }) {
 
     const moduleName = getModuleName(location.pathname);
 
-    // Sincronizar el badge cuando cambia el localStorage (ej. al marcar leídas)
     useEffect(() => {
-        const actualizarBadge = () => {
-            setNoLeidas(obtenerNotificaciones().filter((n) => !n.leida).length);
+        let cancelado = false;
+        const cargar = async () => {
+            try {
+                const data = await notificationsApi.list(user?.id);
+                if (!cancelado) {
+                    setNoLeidas(
+                        (Array.isArray(data) ? data : []).filter((n) => !n.leida).length
+                    );
+                }
+            } catch {
+                if (!cancelado) setNoLeidas(0);
+            }
         };
+        cargar();
+        return () => { cancelado = true; };
+    }, [user?.id]);
 
-        // Escuchar cambios de storage (pestañas distintas) y un evento custom para la misma pestaña
+    useEffect(() => {
+        const actualizarBadge = async () => {
+            try {
+                const data = await notificationsApi.list(user?.id);
+                setNoLeidas(
+                    (Array.isArray(data) ? data : []).filter((n) => !n.leida).length
+                );
+            } catch {
+                setNoLeidas(0);
+            }
+        };
         window.addEventListener("storage", actualizarBadge);
         window.addEventListener("notificaciones-actualizadas", actualizarBadge);
-
         return () => {
             window.removeEventListener("storage", actualizarBadge);
             window.removeEventListener("notificaciones-actualizadas", actualizarBadge);
         };
-    }, []);
+    }, [user?.id]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -91,10 +110,10 @@ function Navbar({ onToggle }) {
                 >
                     <div
                         className="navbar__avatar"
-                        style={getAvatarStyle(user?.nombre, "linear-gradient(135deg, var(--color-primary), var(--color-primary-600))")}
+                        style={getAvatarStyle(user?.nombre, "linear-gradient(135deg, var(--color-primary), var(--color-primary-600))", user?.id)}
                         aria-label={user?.nombre || "Usuario"}
                     >
-                        {!getUserPhoto() && getUserInitials(user?.nombre, "U")}
+                        {!getUserPhoto(user?.id) && getUserInitials(user?.nombre, "U")}
                     </div>
 
                     <div className="navbar__user">

@@ -1,8 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
-import { CATEGORIAS_EVENTO, ESTADOS_EVENTO, MODALIDADES_EVENTO, obtenerEventos, guardarEventos } from "../../utils/eventos";
+import useToast from "../../context/ToastContext";
+import {
+    CATEGORIAS_EVENTO,
+    ESTADOS_EVENTO,
+    MODALIDADES_EVENTO
+} from "../../utils/eventos";
+import { eventsApi } from "../../utils/api";
 import "./Eventos.css";
 
 const CATEGORIA_CLASE = {
@@ -34,7 +40,8 @@ const formVacio = {
     cupo: 0,
     estado: "Activo",
     ponente: "",
-    modalidad: "Presencial"
+    modalidad: "Presencial",
+    participantes: []
 };
 
 function formatearFecha(iso) {
@@ -60,9 +67,28 @@ function formatearHora(hora) {
 }
 
 function Eventos() {
-    const [items, setItems] = useState(() => obtenerEventos());
+    const [items, setItems] = useState([]);
+    const [cargando, setCargando] = useState(true);
     const { user, puede } = useAuth();
+    const toast = useToast();
     const esAdmin = puede("publicar_eventos");
+
+    const cargar = async () => {
+        setCargando(true);
+        try {
+            const data = await eventsApi.list();
+            setItems(Array.isArray(data) ? data : []);
+        } catch (err) {
+            toast.error(err.message || "No se pudieron cargar los eventos.");
+            setItems([]);
+        } finally {
+            setCargando(false);
+        }
+    };
+
+    useEffect(() => {
+        cargar();
+    }, []);
 
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");
@@ -76,7 +102,7 @@ function Eventos() {
     const [error, setError] = useState("");
 
     const [detalleAbierto, setDetalleAbierto] = useState(null);
-    const [verInscritosAbierto, setVerInscritosAbierto] = useState(false);
+    const [inscritosDe, setInscritosDe] = useState(null);
     const [aviso, setAviso] = useState("");
 
     const normalizar = (texto) =>
@@ -104,13 +130,23 @@ function Eventos() {
             return (a.fecha || "").localeCompare(b.fecha || "");
         }
         if (orden === "cupo") {
-            return (b.cupo - b.inscritos) - (a.cupo - a.inscritos);
+            return (b.cupo - contarInscritos(b)) - (a.cupo - contarInscritos(a));
         }
         return (a.nombre || "").localeCompare(b.nombre || "");
     });
 
-    const contarCategoria = (cat) =>
-        items.filter((e) => e.categoria === cat).length;
+    const contarInscritos = (evento) => Number(evento?.inscritos || 0);
+
+    const estaInscrito = (evento, usuarioId) => {
+        if (!evento || usuarioId == null) return false;
+        const lista = Array.isArray(evento.participantes) ? evento.participantes : [];
+        return lista.some((p) => p.usuarioId === usuarioId || p.id_usuario === usuarioId);
+    };
+
+    const cuposDisponibles = (evento) => {
+        const libres = (Number(evento?.cupo) || 0) - contarInscritos(evento);
+        return Math.max(0, libres);
+    };
 
     const sugerencias = [
         ...new Set(
@@ -160,12 +196,12 @@ function Eventos() {
         setForm({ ...form, [e.target.name]: value });
     };
 
-    const handleSubmit = (e) => {
+const handleSubmit = async (e) => {
         e.preventDefault();
 
         const nombreExiste = items.some(
             (item) =>
-                item.nombre.toLowerCase() === form.nombre.trim().toLowerCase() &&
+                (item.nombre || "").toLowerCase() === form.nombre.trim().toLowerCase() &&
                 item.id !== editandoId
         );
 
@@ -174,60 +210,118 @@ function Eventos() {
             return;
         }
 
-        if (editandoId === null) {
-            const nuevo = { id: Date.now(), ...form, inscritos: 0 };
-            const nueva = [nuevo, ...items];
-            setItems(nueva);
-            guardarEventos(nueva);
-            mostrarAviso("Evento creado correctamente.");
-        } else {
-            const nueva = items.map((item) => (item.id === editandoId ? { ...item, ...form } : item));
-            setItems(nueva);
-            guardarEventos(nueva);
-            mostrarAviso("Evento actualizado correctamente.");
+        try {
+            const payload = {
+                nombre: form.nombre,
+                fecha: form.fecha,
+                hora: form.hora,
+                horaInicio: form.hora,
+                horaFin: form.hora,
+                lugar: form.lugar,
+                ubicacion: form.lugar,
+                categoria: form.categoria,
+                descripcion: form.descripcion,
+                estado: form.estado,
+                cupo: Number(form.cupo) || 0,
+                id_usuario: user?.id ?? null
+            };
+
+            if (editandoId === null) {
+                await eventsApi.create(payload);
+                mostrarAviso("Evento creado correctamente.");
+            } else {
+                await eventsApi.update(editandoId, payload);
+                mostrarAviso("Evento actualizado correctamente.");
+            }
+            setModalAbierto(false);
+            await cargar();
+        } catch (err) {
+            setError(err.message || "No se pudo guardar el evento.");
         }
-        setModalAbierto(false);
     };
 
-    const eliminarEvento = (ev) => {
-        const nueva = items.filter((item) => item.id !== ev.id);
-        setItems(nueva);
-        guardarEventos(nueva);
-        setDetalleAbierto(null);
-        mostrarAviso(`Evento "${ev.nombre}" eliminado.`);
+    const eliminarEvento = async (ev) => {
+        if (!window.confirm(`¿Eliminar el evento "${ev.nombre}"?`)) return;
+        try {
+            await eventsApi.remove(ev.id);
+            setDetalleAbierto(null);
+            await cargar();
+            mostrarAviso(`Evento "${ev.nombre}" eliminado.`);
+        } catch (err) {
+            mostrarAviso(err.message || "No se pudo eliminar el evento.");
+        }
     };
 
-    const cambiarEstado = (ev, nuevoEstado) => {
-        const nueva = items.map((item) =>
-            item.id === ev.id ? { ...item, estado: nuevoEstado } : item
-        );
-        setItems(nueva);
-        guardarEventos(nueva);
-        setDetalleAbierto({ ...ev, estado: nuevoEstado });
-        mostrarAviso(`Estado del evento actualizado a "${nuevoEstado}".`);
+    const cambiarEstado = async (ev, nuevoEstado) => {
+        try {
+            await eventsApi.update(ev.id, {
+                nombre: ev.nombre,
+                fecha: ev.fecha,
+                hora: ev.hora,
+                horaInicio: ev.hora,
+                horaFin: ev.horaFin,
+                lugar: ev.lugar,
+                ubicacion: ev.ubicacion ?? ev.lugar,
+                categoria: ev.categoria,
+                descripcion: ev.descripcion,
+                estado: nuevoEstado,
+                cupo: ev.cupo,
+                id_usuario: ev.id_usuario ?? user?.id ?? null
+            });
+            setDetalleAbierto({ ...ev, estado: nuevoEstado });
+            await cargar();
+            mostrarAviso(`Estado del evento actualizado a "${nuevoEstado}".`);
+        } catch (err) {
+            mostrarAviso(err.message || "No se pudo actualizar el estado.");
+        }
     };
 
-    const inscribirse = (ev) => {
-        if (ev.inscritos >= ev.cupo) {
-            mostrarAviso("El evento ya alcanzó su cupo máximo.");
+    const inscribirse = async (ev) => {
+        if (!user) {
+            toast.warning("Inicia sesión para inscribirte.");
             return;
         }
-        const nueva = items.map((item) =>
-            item.id === ev.id ? { ...item, inscritos: item.inscritos + 1 } : item
-        );
-        setItems(nueva);
-        guardarEventos(nueva);
-        setDetalleAbierto((prev) =>
-            prev && prev.id === ev.id
-                ? { ...prev, inscritos: prev.inscritos + 1 }
-                : prev
-        );
-        mostrarAviso("Te has inscrito al evento.");
+        if (estaInscrito(ev, user.id)) {
+            toast.info("Ya estás inscrito en este evento.");
+            return;
+        }
+        if (cuposDisponibles(ev) === 0) {
+            toast.error("El evento ya alcanzó su cupo máximo.");
+            return;
+        }
+        try {
+            await eventsApi.register(ev.id);
+            await cargar();
+            toast.success(`Te inscribiste a "${ev.nombre}".`);
+        } catch (err) {
+            toast.error(err.message || "No se pudo completar la inscripción.");
+        }
     };
 
-    const cuposDisponibles = (ev) => {
-        const libres = (ev.cupo || 0) - (ev.inscritos || 0);
-        return Math.max(0, libres);
+    const cancelarInscripcion = async (ev) => {
+        if (!user) return;
+        if (!estaInscrito(ev, user.id)) return;
+        try {
+            await eventsApi.update(ev.id, {
+                nombre: ev.nombre,
+                fecha: ev.fecha,
+                hora: ev.hora,
+                horaInicio: ev.hora,
+                horaFin: ev.horaFin,
+                lugar: ev.lugar,
+                ubicacion: ev.ubicacion ?? ev.lugar,
+                categoria: ev.categoria,
+                descripcion: ev.descripcion,
+                estado: ev.estado,
+                cupo: ev.cupo,
+                id_usuario: ev.id_usuario ?? user?.id ?? null,
+                inscritos: Math.max(0, Number(ev.inscritos || 1) - 1)
+            });
+            await cargar();
+            toast.info("Inscripción cancelada.");
+        } catch (err) {
+            toast.error(err.message || "No se pudo cancelar la inscripción.");
+        }
     };
 
     const verDetalle = (ev) => setDetalleAbierto(ev);
@@ -355,7 +449,9 @@ function Eventos() {
 
             {encontrados.length === 0 ? (
                 <div className="empty">
-                    No se encontraron eventos con los filtros aplicados.
+                    {cargando
+                        ? "Cargando eventos..."
+                        : "No se encontraron eventos con los filtros aplicados."}
                 </div>
             ) : (
                 <div className="eventos__grid">
@@ -422,8 +518,16 @@ function Eventos() {
                                 <div className="eventos__item-actions">
                                     {!esAdmin && (
                                         <button
-                                            className="eventos__inscribir-button"
-                                            onClick={() => inscribirse(ev)}
+                                            className={
+                                                estaInscrito(ev, user?.id)
+                                                    ? "eventos__inscribir-button eventos__inscribir-button--done"
+                                                    : "eventos__inscribir-button"
+                                            }
+                                            onClick={() =>
+                                                estaInscrito(ev, user?.id)
+                                                    ? cancelarInscripcion(ev)
+                                                    : inscribirse(ev)
+                                            }
                                             disabled={
                                                 ev.estado !== "Activo" ||
                                                 cuposDisponibles(ev) === 0
@@ -431,9 +535,11 @@ function Eventos() {
                                         >
                                             {ev.estado !== "Activo"
                                                 ? "No disponible"
-                                                : cuposDisponibles(ev) === 0
+                                                : cuposDisponibles(ev) === 0 && !estaInscrito(ev, user?.id)
                                                     ? "Cupo agotado"
-                                                    : "Inscribirme"}
+                                                    : estaInscrito(ev, user?.id)
+                                                        ? "Inscrito ✓ · Cancelar"
+                                                        : "Inscribirme"}
                                         </button>
                                     )}
 
@@ -704,13 +810,13 @@ function Eventos() {
                             className={`eventos__cupo-bar ${cuposDisponibles(detalle) === 0 ? "eventos__cupo-bar--full" : ""}`}
                         >
                             <span>
-                                {detalle.inscritos} / {detalle.cupo} inscritos
+                                {contarInscritos(detalle)} / {detalle.cupo} inscritos
                             </span>
                             <div className="eventos__cupo-track">
                                 <div
                                     className="eventos__cupo-fill"
                                     style={{
-                                        width: `${detalle.cupo ? Math.min(100, (detalle.inscritos / detalle.cupo) * 100) : 0}%`
+                                        width: `${detalle.cupo ? Math.min(100, (contarInscritos(detalle) / detalle.cupo) * 100) : 0}%`
                                     }}
                                 />
                             </div>
@@ -721,12 +827,11 @@ function Eventos() {
                                 <button
                                     className="eventos__admin-btn"
                                     onClick={() => {
-                                        setVerInscritosAbierto(true);
+                                        setInscritosDe(detalle);
                                         setDetalleAbierto(null);
                                     }}
-                                    disabled={!detalle.inscritos}
                                 >
-                                    Ver inscritos ({detalle.inscritos})
+                                    Ver inscritos ({contarInscritos(detalle)})
                                 </button>
                                 <button
                                     className="eventos__admin-btn"
@@ -745,29 +850,46 @@ function Eventos() {
                                 </button>
                             </div>
                         ) : (
-                            <button
-                                className="eventos__subscribe-button"
-                                onClick={() => inscribirse(detalle)}
-                                disabled={
-                                    detalle.estado !== "Activo" ||
-                                    cuposDisponibles(detalle) === 0
-                                }
-                            >
-                                {detalle.estado !== "Activo"
-                                    ? `No disponible (${detalle.estado})`
-                                    : cuposDisponibles(detalle) === 0
-                                        ? "Cupo agotado"
-                                        : "Inscribirme"}
-                            </button>
+                            <div className="eventos__subscribe-actions">
+                                <button
+                                    className={
+                                        estaInscrito(detalle, user?.id)
+                                            ? "eventos__subscribe-button eventos__subscribe-button--done"
+                                            : "eventos__subscribe-button"
+                                    }
+                                    onClick={() =>
+                                        estaInscrito(detalle, user?.id)
+                                            ? cancelarInscripcion(detalle)
+                                            : inscribirse(detalle)
+                                    }
+                                    disabled={
+                                        detalle.estado !== "Activo" ||
+                                        (cuposDisponibles(detalle) === 0 && !estaInscrito(detalle, user?.id))
+                                    }
+                                >
+                                    {detalle.estado !== "Activo"
+                                        ? `No disponible (${detalle.estado})`
+                                        : estaInscrito(detalle, user?.id)
+                                            ? "Inscrito ✓ · Cancelar inscripción"
+                                            : cuposDisponibles(detalle) === 0
+                                                ? "Cupo agotado"
+                                                : "Inscribirme"}
+                                </button>
+                                {estaInscrito(detalle, user?.id) && (
+                                    <span className="eventos__inscrito-badge">
+                                        Tu inscripción está confirmada.
+                                    </span>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>
             )}
 
-            {verInscritosAbierto && (
+            {inscritosDe && (
                 <div
                     className="eventos__overlay"
-                    onClick={() => setVerInscritosAbierto(false)}
+                    onClick={() => setInscritosDe(null)}
                 >
                     <div
                         className="eventos__modal"
@@ -777,48 +899,59 @@ function Eventos() {
                             <div>
                                 <h2>Inscritos</h2>
                                 <p>
-                                    {detalleAbierto
-                                        ? items.find((i) => i.id === detalleAbierto.id)?.nombre ||
-                                          ""
-                                        : ""}
+                                    {items.find((i) => i.id === inscritosDe.id)?.nombre ||
+                                        ""}
                                 </p>
                             </div>
                             <button
                                 className="eventos__modal-close"
-                                onClick={() => setVerInscritosAbierto(false)}
+                                onClick={() => setInscritosDe(null)}
                             >
                                 ×
                             </button>
                         </div>
 
                         <div className="eventos__inscritos">
-                            {detalleAbierto &&
-                            (items.find((i) => i.id === detalleAbierto.id)
-                                ?.inscritos || 0) > 0 ? (
-                                <ul className="eventos__inscritos-list">
-                                    {Array.from({
-                                        length: items.find(
-                                            (i) => i.id === detalleAbierto.id
-                                        ).inscritos
-                                    }).map((_, i) => (
-                                        <li
-                                            className="eventos__inscrito"
-                                            key={i}
-                                        >
-                                            <span className="eventos__inscrito-avatar">
-                                                S{i + 1}
-                                            </span>
-                                            <span className="eventos__inscrito-name">
-                                                Estudiante {i + 1}
-                                            </span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <p className="eventos__empty">
-                                    Aún no hay inscritos en este evento.
-                                </p>
-                            )}
+                            {(() => {
+                                const detalle = items.find(
+                                    (i) => i.id === inscritosDe.id
+                                );
+                                const lista = Array.isArray(detalle?.participantes)
+                                    ? detalle.participantes
+                                    : [];
+                                if (lista.length === 0) {
+                                    return (
+                                        <p className="eventos__empty">
+                                            Aún no hay inscritos en este evento.
+                                        </p>
+                                    );
+                                }
+                                return (
+                                    <ul className="eventos__inscritos-list">
+                                        {lista.map((p, i) => (
+                                            <li
+                                                className="eventos__inscrito"
+                                                key={`${p.usuarioId || "anon"}-${i}`}
+                                            >
+                                                <span className="eventos__inscrito-avatar">
+                                                    {(p.nombre || "U")
+                                                        .split(" ")
+                                                        .map((s) => s[0])
+                                                        .join("")
+                                                        .slice(0, 2)
+                                                        .toUpperCase()}
+                                                </span>
+                                                <span className="eventos__inscrito-name">
+                                                    {p.nombre || "Inscrito"}
+                                                </span>
+                                                <span className="eventos__inscrito-fecha">
+                                                    {p.fecha || ""}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>
