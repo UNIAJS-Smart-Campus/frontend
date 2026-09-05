@@ -29,6 +29,7 @@ const ESTADOS = ["Activo", "Inactivo"];
 
 // TAREA 3: form unificado con "nombre" como campo completo, sin "apellido"
 const vacio = {
+    cedula: "",
     usuario: "",
     password: "",
     nombre: "",
@@ -87,7 +88,7 @@ function UsuariosAdmin() {
 
     // Pipeline de filtros: búsqueda → rol → estado
     const buscados = useSearch(items, busqueda, [
-        "usuario", "nombre", "correo", "rol", "programa"
+        "cedula", "usuario", "nombre", "correo", "rol", "programa"
     ]);
     const porRol = filtroRol
         ? buscados.filter((item) => item.rol === filtroRol)
@@ -106,7 +107,7 @@ function UsuariosAdmin() {
     const sugerencias = useMemo(() => [
         ...new Set(
             items
-                .flatMap((i) => [i.usuario, i.nombre, i.correo, i.rol, i.programa])
+                .flatMap((i) => [i.cedula, i.usuario, i.nombre, i.correo, i.rol, i.programa])
                 .filter(Boolean)
         )
     ], [items]);
@@ -141,6 +142,7 @@ function UsuariosAdmin() {
     const abrirEditar = useCallback((item) => {
         setEditandoId(item.id);
         setForm({
+            cedula:    item.cedula   || "",
             usuario:   item.usuario,
             password:  "",              // TAREA 2: campo vacío al editar — se preserva si no cambia
             nombre:    item.nombre,
@@ -190,10 +192,22 @@ function UsuariosAdmin() {
             return;
         }
 
+        const cedulaExiste = items.some(
+            (item) =>
+                String(item.cedula || "") === String(form.cedula || "").trim() &&
+                (String(form.cedula || "").trim() !== "") &&
+                item.id !== editandoId
+        );
+        if (cedulaExiste) {
+            setError("Esa cédula ya está registrada.");
+            return;
+        }
+
         if (editandoId === null) {
             // Crear nuevo usuario
             const nuevo = {
                 id:       Date.now(),
+                cedula:   form.cedula.trim(),
                 usuario:  form.usuario.trim(),
                 password: form.password.trim(),
                 nombre:   form.nombre.trim(),       // TAREA 3: nombre completo directo
@@ -214,6 +228,7 @@ function UsuariosAdmin() {
                 if (item.id !== editandoId) return item;
                 return {
                     ...item,
+                    cedula:    form.cedula.trim(),
                     usuario:  form.usuario.trim(),
                     // TAREA 2: preservar contraseña anterior si el campo queda vacío
                     password: form.password.trim() || item.password,
@@ -281,6 +296,11 @@ function UsuariosAdmin() {
                     {row.rol}
                 </span>
             )
+        },
+        {
+            key: "cedula",
+            label: "Cédula",
+            render: (row) => row.cedula || "—"
         },
         {
             key: "estado",
@@ -526,6 +546,18 @@ function UsuariosAdmin() {
                         />
                     </div>
 
+                    <div className="users__form-group">
+                        <label htmlFor="u-cedula">Cédula</label>
+                        <input
+                            id="u-cedula"
+                            type="text"
+                            name="cedula"
+                            value={form.cedula}
+                            onChange={handleChange}
+                            placeholder="ej. 1023456789"
+                        />
+                    </div>
+
                     {/* TAREA 3: campo único "Nombre completo" */}
                     <div className="users__form-group">
                         <label htmlFor="u-nombre">Nombre completo</label>
@@ -669,6 +701,7 @@ function UsuariosAdmin() {
                             type="submit"
                             className="button button--accent button--md"
                             disabled={
+                                !form.cedula ||
                                 !form.usuario ||
                                 !form.nombre  ||
                                 !form.correo  ||

@@ -2,11 +2,18 @@ import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Navbar from "../components/Navbar/Navbar";
+import useKeyboardShortcuts from "../hooks/useKeyboardShortcuts";
 import "./DashboardLayout.css";
 
 function DashboardLayout() {
     const [collapsed, setCollapsed] = useState(false);
     const location = useLocation();
+
+    useKeyboardShortcuts({
+        onEscape: () => {
+            document.activeElement?.blur?.();
+        }
+    });
 
     return (
         <div className={collapsed ? "app app--collapsed" : "app"}>

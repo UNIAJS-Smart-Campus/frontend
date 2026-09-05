@@ -2,6 +2,7 @@ import { useState } from "react";
 import useAuth from "../../context/useAuth";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import {
     CATEGORIAS,
     CATEGORIA_ICONO,
@@ -31,7 +32,8 @@ function InfoAcademica() {
         return lista;
     });
     const [crearAbierto, setCrearAbierto] = useState(false);
-    const [form,         setForm]         = useState(formVacio);
+    const [confirm,       setConfirm]      = useState(null);
+    const [form,          setForm]         = useState(formVacio);
     const [errores,      setErrores]      = useState({});
     const [aviso,        setAviso]        = useState("");
 
@@ -141,6 +143,23 @@ function InfoAcademica() {
         setItems(actualizadas);
         guardarPublicaciones(actualizadas);
         mostrarAviso("Publicación eliminada.");
+    };
+
+    // ── Confirmaciones ────────────────────────────────────────
+    const pedirConfirmarAprobar = (id, titulo) =>
+        setConfirm({ tipo: "aprobar", id, titulo });
+    const pedirConfirmarRechazar = (id, titulo) =>
+        setConfirm({ tipo: "rechazar", id, titulo });
+    const pedirConfirmarEliminar = (id, titulo) =>
+        setConfirm({ tipo: "eliminar", id, titulo });
+
+    const confirmarAccion = () => {
+        if (!confirm) return;
+        const { tipo, id } = confirm;
+        if (tipo === "aprobar") cambiarEstado(id, "Aprobada");
+        else if (tipo === "rechazar") cambiarEstado(id, "Rechazada");
+        else if (tipo === "eliminar") eliminarPublicacion(id);
+        setConfirm(null);
     };
 
     const cerrar = () => {
@@ -324,7 +343,7 @@ function InfoAcademica() {
                                             <button
                                                 type="button"
                                                 className="info-ac__action info-ac__action--approve"
-                                                onClick={() => cambiarEstado(item.id, "Aprobada")}
+                                                onClick={() => pedirConfirmarAprobar(item.id, item.titulo)}
                                             >
                                                 Aprobar
                                             </button>
@@ -333,7 +352,7 @@ function InfoAcademica() {
                                             <button
                                                 type="button"
                                                 className="info-ac__action info-ac__action--reject"
-                                                onClick={() => cambiarEstado(item.id, "Rechazada")}
+                                                onClick={() => pedirConfirmarRechazar(item.id, item.titulo)}
                                             >
                                                 Rechazar
                                             </button>
@@ -341,7 +360,7 @@ function InfoAcademica() {
                                         <button
                                             type="button"
                                             className="info-ac__action info-ac__action--delete"
-                                            onClick={() => eliminarPublicacion(item.id)}
+                                            onClick={() => pedirConfirmarEliminar(item.id, item.titulo)}
                                         >
                                             Eliminar
                                         </button>
@@ -482,6 +501,34 @@ function InfoAcademica() {
                     </div>
                 </div>
             )}
+
+            {/* ── CONFIRMACIÓN DE ACCIONES ── */}
+            <ConfirmModal
+                isOpen={Boolean(confirm)}
+                title={
+                    confirm?.tipo === "eliminar"
+                        ? "Eliminar publicación"
+                        : confirm?.tipo === "aprobar"
+                        ? "Aprobar publicación"
+                        : "Rechazar publicación"
+                }
+                message={
+                    confirm
+                        ? confirm.tipo === "eliminar"
+                            ? `¿Eliminar la publicación "${confirm.titulo}"? Esta acción no se puede deshacer.`
+                            : confirm.tipo === "aprobar"
+                            ? `¿Aprobar la publicación "${confirm.titulo}"? Será visible para toda la comunidad.`
+                            : `¿Rechazar la publicación "${confirm.titulo}"? No aparecerá en el tablero para los demás usuarios.`
+                        : ""
+                }
+                confirmText={
+                    confirm?.tipo === "aprobar" ? "Aprobar" : confirm?.tipo === "eliminar" ? "Eliminar" : "Rechazar"
+                }
+                cancelText="Cancelar"
+                variant={confirm?.tipo === "aprobar" ? "primary" : "danger"}
+                onConfirm={confirmarAccion}
+                onClose={() => setConfirm(null)}
+            />
         </div>
     );
 }

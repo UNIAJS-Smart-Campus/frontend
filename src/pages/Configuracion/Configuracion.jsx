@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import useAuth from "../../context/useAuth";
 import { useTheme } from "../../context/ThemeContext";
 import Icon from "../../components/Icon/Icon";
+import {
+    getPhotoByUserId,
+    savePhotoByUserId,
+    removePhotoByUserId,
+} from "../../utils/avatar";
 import "./Configuracion.css";
 
 const STORAGE_KEY = "uajs_config";
@@ -138,27 +143,39 @@ function normalizarConfiguracion(base, extra) {
 }
 
 function Configuracion() {
-    const { user, logout } = useAuth();
+    const { user, logout, updateUser } = useAuth();
     const { tema, setTema } = useTheme();
 
     const [config, setConfig] = useState(() => {
         try {
             const guardada = JSON.parse(localStorage.getItem(STORAGE_KEY));
-            // Inicializar correo desde la sesión si el config guardado está vacío
+            const fotoPorId = user?.id ? getPhotoByUserId(user.id) : "";
             const base = {
                 ...configBase,
                 cuenta: {
                     ...configBase.cuenta,
-                    correo: user?.correo || ""
+                    correo: user?.correo || "",
+                    foto: fotoPorId || configBase.cuenta.foto
                 }
             };
-            return guardada ? normalizarConfiguracion(base, guardada) : base;
+            const merged = guardada ? normalizarConfiguracion(base, guardada) : base;
+
+            // Priorizar foto de uajs_foto_${userId} sobre la de uajs_config
+            const fotoFinal = fotoPorId || merged?.cuenta?.foto || "";
+            if (user?.id && fotoFinal && fotoFinal !== fotoPorId) {
+                savePhotoByUserId(user.id, fotoFinal);
+            }
+            merged.cuenta = { ...merged.cuenta, foto: fotoFinal };
+
+            return merged;
         } catch {
+            const fotoPorId = user?.id ? getPhotoByUserId(user.id) : "";
             return {
                 ...configBase,
                 cuenta: {
                     ...configBase.cuenta,
-                    correo: user?.correo || ""
+                    correo: user?.correo || "",
+                    foto: fotoPorId || configBase.cuenta.foto
                 }
             };
         }
@@ -267,6 +284,8 @@ function Configuracion() {
                 ...prev,
                 cuenta: { ...prev.cuenta, foto: dataUrl }
             }));
+            savePhotoByUserId(user?.id, dataUrl);
+            updateUser({ foto: dataUrl });
             marcarGuardado();
         };
         lector.readAsDataURL(archivo);
@@ -281,6 +300,8 @@ function Configuracion() {
             ...prev,
             cuenta: { ...prev.cuenta, foto: "" }
         }));
+        removePhotoByUserId(user?.id);
+        updateUser({ foto: "" });
         marcarGuardado();
     };
 

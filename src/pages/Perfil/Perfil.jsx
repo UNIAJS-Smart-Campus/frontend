@@ -1,17 +1,64 @@
+import { useRef, useState } from "react";
 import useAuth from "../../context/useAuth";
 import Icon from "../../components/Icon/Icon";
-import { getAvatarStyle, getUserInitials, getUserPhoto } from "../../utils/avatar";
+import {
+    getAvatarStyle,
+    getUserInitials,
+    getPhotoByUserId,
+    savePhotoByUserId,
+    removePhotoByUserId,
+} from "../../utils/avatar";
 import "./Perfil.css";
 
 function Perfil() {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
+    const inputRef = useRef(null);
+
+    // Foto vigente: primero busca por userId, si no existe usa la de la sesión
+    const [foto, setFoto] = useState(() => getPhotoByUserId(user?.id) || "");
+    const [errorFoto, setErrorFoto] = useState("");
 
     const iniciales = getUserInitials(user?.nombre, "U");
-
     const rol = user?.rol || "Usuario";
     const programa = user?.programa || "—";
     const correo = user?.correo || "—";
     const usuario = user?.usuario || "—";
+
+    // ── Subir foto ──────────────────────────────────────────────────────────
+    const handleFotoChange = (e) => {
+        const archivo = e.target.files?.[0];
+        if (!archivo) return;
+
+        // Validar tipo
+        if (!archivo.type.startsWith("image/")) {
+            setErrorFoto("Solo se permiten imágenes (JPG, PNG, WEBP).");
+            return;
+        }
+        // Límite 2 MB
+        if (archivo.size > 2 * 1024 * 1024) {
+            setErrorFoto("La imagen no debe superar 2 MB.");
+            return;
+        }
+
+        setErrorFoto("");
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const base64 = ev.target.result;
+            savePhotoByUserId(user?.id, base64);
+            setFoto(base64);
+            updateUser({ foto: base64 });
+        };
+        reader.readAsDataURL(archivo);
+        // Limpiar el input para que vuelva a disparar si se selecciona el mismo archivo
+        e.target.value = "";
+    };
+
+    // ── Eliminar foto ───────────────────────────────────────────────────────
+    const handleEliminarFoto = () => {
+        removePhotoByUserId(user?.id);
+        setFoto("");
+        updateUser({ foto: "" });
+    };
 
     const infoPersonal = [
         { label: "Nombre completo", value: user?.nombre || "—" },
@@ -48,12 +95,71 @@ function Perfil() {
             </div>
 
             <div className="perfil__hero">
-                <div
-                    className="perfil__big-avatar"
-                    style={getAvatarStyle(user?.nombre, "linear-gradient(135deg, var(--color-primary), var(--color-primary-700))")}
-                    aria-label={user?.nombre || "Usuario"}
-                >
-                    {!getUserPhoto() && iniciales}
+                {/* ── Avatar con uploader ── */}
+                <div className="perfil__avatar-wrap">
+                    <div
+                        className="perfil__big-avatar"
+                        style={
+                            foto
+                                ? {
+                                    backgroundImage: `url(${foto})`,
+                                    backgroundSize: "cover",
+                                    backgroundPosition: "center",
+                                    backgroundRepeat: "no-repeat",
+                                    color: "transparent",
+                                }
+                                : getAvatarStyle(
+                                    user?.nombre,
+                                    "linear-gradient(135deg, var(--color-primary), var(--color-primary-700))"
+                                )
+                        }
+                        aria-label={user?.nombre || "Usuario"}
+                    >
+                        {!foto && iniciales}
+                    </div>
+
+                    {/* Overlay de cámara */}
+                    <button
+                        type="button"
+                        className="perfil__avatar-overlay"
+                        onClick={() => inputRef.current?.click()}
+                        title="Cambiar foto de perfil"
+                        aria-label="Cambiar foto de perfil"
+                    >
+                        <span className="perfil__avatar-overlay-icon">📷</span>
+                        <span className="perfil__avatar-overlay-text">
+                            {foto ? "Cambiar" : "Subir foto"}
+                        </span>
+                    </button>
+
+                    {/* Input oculto */}
+                    <input
+                        ref={inputRef}
+                        type="file"
+                        accept="image/*"
+                        className="perfil__avatar-input"
+                        onChange={handleFotoChange}
+                        aria-label="Seleccionar foto de perfil"
+                    />
+
+                    {/* Botón eliminar — solo visible si hay foto */}
+                    {foto && (
+                        <button
+                            type="button"
+                            className="perfil__avatar-remove"
+                            onClick={handleEliminarFoto}
+                            title="Eliminar foto"
+                        >
+                            ✕ Eliminar
+                        </button>
+                    )}
+
+                    {/* Error de validación */}
+                    {errorFoto && (
+                        <p style={{ fontSize: 9, color: "var(--color-danger)", marginTop: 4, textAlign: "center", maxWidth: 110 }}>
+                            {errorFoto}
+                        </p>
+                    )}
                 </div>
 
                 <div className="perfil__hero-main">

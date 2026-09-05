@@ -5,10 +5,10 @@ import BrandLogo from "../../components/BrandLogo/BrandLogo";
 import "./Login.css";
 
 const CREDENCIALES = [
-    { rol: "Administrador", user: "admin", pass: "admin123", color: "#d32f2f" },
-    { rol: "Funcionario", user: "funcionario", pass: "func123", color: "#1976d2" },
-    { rol: "Docente", user: "profesor", pass: "prof123", color: "#388e3c" },
-    { rol: "Estudiante", user: "estudiante", pass: "est123", color: "#f57c00" },
+    { rol: "Administrador", user: "1023456789", pass: "admin123", color: "#d32f2f" },
+    { rol: "Funcionario", user: "1023456788", pass: "func123", color: "#1976d2" },
+    { rol: "Docente", user: "1023456787", pass: "prof123", color: "#388e3c" },
+    { rol: "Estudiante", user: "1023456786", pass: "est123", color: "#f57c00" },
 ];
 
 function Login() {
@@ -124,16 +124,17 @@ function Login() {
 
                         <form onSubmit={handleSubmit} className="login__form" autoComplete="off">
                             <div className="login__field">
-                                <label htmlFor="login-identificacion">Identificación</label>
+                                <label htmlFor="login-identificacion">Cédula</label>
                                 <div className="login__input-wrap">
                                     <svg className="login__input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                        <circle cx="12" cy="7" r="4"/>
+                                        <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                        <line x1="7" y1="15" x2="7" y2="15"/>
+                                        <line x1="2" y1="9" x2="22" y2="9"/>
                                     </svg>
                                     <input
                                         type="text"
                                         id="login-identificacion"
-                                        placeholder="ej. admin"
+                                        placeholder="Número de cédula"
                                         value={identificacion}
                                         onChange={(e) => setIdentificacion(e.target.value)}
                                         autoComplete="username"

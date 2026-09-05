@@ -132,6 +132,25 @@
     flex-wrap: wrap;
 }
 
+.landing__primary {
+    padding: 14px 28px;
+    border-radius: var(--radius-full, 50px);
+    border: none;
+    background: linear-gradient(90deg, var(--color-accent-dark, #f2b705), var(--color-accent, #f9d74a));
+    color: var(--color-primary-800, #14304d);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 12px 24px rgba(15, 35, 60, 0.25);
+    transition: transform var(--transition-base), box-shadow var(--transition-base), filter var(--transition-fast);
+}
+
+.landing__primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 30px rgba(15, 35, 60, 0.32);
+    filter: brightness(1.05);
+}
+
 .landing__secondary {
     padding: 14px 24px;
     border-radius: var(--radius-full, 50px);
@@ -240,25 +259,31 @@
 }
 
 /* ServiceCard sobre fondo oscuro de la Landing */
-.landing .service-card {
-    background-color: rgba(255, 255, 255, 0.06);
+.landing .service-card,
+.landing .service-card::before {
+    background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow: none;
+    color: var(--color-text-inverse);
+}
+
+.landing .service-card::before {
+    display: none;
 }
 
 .landing .service-card:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.22);
 }
 
 .landing .service-card__icon {
-    background-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.12);
     color: var(--color-text-inverse);
 }
 
 .landing .service-card__category {
-    color: var(--color-accent-light);
-    background-color: rgba(255, 255, 255, 0.12);
+    color: var(--color-text-inverse);
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .landing .service-card__title {
@@ -266,15 +291,15 @@
 }
 
 .landing .service-card__description {
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.78);
 }
 
 .landing .service-card__link {
-    color: var(--color-accent-light);
+    color: var(--color-accent-light, #84c4ff);
 }
 
 .landing .service-card__link:hover {
-    color: var(--color-accent);
+    color: var(--color-accent, #4f8cff);
 }
 
 .landing__footer {

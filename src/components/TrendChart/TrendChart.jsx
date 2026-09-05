@@ -1,32 +1,74 @@
 import { useState } from "react";
 import "./TrendChart.css";
 
+/**
+ * TrendChart — barras agrupadas con línea de tendencia SVG superpuesta.
+ *
+ * Alineación SVG ↔ barras:
+ *   El contenedor .trend__chart tiene height fija (CSS: 200px) y
+ *   padding-top de BAR_PADDING_TOP px. Las barras viven en .trend__cols
+ *   cuya altura útil es:  chartH - BAR_PADDING_TOP - LABEL_H
+ *
+ *   El SVG cubre exactamente esa misma región:
+ *     inset-top    = BAR_PADDING_TOP
+ *     inset-bottom = LABEL_H   (altura del label del eje X)
+ *     inset-left   = AXIS_W    (ancho reservado para el eje Y)
+ *
+ *   Con viewBox="0 0 100 100" y preserveAspectRatio="none":
+ *     x del punto i = (i + 0.5) / n * 100        → centro del grupo i
+ *     y del punto i = (1 - valor/maximo) * 100    → 0 = arriba, 100 = abajo
+ *
+ *   Así y=0 corresponde al techo de las barras (maximo) y
+ *   y=100 corresponde a la base (0), igual que las barras CSS.
+ */
+
+// Estos valores DEBEN coincidir con el CSS:
+const CHART_H      = 200;  // .trend__chart height
+const BAR_PAD_TOP  = 12;   // .trend__chart padding-top
+const LABEL_H      = 22;   // altura aproximada del .trend__label + gap
+const AXIS_W       = 36;   // .trend__chart padding-left (eje Y)
+
 function TrendChart({ data = [], maxPoints = 12 }) {
-    const [tooltip, setTooltip] = useState(null); // { index, x, y, mes, solicitudes, reservas }
+    const [tooltip, setTooltip] = useState(null);
 
     const visibles = data.slice(-maxPoints);
+    const n = visibles.length || 1;
+
     const maximo = Math.max(
         1,
         ...visibles.map((m) => Math.max(m.solicitudes, m.reservas))
     );
 
-    // Calcular puntos para la línea SVG de tendencia
-    const chartH = 180;
-    const grupoAncho = 100 / visibles.length;
-
+    /**
+     * Calcula los puntos de la polyline en el espacio viewBox 0-100.
+     *   x: centro del grupo i dentro del ancho total
+     *   y: altura proporcional, 0 = tope, 100 = base
+     */
     const puntosLinea = (campo) =>
         visibles
             .map((m, i) => {
-                const x = grupoAncho * i + grupoAncho / 2;
-                const y = 100 - (m[campo] / maximo) * 88; // 88% del alto para dejar espacio
-                return `${x},${y}`;
+                const x = (i + 0.5) / n * 100;
+                const y = (1 - m[campo] / maximo) * 100;
+                return `${x.toFixed(2)},${y.toFixed(2)}`;
             })
             .join(" ");
 
+    // Altura útil de la barra en px (para pasar como CSS var al SVG si se necesita)
+    const barAreaH = CHART_H - BAR_PAD_TOP - LABEL_H;
+
     return (
         <div className="trend">
-            {/* Línea de cuadrícula de referencia */}
-            <div className="trend__grid-lines">
+            {/* ── Cuadrícula de referencia (eje Y) ── */}
+            <div
+                className="trend__grid-lines"
+                style={{
+                    // Alinear exactamente con la zona de barras
+                    top:    BAR_PAD_TOP,
+                    bottom: LABEL_H,
+                    left:   AXIS_W,
+                    right:  0,
+                }}
+            >
                 {[0, 25, 50, 75, 100].map((pct) => (
                     <div
                         key={pct}
@@ -40,26 +82,26 @@ function TrendChart({ data = [], maxPoints = 12 }) {
                 ))}
             </div>
 
+            {/* ── Área principal: barras + SVG superpuesto ── */}
             <div className="trend__chart">
-                {/* Líneas de tendencia SVG superpuestas */}
+                {/*
+                  SVG alineado pixel-perfect con el área de barras:
+                  - inset-top    = BAR_PAD_TOP  (mismo padding-top que .trend__chart)
+                  - inset-bottom = LABEL_H      (deja libre el espacio del label)
+                  - inset-left   = AXIS_W       (deja libre el eje Y)
+                */}
                 <svg
                     className="trend__lines-svg"
                     viewBox="0 0 100 100"
                     preserveAspectRatio="none"
                     aria-hidden="true"
+                    style={{
+                        top:    BAR_PAD_TOP,
+                        bottom: LABEL_H,
+                        left:   AXIS_W,
+                        right:  0,
+                    }}
                 >
-                    {/* Área relleno solicitudes */}
-                    <defs>
-                        <linearGradient id="gradSolicitudes" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#025E73" stopOpacity="0.18" />
-                            <stop offset="100%" stopColor="#025E73" stopOpacity="0" />
-                        </linearGradient>
-                        <linearGradient id="gradReservas" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#F2B705" stopOpacity="0.15" />
-                            <stop offset="100%" stopColor="#F2B705" stopOpacity="0" />
-                        </linearGradient>
-                    </defs>
-
                     <polyline
                         className="trend__line trend__line--solicitudes"
                         points={puntosLinea("solicitudes")}
@@ -80,17 +122,17 @@ function TrendChart({ data = [], maxPoints = 12 }) {
                     />
                 </svg>
 
-                {/* Barras */}
+                {/* ── Grupos de barras ── */}
                 {visibles.map((mes, i) => (
                     <div
                         className={`trend__group${tooltip?.index === i ? " trend__group--active" : ""}`}
                         key={`${mes.mes}-${i}`}
                         onMouseEnter={(e) => {
-                            const rect = e.currentTarget.closest(".trend").getBoundingClientRect();
+                            const trendRect = e.currentTarget.closest(".trend").getBoundingClientRect();
                             const groupRect = e.currentTarget.getBoundingClientRect();
                             setTooltip({
                                 index: i,
-                                x: groupRect.left - rect.left + groupRect.width / 2,
+                                x: groupRect.left - trendRect.left + groupRect.width / 2,
                                 mes: mes.mes,
                                 solicitudes: mes.solicitudes,
                                 reservas: mes.reservas,
@@ -122,11 +164,14 @@ function TrendChart({ data = [], maxPoints = 12 }) {
                     </div>
                 ))}
 
-                {/* Tooltip flotante */}
+                {/* ── Tooltip flotante ── */}
                 {tooltip && (
                     <div
                         className="trend__tooltip"
-                        style={{ left: tooltip.x }}
+                        style={{
+                            // Clampear para que no se salga en los extremos
+                            left: `clamp(65px, ${tooltip.x}px, calc(100% - 65px))`,
+                        }}
                     >
                         <span className="trend__tooltip-mes">{tooltip.mes}</span>
                         <div className="trend__tooltip-row">
@@ -143,6 +188,7 @@ function TrendChart({ data = [], maxPoints = 12 }) {
                 )}
             </div>
 
+            {/* ── Leyenda ── */}
             <div className="trend__legend">
                 <span className="trend__legend-item trend__legend-item--solicitudes">
                     Solicitudes

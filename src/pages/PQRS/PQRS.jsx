@@ -4,9 +4,12 @@ import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import Pagination from "../../components/Pagination/Pagination";
 import Modal from "../../components/Modal/Modal";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import useAuth from "../../context/useAuth";
+import useToast from "../../context/ToastContext";
 import { TIPOS_PQRS, obtenerPqrs, guardarPqrs, obtenerPqrsPorPerfil } from "../../utils/pqrs";
+import { obtenerUsuarios } from "../../utils/users";
 import useSearch from "../../hooks/useSearch";
 import usePagination from "../../hooks/usePagination";
 import "./PQRS.css";
@@ -45,6 +48,25 @@ const ESTADOS_PQRS = [
 
 const PRIORIDADES = ["Alta", "Media", "Baja"];
 
+// Transiciones de estado válidas: desde cada estado, hacia cuáles se puede pasar.
+const TRANSICIONES = {
+    Registrada: ["En revisión", "Resuelta", "Cerrada"],
+    "En revisión": ["Asignada", "En proceso", "Resuelta", "Cerrada"],
+    Asignada: ["En proceso", "Resuelta", "Cerrada"],
+    "En proceso": ["Resuelta", "Cerrada"],
+    Resuelta: ["Cerrada"],
+    Cerrada: []
+};
+
+const ESTADOS_FINALES = ["Resuelta", "Cerrada"];
+
+// Devuelve el estado siguiente del ciclo de vida (avance de un paso).
+function siguienteEstado(estado) {
+    const idx = ESTADOS_PQRS.indexOf(estado);
+    if (idx === -1 || idx >= ESTADOS_PQRS.length - 1) return estado;
+    return ESTADOS_PQRS[idx + 1];
+}
+
 const formVacio = {
     estado: "En revisión",
     asignadoA: "",
@@ -54,6 +76,7 @@ const formVacio = {
 
 function PQRS() {
     const { puede, user } = useAuth();
+    const toast = useToast();
     const puedeGestionar = puede("gestionar_solicitudes") || puede("actualizar_estados");
 
     const [filtroTipo, setFiltroTipo] = useState("Todos");
@@ -63,11 +86,26 @@ function PQRS() {
 
     const [gestionAbierto, setGestionAbierto] = useState(false);
     const [detalleAbierto, setDetalleAbierto] = useState(false);
+    const [confirmEliminarAbierto, setConfirmEliminarAbierto] = useState(false);
+    const [confirmEstadoAbierto, setConfirmEstadoAbierto] = useState(false);
+    const [pendiente, setPendiente] = useState(null);
     const [seleccionada, setSeleccionada] = useState(null);
     const [form, setForm] = useState(formVacio);
     const [aviso, setAviso] = useState("");
     const [errorAviso, setErrorAviso] = useState("");
     const [items, setItems] = useState(() => obtenerPqrsPorPerfil(user?.rol));
+
+    const usuariosAsignables = useMemo(
+        () =>
+            obtenerUsuarios()
+                .filter(
+                    (u) =>
+                        (u.rol === "Administrador" || u.rol === "Administrativo") &&
+                        u.estado === "Activo"
+                )
+                .map((u) => ({ id: u.id, nombre: u.nombre })),
+        []
+    );
 
     useEffect(() => {
         setItems(obtenerPqrsPorPerfil(user?.rol));
@@ -150,31 +188,113 @@ function PQRS() {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
+    const guardarPqrsConHistorial = (todas, id, cambios) => {
+        const ahora = new Date();
+        const fecha = ahora.toISOString().slice(0, 10);
+        const hora = ahora.toTimeString().slice(0, 5);
+        const historial = [
+            ...(cambios.historial || []),
+            {
+                estado: cambios.estado,
+                fecha: `${fecha} ${hora}`,
+                detalle: cambios.detalle || ""
+            }
+        ];
+        return todas.map((p) =>
+            p.id === id ? { ...p, ...cambios, historial } : p
+        );
+    };
+
     const handleGuardar = (e) => {
         e.preventDefault();
         if (!seleccionada) return;
+
+        const estadoInicial = seleccionada.estado || "En revisión";
+        const datosCambian = [
+            form.asignadoA !== (seleccionada.asignadoA || ""),
+            form.prioridad !== (seleccionada.prioridad || "Media"),
+            form.respuesta !== (seleccionada.respuesta || "")
+        ].some(Boolean);
+
+        // El estado avanza automáticamente un paso en el ciclo de vida.
+        const estadoObjetivo = siguienteEstado(estadoInicial);
+        const cambiarEstado = estadoObjetivo !== estadoInicial;
+
+        if (!datosCambian && !cambiarEstado) {
+            mostrarAviso("No hay cambios para guardar.", true);
+            return;
+        }
+
+        // Al avanzar a Resuelta se exige una respuesta.
+        if (cambiarEstado && estadoObjetivo === "Resuelta" && !form.respuesta.trim()) {
+            mostrarAviso("Debes escribir una respuesta para avanzar a Resuelta.", true);
+            return;
+        }
+
+        setPendiente({
+            estadoObjetivo,
+            cambiarEstado,
+            datosCambian,
+            asignadoA: form.asignadoA,
+            prioridad: form.prioridad,
+            respuesta: form.respuesta
+        });
+        setConfirmEstadoAbierto(true);
+    };
+
+    const confirmarAvanceEstado = () => {
+        if (!seleccionada || !pendiente) return;
+        const { estadoObjetivo, cambiarEstado, datosCambian } = pendiente;
+        const estadoInicial = seleccionada.estado || "En revisión";
+        const estadoFinal = cambiarEstado ? estadoObjetivo : estadoInicial;
+
         const todas = obtenerPqrs();
-        const nuevas = todas.map((p) =>
-            p.id === seleccionada.id
-                ? { ...p, estado: form.estado, asignadoA: form.asignadoA, prioridad: form.prioridad, respuesta: form.respuesta }
-                : p
-        );
+        const detalle = [];
+        if (cambiarEstado) detalle.push(`Estado: ${estadoInicial} → ${estadoFinal}`);
+        if (pendiente.asignadoA !== (seleccionada.asignadoA || ""))
+            detalle.push(`Asignada a ${pendiente.asignadoA || "ninguno"}`);
+        if (pendiente.prioridad !== (seleccionada.prioridad || "Media"))
+            detalle.push(`Prioridad: ${pendiente.prioridad}`);
+        if (pendiente.respuesta !== (seleccionada.respuesta || ""))
+            detalle.push("Respuesta registrada");
+
+        const nuevas = guardarPqrsConHistorial(todas, seleccionada.id, {
+            estado: estadoFinal,
+            asignadoA: pendiente.asignadoA,
+            prioridad: pendiente.prioridad,
+            respuesta: pendiente.respuesta,
+            historial: seleccionada.historial || [],
+            detalle: `Actualización por ${user?.nombre || "el gestor"}: ${detalle.join(" · ")}`
+        });
         guardarPqrs(nuevas);
         setItems(obtenerPqrsPorPerfil(user?.rol));
-        mostrarAviso("PQRS actualizada correctamente.");
+        mostrarAviso(
+            cambiarEstado
+                ? `PQRS avanzó de "${estadoInicial}" a "${estadoFinal}".`
+                : "PQRS actualizada correctamente."
+        );
+        setConfirmEstadoAbierto(false);
+        setPendiente(null);
         cerrarModales();
     };
 
+    const cancelarAvanceEstado = () => {
+        setConfirmEstadoAbierto(false);
+        setPendiente(null);
+    };
+
     const handleEliminar = (item) => {
-        const confirmar = window.confirm(
-            `¿Eliminar la PQRS ${item.id}? Esta acción no se puede deshacer.`
-        );
-        if (!confirmar) return;
+        setSeleccionada(item);
+        setConfirmEliminarAbierto(true);
+    };
+
+    const confirmarEliminar = () => {
+        if (!seleccionada) return;
         const todas = obtenerPqrs();
-        const nuevas = todas.filter((p) => p.id !== item.id);
+        const nuevas = todas.filter((p) => p.id !== seleccionada.id);
         guardarPqrs(nuevas);
         setItems(obtenerPqrsPorPerfil(user?.rol));
-        mostrarAviso("PQRS eliminada.");
+        toast.success("PQRS eliminada correctamente.");
         cerrarModales();
     };
 
@@ -444,6 +564,12 @@ function PQRS() {
                                         >
                                             Gestionar
                                         </button>
+                                        <button
+                                            className="gpqrs__action gpqrs__action--danger"
+                                            onClick={() => handleEliminar(item)}
+                                        >
+                                            Eliminar
+                                        </button>
                                     </div>
                                 )}
                             </article>
@@ -477,20 +603,28 @@ function PQRS() {
                         </p>
 
                         <div className="form-grid gpqrs__form-grid">
-                            <div className="gpqrs__form-group">
-                                <label htmlFor="gpqrs-estado-edit">Estado</label>
-                                <select
-                                    id="gpqrs-estado-edit"
-                                    name="estado"
-                                    value={form.estado}
-                                    onChange={handleChange}
-                                >
-                                    {ESTADOS_PQRS.map((estado) => (
-                                        <option key={estado} value={estado}>
-                                            {estado}
-                                        </option>
-                                    ))}
-                                </select>
+                            <div className="gpqrs__form-group gpqrs__estado-flujo">
+                                <label>Estado actual</label>
+                                <div className="gpqrs__estado-actual">
+                                    <span
+                                        className={`pqrs__item-status ${ESTADO_CLASE[seleccionada.estado] || "closed"}`}
+                                    >
+                                        {seleccionada.estado}
+                                    </span>
+                                    {siguienteEstado(seleccionada.estado) !== seleccionada.estado && (
+                                        <>
+                                            <span className="gpqrs__estado-flecha">→</span>
+                                            <span className="pqrs__item-status review">
+                                                {siguienteEstado(seleccionada.estado)}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                                <p className="gpqrs__estado-ayuda">
+                                    {siguienteEstado(seleccionada.estado) === seleccionada.estado
+                                        ? "Esta PQRS ya está en su estado final y no avanzará más."
+                                        : `Al guardar, la PQRS avanzará automáticamente a "${siguienteEstado(seleccionada.estado)}" y se te pedirá confirmación.`}
+                                </p>
                             </div>
 
                             <div className="gpqrs__form-group">
@@ -512,14 +646,19 @@ function PQRS() {
 
                         <div className="gpqrs__form-group">
                             <label htmlFor="gpqrs-asignado-edit">Asignar a</label>
-                            <input
+                            <select
                                 id="gpqrs-asignado-edit"
-                                type="text"
                                 name="asignadoA"
                                 value={form.asignadoA}
                                 onChange={handleChange}
-                                placeholder="Nombre del responsable"
-                            />
+                            >
+                                <option value="">Sin asignar</option>
+                                {usuariosAsignables.map((u) => (
+                                    <option key={u.id} value={u.nombre}>
+                                        {u.nombre}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="gpqrs__form-group">
@@ -535,13 +674,6 @@ function PQRS() {
                         </div>
 
                         <div className="modal__footer">
-                            <button
-                                type="button"
-                                className="gpqrs__action gpqrs__action--danger"
-                                onClick={() => handleEliminar(seleccionada)}
-                            >
-                                Eliminar
-                            </button>
                             <div className="gpqrs__modal-actions">
                                 <button
                                     type="button"
@@ -638,6 +770,41 @@ function PQRS() {
                     </div>
                 )}
             </Modal>
+
+            <ConfirmModal
+                isOpen={confirmEliminarAbierto}
+                title="Eliminar PQRS"
+                message={
+                    seleccionada
+                        ? `¿Eliminar la PQRS ${seleccionada.id}? Esta acción no se puede deshacer.`
+                        : ""
+                }
+                confirmText="Eliminar"
+                cancelText="Cancelar"
+                variant="danger"
+                onConfirm={confirmarEliminar}
+                onClose={() => {
+                    setConfirmEliminarAbierto(false);
+                    setSeleccionada(null);
+                }}
+            />
+
+            <ConfirmModal
+                isOpen={confirmEstadoAbierto}
+                title="Confirmar avance de estado"
+                message={
+                    seleccionada && pendiente
+                        ? pendiente.cambiarEstado
+                            ? `¿Confirmas el avance de la PQRS ${seleccionada.id} de "${seleccionada.estado}" a "${pendiente.estadoObjetivo}"? Esta acción se registrará en el historial.`
+                            : "Esta PQRS ya está en su estado final. ¿Guardas los cambios sin modificar el estado?"
+                        : ""
+                }
+                confirmText={pendiente?.cambiarEstado ? "Confirmar avance" : "Guardar"}
+                cancelText="Cancelar"
+                variant="primary"
+                onConfirm={confirmarAvanceEstado}
+                onClose={cancelarAvanceEstado}
+            />
         </div>
     );
 }

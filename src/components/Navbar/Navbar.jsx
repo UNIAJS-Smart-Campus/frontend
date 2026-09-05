@@ -91,10 +91,10 @@ function Navbar({ onToggle }) {
                 >
                     <div
                         className="navbar__avatar"
-                        style={getAvatarStyle(user?.nombre, "linear-gradient(135deg, var(--color-primary), var(--color-primary-600))")}
+                        style={getAvatarStyle(user?.nombre, "linear-gradient(135deg, var(--color-primary), var(--color-primary-600))", user?.id)}
                         aria-label={user?.nombre || "Usuario"}
                     >
-                        {!getUserPhoto() && getUserInitials(user?.nombre, "U")}
+                        {!getUserPhoto(user?.id) && getUserInitials(user?.nombre, "U")}
                     </div>
 
                     <div className="navbar__user">
