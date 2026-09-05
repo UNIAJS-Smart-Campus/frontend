@@ -112,6 +112,7 @@ const usuarios = [
     {
         id: 1,
         usuario: "admin",
+        cedula: "1023456789",
         password: "admin123",
         nombre: "Natalia Rodríguez",
         correo: "natalia.rodriguez@uajs.edu.co",
@@ -124,6 +125,7 @@ const usuarios = [
     {
         id: 2,
         usuario: "funcionario",
+        cedula: "1023456788",
         password: "func123",
         nombre: "Carlos Méndez",
         correo: "carlos.mendez@uajs.edu.co",
@@ -136,6 +138,7 @@ const usuarios = [
     {
         id: 3,
         usuario: "profesor",
+        cedula: "1023456787",
         password: "prof123",
         nombre: "Laura Gómez",
         correo: "laura.gomez@uajs.edu.co",
@@ -148,6 +151,7 @@ const usuarios = [
     {
         id: 4,
         usuario: "estudiante",
+        cedula: "1023456786",
         password: "est123",
         nombre: "Andrés Torres",
         correo: "andres.torres@uajs.edu.co",
@@ -160,6 +164,7 @@ const usuarios = [
     {
         id: 5,
         usuario: "docente2",
+        cedula: "1023456785",
         password: "doc123",
         nombre: "María Fernanda Cárdenas",
         correo: "mf.cardenas@uajs.edu.co",
@@ -172,6 +177,7 @@ const usuarios = [
     {
         id: 6,
         usuario: "estudiante2",
+        cedula: "1023456784",
         password: "stu123",
         nombre: "Valentina Morales",
         correo: "valentina.morales@uajs.edu.co",
@@ -184,6 +190,7 @@ const usuarios = [
     {
         id: 7,
         usuario: "admin2",
+        cedula: "1023456783",
         password: "ua123",
         nombre: "Javier Álvarez",
         correo: "javier.alvarez@uajs.edu.co",
@@ -196,6 +203,7 @@ const usuarios = [
     {
         id: 8,
         usuario: "admvo",
+        cedula: "1023456782",
         password: "adm123",
         nombre: "Sofía Jiménez",
         correo: "sofia.jimenez@uajs.edu.co",
@@ -207,579 +215,120 @@ const usuarios = [
     },
     {
         id: 9,
-        usuario: "estudiante3",
-        password: "stu123",
-        nombre: "Camila Restrepo",
-        correo: "camila.restrepo@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería de Sistemas",
+        usuario: "docente3",
+        cedula: "1023456781",
+        password: "doc456",
+        nombre: "Ricardo Torres",
+        correo: "ricardo.torres@uajs.edu.co",
+        rol: "Docente",
+        programa: "Física",
         estado: "Activo",
-        cargo: "Estudiante",
+        cargo: "Docente de laboratorio",
         campus: "Campus central"
     },
     {
         id: 10,
-        usuario: "estudiante4",
-        password: "stu123",
-        nombre: "Santiago Pérez",
-        correo: "santiago.perez@uajs.edu.co",
+        usuario: "estudiante3",
+        cedula: "1023456780",
+        password: "stu456",
+        nombre: "Isabella Ramírez",
+        correo: "isabella.ramirez@uajs.edu.co",
         rol: "Estudiante",
-        programa: "Ingeniería Industrial",
+        programa: "Ingeniería Civil",
         estado: "Activo",
         cargo: "Estudiante",
-        campus: "Campus principal"
+        campus: "Campus Norte"
     },
     {
         id: 11,
-        usuario: "estudiante5",
-        password: "stu123",
-        nombre: "Daniela Ortiz",
-        correo: "daniela.ortiz@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Administración de Empresas",
+        usuario: "admin3",
+        cedula: "1023456779",
+        password: "admin456",
+        nombre: "Andrés Gutiérrez",
+        correo: "andres.gutierrez@uajs.edu.co",
+        rol: "Administrador",
+        programa: "Tecnologías de la información",
         estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus occidente"
+        cargo: "Director de sistemas",
+        campus: "Campus principal"
     },
     {
         id: 12,
-        usuario: "estudiante6",
-        password: "stu123",
-        nombre: "Mateo Salazar",
-        correo: "mateo.salazar@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Contaduría Pública",
+        usuario: "admvo2",
+        cedula: "1023456778",
+        password: "adm456",
+        nombre: "Paula Vargas",
+        correo: "paula.vargas@uajs.edu.co",
+        rol: "Administrativo",
+        programa: "Recursos Humanos",
         estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus centro"
+        cargo: "Analista de talento humano",
+        campus: "Campus occidente"
     },
     {
         id: 13,
-        usuario: "estudiante7",
-        password: "stu123",
-        nombre: "Isabella Vargas",
-        correo: "isabella.vargas@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Psicología",
+        usuario: "docente4",
+        cedula: "1023456777",
+        password: "doc789",
+        nombre: "Fernando Castillo",
+        correo: "fernando.castillo@uajs.edu.co",
+        rol: "Docente",
+        programa: "Economía",
         estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus principal"
+        cargo: "Docente titular",
+        campus: "Campus central"
     },
     {
         id: 14,
-        usuario: "estudiante8",
-        password: "stu123",
-        nombre: "Sebastián Castro",
-        correo: "sebastian.castro@uajs.edu.co",
+        usuario: "estudiante4",
+        cedula: "1023456776",
+        password: "stu789",
+        nombre: "Camila Herrera",
+        correo: "camila.herrera@uajs.edu.co",
         rol: "Estudiante",
-        programa: "Ingeniería de Software",
+        programa: "Derecho",
         estado: "Activo",
         cargo: "Estudiante",
-        campus: "Campus central"
+        campus: "Campus centro"
     },
     {
         id: 15,
-        usuario: "estudiante9",
-        password: "stu123",
-        nombre: "Mariana López",
-        correo: "mariana.lopez@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Comunicación Social",
+        usuario: "admin4",
+        cedula: "1023456775",
+        password: "admin789",
+        nombre: "Luisa Cardona",
+        correo: "luisa.cardona@uajs.edu.co",
+        rol: "Administrador",
+        programa: "Administración",
         estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus occidente"
+        cargo: "Rectora",
+        campus: "Campus principal"
     },
     {
         id: 16,
-        usuario: "estudiante10",
-        password: "stu123",
-        nombre: "Tomás Herrera",
-        correo: "tomas.herrera@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería de Sistemas",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus principal"
+        usuario: "docente5",
+        cedula: "1023456774",
+        password: "doc000",
+        nombre: "Sebastián Rojas",
+        correo: "sebastian.rojas@uajs.edu.co",
+        rol: "Docente",
+        programa: "Idiomas",
+        estado: "Inactivo",
+        cargo: "Docente de inglés",
+        campus: "Campus occidente"
     },
     {
         id: 17,
-        usuario: "estudiante11",
-        password: "stu123",
-        nombre: "Luciana Ramírez",
-        correo: "luciana.ramirez@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Derecho",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus centro"
-    },
-    {
-        id: 18,
-        usuario: "estudiante12",
-        password: "stu123",
-        nombre: "Joaquín Morales",
-        correo: "joaquin.morales@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Administración de Empresas",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus occidente"
-    },
-    {
-        id: 19,
-        usuario: "estudiante13",
-        password: "stu123",
-        nombre: "Sara Quintero",
-        correo: "sara.quintero@uajs.edu.co",
+        usuario: "estudiante5",
+        cedula: "1023456773",
+        password: "stu000",
+        nombre: "Daniela Ortiz",
+        correo: "daniela.ortiz@uajs.edu.co",
         rol: "Estudiante",
         programa: "Psicología",
         estado: "Activo",
         cargo: "Estudiante",
-        campus: "Campus principal"
-    },
-    {
-        id: 20,
-        usuario: "estudiante14",
-        password: "stu123",
-        nombre: "Felipe Mendoza",
-        correo: "felipe.mendoza@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería Industrial",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus central"
-    },
-    {
-        id: 21,
-        usuario: "estudiante15",
-        password: "stu123",
-        nombre: "Juliana Ríos",
-        correo: "juliana.rios@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Contaduría Pública",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus occidente"
-    },
-    {
-        id: 22,
-        usuario: "estudiante16",
-        password: "stu123",
-        nombre: "David Ospina",
-        correo: "david.ospina@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería de Sistemas",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus principal"
-    },
-    {
-        id: 23,
-        usuario: "estudiante17",
-        password: "stu123",
-        nombre: "Paula Aguilar",
-        correo: "paula.aguilar@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Comunicación Social",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus centro"
-    },
-    {
-        id: 24,
-        usuario: "estudiante18",
-        password: "stu123",
-        nombre: "Andrés Felipe Duarte",
-        correo: "af.duarte@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería de Software",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus central"
-    },
-    {
-        id: 25,
-        usuario: "estudiante19",
-        password: "stu123",
-        nombre: "Manuela Cabrera",
-        correo: "manuela.cabrera@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Derecho",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus occidente"
-    },
-    {
-        id: 26,
-        usuario: "estudiante20",
-        password: "stu123",
-        nombre: "Esteban Romero",
-        correo: "esteban.romero@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Administración de Empresas",
-        estado: "Inactivo",
-        cargo: "Estudiante",
-        campus: "Campus principal"
-    },
-    {
-        id: 27,
-        usuario: "estudiante21",
-        password: "stu123",
-        nombre: "Ana Sofía Castillo",
-        correo: "as.castillo@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería de Sistemas",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus principal"
-    },
-    {
-        id: 28,
-        usuario: "estudiante22",
-        password: "stu123",
-        nombre: "Juan Pablo Ramírez",
-        correo: "jp.ramirez@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería Industrial",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus occidente"
-    },
-    {
-        id: 29,
-        usuario: "estudiante23",
-        password: "stu123",
-        nombre: "María Camila Vega",
-        correo: "mc.vega@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Administración de Empresas",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus central"
-    },
-    {
-        id: 30,
-        usuario: "estudiante24",
-        password: "stu123",
-        nombre: "Carlos Andrés Pinilla",
-        correo: "ca.pinilla@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Contaduría Pública",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus centro"
-    },
-    {
-        id: 31,
-        usuario: "estudiante25",
-        password: "stu123",
-        nombre: "Laura Daniela Forero",
-        correo: "ld.forero@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Psicología",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus occidente"
-    },
-    {
-        id: 32,
-        usuario: "estudiante26",
-        password: "stu123",
-        nombre: "Andrés Mauricio León",
-        correo: "am.leon@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería de Software",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus principal"
-    },
-    {
-        id: 33,
-        usuario: "estudiante27",
-        password: "stu123",
-        nombre: "Valentina Espinosa",
-        correo: "valentina.espinosa@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Comunicación Social",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus principal"
-    },
-    {
-        id: 34,
-        usuario: "estudiante28",
-        password: "stu123",
-        nombre: "Diego Alejandro Soto",
-        correo: "da.soto@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería de Sistemas",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus central"
-    },
-    {
-        id: 35,
-        usuario: "estudiante29",
-        password: "stu123",
-        nombre: "Catalina Mejía",
-        correo: "catalina.mejia@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Derecho",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus occidente"
-    },
-    {
-        id: 36,
-        usuario: "estudiante30",
-        password: "stu123",
-        nombre: "Jorge Eduardo Bernal",
-        correo: "je.bernal@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Administración de Empresas",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus principal"
-    },
-    {
-        id: 37,
-        usuario: "estudiante31",
-        password: "stu123",
-        nombre: "Natalia Cardona",
-        correo: "natalia.cardona@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Psicología",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus central"
-    },
-    {
-        id: 38,
-        usuario: "estudiante32",
-        password: "stu123",
-        nombre: "Ricardo Andrés Pérez",
-        correo: "ra.perez@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería Industrial",
-        estado: "Inactivo",
-        cargo: "Estudiante",
-        campus: "Campus occidente"
-    },
-    {
-        id: 39,
-        usuario: "estudiante33",
-        password: "stu123",
-        nombre: "Sofía Alexandra Ruiz",
-        correo: "sa.ruiz@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Contaduría Pública",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus principal"
-    },
-    {
-        id: 40,
-        usuario: "estudiante34",
-        password: "stu123",
-        nombre: "Luis Fernando Castaño",
-        correo: "lf.castano@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería de Sistemas",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus occidente"
-    },
-    {
-        id: 41,
-        usuario: "estudiante35",
-        password: "stu123",
-        nombre: "Daniela Fernanda Núñez",
-        correo: "df.nunez@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Comunicación Social",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus central"
-    },
-    {
-        id: 42,
-        usuario: "estudiante36",
-        password: "stu123",
-        nombre: "Mauricio Ortiz",
-        correo: "mauricio.ortiz@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Derecho",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus principal"
-    },
-    {
-        id: 43,
-        usuario: "estudiante37",
-        password: "stu123",
-        nombre: "Alejandra Torres",
-        correo: "alejandra.torres@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería de Software",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus occidente"
-    },
-    {
-        id: 44,
-        usuario: "estudiante38",
-        password: "stu123",
-        nombre: "Sergio Iván Montenegro",
-        correo: "si.montenegro@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Administración de Empresas",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus central"
-    },
-    {
-        id: 45,
-        usuario: "estudiante39",
-        password: "stu123",
-        nombre: "Ximena Alexandra Lara",
-        correo: "xa.lara@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Psicología",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus principal"
-    },
-    {
-        id: 46,
-        usuario: "estudiante40",
-        password: "stu123",
-        nombre: "Bryan Stiven Ortiz",
-        correo: "bs.ortiz@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería Industrial",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus occidente"
-    },
-    {
-        id: 47,
-        usuario: "estudiante41",
-        password: "stu123",
-        nombre: "Tatiana Andrea Ríos",
-        correo: "ta.rios@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Contaduría Pública",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus principal"
-    },
-    {
-        id: 48,
-        usuario: "estudiante42",
-        password: "stu123",
-        nombre: "Kevin Andrés Saldarriaga",
-        correo: "ka.saldarriaga@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería de Sistemas",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus central"
-    },
-    {
-        id: 49,
-        usuario: "estudiante43",
-        password: "stu123",
-        nombre: "Diana Carolina Morales",
-        correo: "dc.morales@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Comunicación Social",
-        estado: "Inactivo",
-        cargo: "Estudiante",
-        campus: "Campus occidente"
-    },
-    {
-        id: 50,
-        usuario: "estudiante44",
-        password: "stu123",
-        nombre: "Hernán Darío Zapata",
-        correo: "hd.zapata@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Derecho",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus principal"
-    },
-    {
-        id: 51,
-        usuario: "estudiante45",
-        password: "stu123",
-        nombre: "Laura Melissa Gutiérrez",
-        correo: "lm.gutierrez@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería de Software",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus central"
-    },
-    {
-        id: 52,
-        usuario: "estudiante46",
-        password: "stu123",
-        nombre: "Julián Andrés Cárdenas",
-        correo: "ja.cardenas@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Administración de Empresas",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus occidente"
-    },
-    {
-        id: 53,
-        usuario: "estudiante47",
-        password: "stu123",
-        nombre: "María José Pacheco",
-        correo: "mj.pacheco@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Psicología",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus principal"
-    },
-    {
-        id: 54,
-        usuario: "estudiante48",
-        password: "stu123",
-        nombre: "Camilo Ernesto Restrepo",
-        correo: "ce.restrepo@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería Industrial",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus central"
-    },
-    {
-        id: 55,
-        usuario: "estudiante49",
-        password: "stu123",
-        nombre: "Melissa Andrea Torres",
-        correo: "ma.torres@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Contaduría Pública",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus occidente"
-    },
-    {
-        id: 56,
-        usuario: "estudiante50",
-        password: "stu123",
-        nombre: "Iván Darío Salazar",
-        correo: "id.salazar@uajs.edu.co",
-        rol: "Estudiante",
-        programa: "Ingeniería de Sistemas",
-        estado: "Activo",
-        cargo: "Estudiante",
-        campus: "Campus principal"
+        campus: "Campus Norte"
     }
 ];
 
@@ -788,7 +337,42 @@ export const STORAGE_KEY = "uajs_users";
 export function obtenerUsuarios() {
     try {
         const guardados = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-        if (guardados.length > 0) return guardados;
+        let cambio = false;
+        if (guardados.length > 0) {
+            // Asegurar que los usuarios base estén presentes (evita IDs duplicados)
+            // y rellenar campos base que falten (p.ej. cedula).
+            const fusionados = [...guardados];
+            const idsGuardados = new Set(guardados.map((u) => u.id));
+            const basePorId = {};
+            usuarios.forEach((base) => { basePorId[base.id] = base; });
+
+            usuarios.forEach((base) => {
+                if (!idsGuardados.has(base.id)) {
+                    fusionados.push(base);
+                    cambio = true;
+                }
+            });
+
+            const indexados = fusionados.map((u) => {
+                const base = basePorId[u.id];
+                if (!base) return u;
+                let m = false;
+                const actualizado = { ...u };
+                ["cedula", "correo", "programa", "cargo", "campus"].forEach((campo) => {
+                    if ((!u[campo] || u[campo] === "") && base[campo]) {
+                        actualizado[campo] = base[campo];
+                        m = true;
+                    }
+                });
+                if (m) cambio = true;
+                return actualizado;
+            });
+
+            if (cambio) {
+                guardarUsuarios(indexados);
+            }
+            return indexados;
+        }
         guardarUsuarios(usuarios);
         return usuarios;
     } catch {

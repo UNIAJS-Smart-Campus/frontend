@@ -473,6 +473,26 @@
     gap: var(--space-3);
 }
 
+/* ============ ESTADO FLUJO (avance automático) ============ */
+.gpqrs__estado-actual {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 22px;
+}
+
+.gpqrs__estado-flecha {
+    color: var(--color-text-muted);
+    font-weight: 700;
+}
+
+.gpqrs__estado-ayuda {
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
 /* ============ DETAIL MODAL ============ */
 .gpqrs__detail {
     display: flex;

@@ -1,3 +1,5 @@
+import { obtenerUsuarios } from "./users";
+
 export const CATEGORIAS_EVENTO = ["Académico", "Cultural", "Formación", "Institucional"];
 
 export const ESTADOS_EVENTO = ["Activo", "Finalizado", "Cancelado"];
@@ -6,116 +8,85 @@ export const MODALIDADES_EVENTO = ["Presencial", "Virtual", "Híbrido"];
 
 function generarParticipantesIniciales(n) {
     const total = Math.max(0, Number(n) || 0);
+    if (total === 0) return [];
+
+    const usuarios = obtenerUsuarios().filter((u) => u.estado === "Activo");
+    if (usuarios.length === 0) return [];
+
     const resultado = [];
+    const fechas = [
+        "2026-08-25", "2026-08-26", "2026-08-27", "2026-08-28",
+        "2026-08-29", "2026-08-30", "2026-08-31", "2026-09-01"
+    ];
+
     for (let i = 0; i < total; i += 1) {
+        const u = usuarios[i % usuarios.length];
         resultado.push({
-            usuarioId: null,
-            nombre: `Inscrito #${i + 1}`,
-            fecha: "2026-08-30"
+            usuarioId: u.id,
+            nombre: u.nombre,
+            fecha: fechas[i % fechas.length]
         });
     }
     return resultado;
 }
 
-const ESTUDIANTES_ACTIVOS = [
-    4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
-    27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 39, 40, 41, 42, 43, 44,
-    45, 46, 47, 48, 50, 51, 52, 53, 54, 55, 56
-];
-
-const CUPO_POR_EVENTO = {
-    1: 47,
-    2: 35,
-    3: 47,
-    4: 187,
-    5: 47,
-    6: 142
+// Número de inscritos ficticios por usuario (id del evento precargado)
+const INSCRITOS_MOCK_POR_EVENTO = {
+    1: 6,
+    2: 4,
+    3: 5,
+    4: 7,
+    5: 3,
+    6: 7
 };
-
-const INSCRITOS_SEED = Object.fromEntries(
-    Object.entries(CUPO_POR_EVENTO).map(([eventoId, cupo]) => {
-        const total = Math.min(cupo, ESTUDIANTES_ACTIVOS.length);
-        const ronda = [];
-        let i = 0;
-        while (ronda.length < total) {
-            const id = ESTUDIANTES_ACTIVOS[i % ESTUDIANTES_ACTIVOS.length];
-            ronda.push(id);
-            i += 1;
-        }
-        return [eventoId, ronda];
-    })
-);
-
-function lookupNombre(usuarioId) {
-    if (usuarioId == null) return "Inscrito";
-    const map = {
-        4: "Andrés Torres",
-        6: "Valentina Morales",
-        9: "Camila Restrepo",
-        10: "Santiago Pérez",
-        11: "Daniela Ortiz",
-        12: "Mateo Salazar",
-        13: "Isabella Vargas",
-        14: "Sebastián Castro",
-        15: "Mariana López",
-        16: "Tomás Herrera",
-        17: "Luciana Ramírez",
-        18: "Joaquín Morales",
-        19: "Sara Quintero",
-        20: "Felipe Mendoza",
-        21: "Juliana Ríos",
-        22: "David Ospina",
-        23: "Paula Aguilar",
-        24: "Andrés Felipe Duarte",
-        25: "Manuela Cabrera",
-        27: "Ana Sofía Castillo",
-        28: "Juan Pablo Ramírez",
-        29: "María Camila Vega",
-        30: "Carlos Andrés Pinilla",
-        31: "Laura Daniela Forero",
-        32: "Andrés Mauricio León",
-        33: "Valentina Espinosa",
-        34: "Diego Alejandro Soto",
-        35: "Catalina Mejía",
-        36: "Jorge Eduardo Bernal",
-        37: "Natalia Cardona",
-        39: "Sofía Alexandra Ruiz",
-        40: "Luis Fernando Castaño",
-        41: "Daniela Fernanda Núñez",
-        42: "Mauricio Ortiz",
-        43: "Alejandra Torres",
-        44: "Sergio Iván Montenegro",
-        45: "Ximena Alexandra Lara",
-        46: "Bryan Stiven Ortiz",
-        47: "Tatiana Andrea Ríos",
-        48: "Kevin Andrés Saldarriaga",
-        50: "Hernán Darío Zapata",
-        51: "Laura Melissa Gutiérrez",
-        52: "Julián Andrés Cárdenas",
-        53: "María José Pacheco",
-        54: "Camilo Ernesto Restrepo",
-        55: "Melissa Andrea Torres",
-        56: "Iván Darío Salazar"
-    };
-    return map[usuarioId] || `Inscrito #${usuarioId}`;
-}
-
-function generarParticipantesPorEvento(eventoId) {
-    const ids = INSCRITOS_SEED[eventoId] || [];
-    return ids.map((uid) => ({
-        usuarioId: uid,
-        nombre: lookupNombre(uid),
-        fecha: "2026-08-30"
-    }));
-}
 
 function migrarEvento(ev) {
     if (!ev || typeof ev !== "object") return ev;
-    if (Array.isArray(ev.participantes)) return ev;
-    const legacy = typeof ev.inscritos === "number" ? ev.inscritos : 0;
-    const next = { ...ev };
+
+    const participantes = Array.isArray(ev.participantes) ? ev.participantes : [];
+    // ¿Hay participantes que ya llegaron con usuario real (no null)?
+    const participantesReales = participantes.filter((p) => p.usuarioId != null);
+
+    // Para eventos precargados (id conocido), siempre garantizar que tengamos
+    // los inscritos ficticios iniciales si no hay ningún participante real.
+    if (INSCRITOS_MOCK_POR_EVENTO[ev.id] != null && participantesReales.length === 0) {
+        return {
+            ...ev,
+            participantes: generarParticipantesIniciales(INSCRITOS_MOCK_POR_EVENTO[ev.id]),
+            _migrado: true
+        };
+    }
+
+    // Ya migrado y con participantes → no tocar
+    if (ev._migrado) return ev;
+
+    let next = { ...ev };
+    const legacy = typeof next.inscritos === "number" ? next.inscritos : 0;
     delete next.inscritos;
-    next.participantes = generarParticipantesIniciales(legacy);
+
+    const participantesNull = participantes.filter((p) => p.usuarioId == null);
+
+    // Evento no precargado con número legacy + cero participantes → poblar
+    if (participantes.length === 0 && legacy > 0) {
+        next.participantes = generarParticipantesIniciales(legacy);
+        next._migrado = true;
+        return next;
+    }
+
+    // Convertir cualquier participante null restante a un usuario real
+    if (participantesNull.length > 0) {
+        const reales = obtenerUsuarios().filter((u) => u.estado === "Activo");
+        let idx = 0;
+        const convertidos = participantes.map((p) => {
+            if (p.usuarioId != null) return p;
+            const rep = reales[idx % reales.length];
+            idx += 1;
+            return rep ? { ...p, usuarioId: rep.id, nombre: rep.nombre } : p;
+        });
+        next.participantes = convertidos;
+    }
+
+    next._migrado = true;
     return next;
 }
 
@@ -130,7 +101,8 @@ const eventos = [
         descripcion: "Jornada académica con expertos en IA aplicada, innovación y transformación digital.",
         estado: "Activo",
         cupo: 150,
-        participantes: generarParticipantesPorEvento(1),
+        participantes: generarParticipantesIniciales(6),
+        _migrado: true,
         ponente: "Dra. Ana María López",
         modalidad: "Presencial"
     },
@@ -144,7 +116,8 @@ const eventos = [
         descripcion: "Sesión práctica para desarrollar modelos de negocio, pitch y trabajo en equipo.",
         estado: "Activo",
         cupo: 45,
-        participantes: generarParticipantesPorEvento(2),
+        participantes: generarParticipantesIniciales(4),
+        _migrado: true,
         ponente: "Daniel Ruiz",
         modalidad: "Híbrido"
     },
@@ -158,7 +131,8 @@ const eventos = [
         descripcion: "Proyección, conversación y análisis del papel de la cultura en la vida universitaria.",
         estado: "Activo",
         cupo: 90,
-        participantes: generarParticipantesPorEvento(3),
+        participantes: generarParticipantesIniciales(5),
+        _migrado: true,
         ponente: "Colectivo cultural UAJS",
         modalidad: "Presencial"
     },
@@ -172,7 +146,8 @@ const eventos = [
         descripcion: "Encuentro con empresas, programas de prácticas y oportunidades de empleo para estudiantes.",
         estado: "Activo",
         cupo: 220,
-        participantes: generarParticipantesPorEvento(4),
+        participantes: generarParticipantesIniciales(7),
+        _migrado: true,
         ponente: "Vicerrectoría de bienestar y empleabilidad",
         modalidad: "Presencial"
     },
@@ -186,7 +161,8 @@ const eventos = [
         descripcion: "Presentación de proyectos de investigación y resultados de trabajo de grado.",
         estado: "Activo",
         cupo: 60,
-        participantes: generarParticipantesPorEvento(5),
+        participantes: generarParticipantesIniciales(3),
+        _migrado: true,
         ponente: "Dra. Carolina Ruiz",
         modalidad: "Virtual"
     },
@@ -200,7 +176,8 @@ const eventos = [
         descripcion: "Actividades de acompañamiento, sensibilización y bienestar para la comunidad universitaria.",
         estado: "Activo",
         cupo: 180,
-        participantes: generarParticipantesPorEvento(6),
+        participantes: generarParticipantesIniciales(7),
+        _migrado: true,
         ponente: "Bienestar institucional",
         modalidad: "Híbrido"
     }

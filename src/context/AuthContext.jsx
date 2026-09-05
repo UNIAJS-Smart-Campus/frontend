@@ -36,7 +36,8 @@ function AuthProvider({ children }) {
         try {
             const usuario = obtenerUsuarios().find(
                 (u) =>
-                    u.usuario === identificacion &&
+                    (u.cedula === identificacion ||
+                        u.usuario === identificacion) &&
                     u.password === password
             );
 
@@ -81,6 +82,23 @@ function AuthProvider({ children }) {
         }
     };
 
+    /**
+     * Actualiza campos del usuario en sesión (en memoria y en localStorage).
+     * Útil para reflejar la foto de perfil u otros cambios sin re-login.
+     */
+    const updateUser = (campos) => {
+        setUser((prev) => {
+            if (!prev) return prev;
+            const siguiente = { ...prev, ...campos };
+            try {
+                localStorage.setItem(SESSION_KEY, JSON.stringify(siguiente));
+            } catch {
+                // ignorar si no hay espacio
+            }
+            return siguiente;
+        });
+    };
+
     const tienePermiso = (permiso) => {
         if (!user) return false;
         const permisos = permisosDeRol(user.rol);
@@ -109,7 +127,8 @@ function AuthProvider({ children }) {
         <AuthContext.Provider value={{ 
             user, 
             login, 
-            logout, 
+            logout,
+            updateUser,
             tienePermiso, 
             puede,
             esRol,

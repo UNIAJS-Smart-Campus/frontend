@@ -21,7 +21,16 @@
     opacity: 0.5;
 }
 
-/* Segmento base */
+/*
+ * Segmento base.
+ *
+ * La animación mueve SOLO stroke-dashoffset:
+ *   - from: var(--donut-offset-from) = circumference  → segmento invisible
+ *   - to:   var(--donut-offset-to)   = offsetFinal    → posición correcta
+ *
+ * stroke-dasharray NO se toca en la animación; queda fijo en "dash gap"
+ * desde el JSX. Así no hay conflicto entre la posición inline y la keyframe.
+ */
 .donut__segment {
     cursor: pointer;
     transition:
@@ -29,24 +38,19 @@
         opacity var(--transition-base),
         filter var(--transition-fast);
 
-    /* Animación de entrada: dibuja el arco desde 0 */
-    stroke-dashoffset: var(--donut-dash, 0);
-    animation: donut-draw 0.8s cubic-bezier(0.4, 0, 0.2, 1) var(--donut-delay, 0s) both;
+    animation: donut-draw 0.7s cubic-bezier(0.4, 0, 0.2, 1) var(--donut-delay, 0s) both;
 }
 
 @keyframes donut-draw {
     from {
-        stroke-dasharray: 0 var(--donut-circum, 999);
+        stroke-dashoffset: var(--donut-offset-from);
         opacity: 0;
     }
     to {
-        stroke-dasharray: var(--donut-dash, 0) calc(var(--donut-circum, 999) - var(--donut-dash, 0));
+        stroke-dashoffset: var(--donut-offset-to);
         opacity: 1;
     }
 }
-
-/* Nota: el stroke-dashoffset real se aplica inline desde JSX después de la animación.
-   Para evitar conflicto, la animación usa stroke-dasharray directamente.  */
 
 /* Estado hover — resaltado */
 .donut__segment--hovered {

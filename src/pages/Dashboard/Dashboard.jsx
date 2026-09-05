@@ -4,7 +4,7 @@ import useAuth from "../../context/useAuth";
 import useSearch from "../../hooks/useSearch";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
-import { obtenerSolicitudes, ESTADOS_FINALES, ETIQUETA_ESTADO, ESTADO_COLOR } from "../../utils/solicitudes";
+import { obtenerSolicitudes, ESTADOS_FINALES } from "../../utils/solicitudes";
 import { obtenerReservas } from "../../utils/reservas";
 import { obtenerNotificacionesPorPerfil } from "../../utils/notificaciones";
 import { obtenerEventosPorPerfil } from "../../utils/eventos";
@@ -235,9 +235,7 @@ function Dashboard() {
                 tiempo:      new Date(sol.fecha + "T00:00:00").toLocaleDateString("es-CO", {
                     day: "numeric", month: "short"
                 }),
-                clase:       "blue",
-                etiqueta:    ETIQUETA_ESTADO[sol.estado] || sol.estado,
-                estadoClase: `status-${ESTADO_COLOR[sol.estado] || "gray"}`
+                clase:       "blue"
             });
         });
 
@@ -371,9 +369,6 @@ function Dashboard() {
                                     <div className="dashboard__request-name">{sol.tipo}</div>
                                     <div className="dashboard__request-id">ID: {sol.id}</div>
                                 </div>
-                                <span className={`status status-${ESTADO_COLOR[sol.estado] || "gray"}`}>
-                                    {ETIQUETA_ESTADO[sol.estado] || sol.estado}
-                                </span>
                                 <div className="dashboard__request-date">
                                     {new Date(sol.fecha + "T00:00:00").toLocaleDateString("es-CO", {
                                         day: "2-digit", month: "2-digit", year: "numeric"
@@ -475,11 +470,6 @@ function Dashboard() {
                                         <div className="dashboard__activity-title">{actividad.titulo}</div>
                                         <div className="dashboard__activity-time">{actividad.tiempo}</div>
                                     </div>
-                                    {actividad.etiqueta && (
-                                        <span className={`status ${actividad.estadoClase}`}>
-                                            {actividad.etiqueta}
-                                        </span>
-                                    )}
                                 </div>
                             ))
                         )}

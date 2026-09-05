@@ -370,3 +370,82 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ============ AVATAR UPLOADER ============ */
+
+/* Wrapper del avatar en el hero — posición relativa para el overlay */
+.perfil__avatar-wrap {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    flex-shrink: 0;
+}
+
+/* El avatar grande usa el mismo estilo de antes */
+.perfil__avatar-wrap .perfil__big-avatar {
+    width: 100%;
+    height: 100%;
+}
+
+/* Overlay de cámara — aparece al hacer hover sobre el avatar */
+.perfil__avatar-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    border: none;
+    padding: 0;
+}
+
+.perfil__avatar-wrap:hover .perfil__avatar-overlay {
+    opacity: 1;
+}
+
+.perfil__avatar-overlay-icon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.perfil__avatar-overlay-text {
+    font-size: 8px;
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* Input file oculto */
+.perfil__avatar-input {
+    display: none;
+}
+
+/* Botón eliminar foto — aparece debajo del avatar si hay foto */
+.perfil__avatar-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 6px;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--color-danger);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background var(--transition-fast);
+    white-space: nowrap;
+}
+
+.perfil__avatar-remove:hover {
+    background: var(--color-danger-100);
+}

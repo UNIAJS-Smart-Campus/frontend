@@ -5,6 +5,20 @@ export const TIPOS_PQRS = [
     "Sugerencia"
 ];
 
+// Catálogo canónico de estados de PQRS.
+// Úsalo siempre que necesites comparar o listar estados para evitar strings sueltos.
+export const ESTADOS_PQRS = [
+    "En revisión",
+    "Asignada",
+    "En proceso",
+    "Resuelta",
+    "Cerrada"
+];
+
+// Estados que se consideran abiertos (no finalizados).
+export const ESTADOS_PQRS_ABIERTOS = ["En revisión", "Asignada", "En proceso"];
+export const ESTADOS_PQRS_FINALES  = ["Resuelta", "Cerrada"];
+
 export const SEDES = [
     "SINCELEJO",
     "CARTAGENA",

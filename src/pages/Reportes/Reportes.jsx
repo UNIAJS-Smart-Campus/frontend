@@ -67,7 +67,7 @@ function Reportes() {
                     <h1>{alcance === "personal" ? "Mi reporte" : "Reporte institucional"}</h1>
                     <p>
                         {alcance === "personal"
-                            ? "Indicadores de tu actividad en el campus generados el el"
+                            ? "Indicadores de tu actividad en el campus generados el"
                             : "Indicadores del campus generados el "}
                         <strong>{fechaGeneracion}</strong>.
                     </p>
@@ -98,7 +98,7 @@ function Reportes() {
             </div>
 
             {/* ── KPIs ── */}
-            <section className="summary">
+            <section className="summary reportes__summary">
                 {datos.kpis.map((kpi) => (
                     <article className="summary__card" key={kpi.etiqueta}>
                         <div
@@ -135,7 +135,8 @@ function Reportes() {
                     { label: "Usuarios",    value: datos.totales.usuarios    },
                     { label: "PQRS",        value: datos.totales.pqrs        },
                     { label: "Eventos",     value: datos.totales.eventos     },
-                ].map(({ label, value }) => (
+                // Error 7 fix: omitir items cuyo value es null (ej: Usuarios en vista personal)
+                ].filter(({ value }) => value !== null).map(({ label, value }) => (
                     <div className="reportes__stat" key={label}>
                         <span className="reportes__stat-label">{label}</span>
                         <span className="reportes__stat-value">{value}</span>
@@ -262,7 +263,8 @@ function Reportes() {
                                                 className="reportes__bar"
                                                 style={{
                                                     width: `${(fila.total / maximo) * 100}%`,
-                                                    background: fila.color
+                                                    background: fila.color,
+                                                    minWidth: fila.total > 0 ? "4px" : "0"
                                                 }}
                                             />
                                         </div>
@@ -318,7 +320,8 @@ function Reportes() {
                                         className="reportes__bar"
                                         style={{
                                             width: `${(fila.total / maxEventos) * 100}%`,
-                                            background: fila.color
+                                            background: fila.color,
+                                            minWidth: fila.total > 0 ? "4px" : "0"
                                         }}
                                     />
                                 </div>

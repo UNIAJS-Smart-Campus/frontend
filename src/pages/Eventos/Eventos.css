@@ -882,21 +882,3 @@
     color: var(--color-text-muted);
     margin-left: auto;
 }
-
-.eventos__inscritos-meta {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--color-text-muted);
-    margin-bottom: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.eventos__inscrito-id {
-    font-size: 10px;
-    color: var(--color-text-muted);
-    background-color: var(--color-bg-soft, #f3f4f6);
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
