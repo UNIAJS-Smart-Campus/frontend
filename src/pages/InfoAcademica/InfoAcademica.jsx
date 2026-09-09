@@ -191,6 +191,23 @@ function InfoAcademica() {
         setConfirm(null);
     };
 
+    // ── Confirmaciones ────────────────────────────────────────
+    const pedirConfirmarAprobar = (id, titulo) =>
+        setConfirm({ tipo: "aprobar", id, titulo });
+    const pedirConfirmarRechazar = (id, titulo) =>
+        setConfirm({ tipo: "rechazar", id, titulo });
+    const pedirConfirmarEliminar = (id, titulo) =>
+        setConfirm({ tipo: "eliminar", id, titulo });
+
+    const confirmarAccion = () => {
+        if (!confirm) return;
+        const { tipo, id } = confirm;
+        if (tipo === "aprobar") cambiarEstado(id, "Aprobada");
+        else if (tipo === "rechazar") cambiarEstado(id, "Rechazada");
+        else if (tipo === "eliminar") eliminarPublicacion(id);
+        setConfirm(null);
+    };
+
     const cerrar = () => {
         setCrearAbierto(false);
         setForm(formVacio);

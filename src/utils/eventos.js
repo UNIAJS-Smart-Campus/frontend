@@ -1,8 +1,94 @@
+import { obtenerUsuarios } from "./users";
+
 export const CATEGORIAS_EVENTO = ["Académico", "Cultural", "Formación", "Institucional"];
 
 export const ESTADOS_EVENTO = ["Activo", "Finalizado", "Cancelado"];
 
 export const MODALIDADES_EVENTO = ["Presencial", "Virtual", "Híbrido"];
+
+function generarParticipantesIniciales(n) {
+    const total = Math.max(0, Number(n) || 0);
+    if (total === 0) return [];
+
+    const usuarios = obtenerUsuarios().filter((u) => u.estado === "Activo");
+    if (usuarios.length === 0) return [];
+
+    const resultado = [];
+    const fechas = [
+        "2026-08-25", "2026-08-26", "2026-08-27", "2026-08-28",
+        "2026-08-29", "2026-08-30", "2026-08-31", "2026-09-01"
+    ];
+
+    for (let i = 0; i < total; i += 1) {
+        const u = usuarios[i % usuarios.length];
+        resultado.push({
+            usuarioId: u.id,
+            nombre: u.nombre,
+            fecha: fechas[i % fechas.length]
+        });
+    }
+    return resultado;
+}
+
+// Número de inscritos ficticios por usuario (id del evento precargado)
+const INSCRITOS_MOCK_POR_EVENTO = {
+    1: 6,
+    2: 4,
+    3: 5,
+    4: 7,
+    5: 3,
+    6: 7
+};
+
+function migrarEvento(ev) {
+    if (!ev || typeof ev !== "object") return ev;
+
+    const participantes = Array.isArray(ev.participantes) ? ev.participantes : [];
+    // ¿Hay participantes que ya llegaron con usuario real (no null)?
+    const participantesReales = participantes.filter((p) => p.usuarioId != null);
+
+    // Para eventos precargados (id conocido), siempre garantizar que tengamos
+    // los inscritos ficticios iniciales si no hay ningún participante real.
+    if (INSCRITOS_MOCK_POR_EVENTO[ev.id] != null && participantesReales.length === 0) {
+        return {
+            ...ev,
+            participantes: generarParticipantesIniciales(INSCRITOS_MOCK_POR_EVENTO[ev.id]),
+            _migrado: true
+        };
+    }
+
+    // Ya migrado y con participantes → no tocar
+    if (ev._migrado) return ev;
+
+    let next = { ...ev };
+    const legacy = typeof next.inscritos === "number" ? next.inscritos : 0;
+    delete next.inscritos;
+
+    const participantesNull = participantes.filter((p) => p.usuarioId == null);
+
+    // Evento no precargado con número legacy + cero participantes → poblar
+    if (participantes.length === 0 && legacy > 0) {
+        next.participantes = generarParticipantesIniciales(legacy);
+        next._migrado = true;
+        return next;
+    }
+
+    // Convertir cualquier participante null restante a un usuario real
+    if (participantesNull.length > 0) {
+        const reales = obtenerUsuarios().filter((u) => u.estado === "Activo");
+        let idx = 0;
+        const convertidos = participantes.map((p) => {
+            if (p.usuarioId != null) return p;
+            const rep = reales[idx % reales.length];
+            idx += 1;
+            return rep ? { ...p, usuarioId: rep.id, nombre: rep.nombre } : p;
+        });
+        next.participantes = convertidos;
+    }
+
+    next._migrado = true;
+    return next;
+}
 
 const eventos = [
     {
@@ -15,7 +101,8 @@ const eventos = [
         descripcion: "Jornada académica con expertos en IA aplicada, innovación y transformación digital.",
         estado: "Activo",
         cupo: 150,
-        inscritos: 118,
+        participantes: generarParticipantesIniciales(6),
+        _migrado: true,
         ponente: "Dra. Ana María López",
         modalidad: "Presencial"
     },
@@ -29,7 +116,8 @@ const eventos = [
         descripcion: "Sesión práctica para desarrollar modelos de negocio, pitch y trabajo en equipo.",
         estado: "Activo",
         cupo: 45,
-        inscritos: 36,
+        participantes: generarParticipantesIniciales(4),
+        _migrado: true,
         ponente: "Daniel Ruiz",
         modalidad: "Híbrido"
     },
@@ -43,7 +131,8 @@ const eventos = [
         descripcion: "Proyección, conversación y análisis del papel de la cultura en la vida universitaria.",
         estado: "Activo",
         cupo: 90,
-        inscritos: 58,
+        participantes: generarParticipantesIniciales(5),
+        _migrado: true,
         ponente: "Colectivo cultural UAJS",
         modalidad: "Presencial"
     },
@@ -57,7 +146,8 @@ const eventos = [
         descripcion: "Encuentro con empresas, programas de prácticas y oportunidades de empleo para estudiantes.",
         estado: "Activo",
         cupo: 220,
-        inscritos: 187,
+        participantes: generarParticipantesIniciales(7),
+        _migrado: true,
         ponente: "Vicerrectoría de bienestar y empleabilidad",
         modalidad: "Presencial"
     },
@@ -71,7 +161,8 @@ const eventos = [
         descripcion: "Presentación de proyectos de investigación y resultados de trabajo de grado.",
         estado: "Activo",
         cupo: 60,
-        inscritos: 49,
+        participantes: generarParticipantesIniciales(3),
+        _migrado: true,
         ponente: "Dra. Carolina Ruiz",
         modalidad: "Virtual"
     },
@@ -85,7 +176,8 @@ const eventos = [
         descripcion: "Actividades de acompañamiento, sensibilización y bienestar para la comunidad universitaria.",
         estado: "Activo",
         cupo: 180,
-        inscritos: 142,
+        participantes: generarParticipantesIniciales(7),
+        _migrado: true,
         ponente: "Bienestar institucional",
         modalidad: "Híbrido"
     }
@@ -93,10 +185,33 @@ const eventos = [
 
 export const STORAGE_KEY = "uajs_eventos";
 
+export function contarInscritos(evento) {
+    return Array.isArray(evento?.participantes) ? evento.participantes.length : 0;
+}
+
+export function estaInscrito(evento, usuarioId) {
+    if (!evento || !Array.isArray(evento.participantes) || usuarioId == null) {
+        return false;
+    }
+    return evento.participantes.some((p) => p.usuarioId === usuarioId);
+}
+
+export function cuposDisponibles(evento) {
+    const libres = (evento?.cupo || 0) - contarInscritos(evento);
+    return Math.max(0, libres);
+}
+
 export function obtenerEventos() {
     try {
         const guardados = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-        if (guardados.length > 0) return guardados;
+        if (Array.isArray(guardados) && guardados.length > 0) {
+            const migrados = guardados.map(migrarEvento);
+            const necesitaGuardar = migrados.some(
+                (m, i) => m !== guardados[i]
+            );
+            if (necesitaGuardar) guardarEventos(migrados);
+            return migrados;
+        }
         guardarEventos(eventos);
         return eventos;
     } catch {

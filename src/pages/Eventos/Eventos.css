@@ -846,3 +846,39 @@
         grid-template-columns: 1fr;
     }
 }
+
+.eventos__inscribir-button--done,
+.eventos__subscribe-button--done {
+    background-color: var(--color-success-100, #d1fae5);
+    color: var(--color-success-700, #047857);
+    border-color: var(--color-success-200, #a7f3d0);
+}
+
+.eventos__inscribir-button--done:hover,
+.eventos__subscribe-button--done:hover {
+    background-color: var(--color-success-200, #a7f3d0);
+}
+
+.eventos__subscribe-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.eventos__inscrito-badge {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-success-700, #047857);
+    text-align: center;
+    background-color: var(--color-success-50, #ecfdf5);
+    border: 1px solid var(--color-success-200, #a7f3d0);
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+.eventos__inscrito-fecha {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    margin-left: auto;
+}

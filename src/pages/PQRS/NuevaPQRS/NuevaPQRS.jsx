@@ -169,7 +169,10 @@ function NuevaPQRS() {
                 estado: "Registrada",
                 solicitante: user?.nombre || form.nombre.trim() || "Anónimo",
                 usuarioId: user?.id ?? null,
-                prioridad: "Media"
+                prioridad: "Media",
+                adjunto: adjunto
+                    ? { nombre: adjunto.nombre, tipo: adjunto.tipo, dataUrl: adjunto.dataUrl }
+                    : null
             });
 
             setConfirmacion(

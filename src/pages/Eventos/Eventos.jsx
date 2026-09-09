@@ -6,6 +6,9 @@ import useToast from "../../context/ToastContext";
 import {
     CATEGORIAS_EVENTO,
     ESTADOS_EVENTO,
+import {
+    CATEGORIAS_EVENTO,
+    ESTADOS_EVENTO,
     MODALIDADES_EVENTO
 } from "../../utils/eventos";
 import { eventsApi } from "../../utils/api";
@@ -210,33 +213,35 @@ const handleSubmit = async (e) => {
             return;
         }
 
-        try {
-            const payload = {
-                nombre: form.nombre,
-                fecha: form.fecha,
-                hora: form.hora,
-                horaInicio: form.hora,
-                horaFin: form.hora,
-                lugar: form.lugar,
-                ubicacion: form.lugar,
-                categoria: form.categoria,
-                descripcion: form.descripcion,
-                estado: form.estado,
-                cupo: Number(form.cupo) || 0,
-                id_usuario: user?.id ?? null
-            };
+try {
+    const payload = {
+        nombre: form.nombre,
+        fecha: form.fecha,
+        hora: form.hora,
+        horaInicio: form.hora,
+        horaFin: form.hora,
+        lugar: form.lugar,
+        ubicacion: form.lugar,
+        categoria: form.categoria,
+        descripcion: form.descripcion,
+        estado: form.estado,
+        cupo: Number(form.cupo) || 0,
+        id_usuario: user?.id ?? null
+    };
 
-            if (editandoId === null) {
-                await eventsApi.create(payload);
-                mostrarAviso("Evento creado correctamente.");
-            } else {
-                await eventsApi.update(editandoId, payload);
-                mostrarAviso("Evento actualizado correctamente.");
-            }
-            setModalAbierto(false);
-            await cargar();
-        } catch (err) {
-            setError(err.message || "No se pudo guardar el evento.");
+    if (editandoId === null) {
+        await eventsApi.create(payload);
+        mostrarAviso("Evento creado correctamente.");
+    } else {
+        await eventsApi.update(editandoId, payload);
+        mostrarAviso("Evento actualizado correctamente.");
+    }
+
+    setModalAbierto(false);
+    await cargar();
+} catch (err) {
+    setError(err.message || "No se pudo guardar el evento.");
+}
         }
     };
 
@@ -276,7 +281,7 @@ const handleSubmit = async (e) => {
         }
     };
 
-    const inscribirse = async (ev) => {
+const inscribirse = async (ev) => {
         if (!user) {
             toast.warning("Inicia sesión para inscribirte.");
             return;
@@ -289,40 +294,13 @@ const handleSubmit = async (e) => {
             toast.error("El evento ya alcanzó su cupo máximo.");
             return;
         }
-        try {
-            await eventsApi.register(ev.id);
-            await cargar();
-            toast.success(`Te inscribiste a "${ev.nombre}".`);
-        } catch (err) {
-            toast.error(err.message || "No se pudo completar la inscripción.");
-        }
-    };
-
-    const cancelarInscripcion = async (ev) => {
-        if (!user) return;
-        if (!estaInscrito(ev, user.id)) return;
-        try {
-            await eventsApi.update(ev.id, {
-                nombre: ev.nombre,
-                fecha: ev.fecha,
-                hora: ev.hora,
-                horaInicio: ev.hora,
-                horaFin: ev.horaFin,
-                lugar: ev.lugar,
-                ubicacion: ev.ubicacion ?? ev.lugar,
-                categoria: ev.categoria,
-                descripcion: ev.descripcion,
-                estado: ev.estado,
-                cupo: ev.cupo,
-                id_usuario: ev.id_usuario ?? user?.id ?? null,
-                inscritos: Math.max(0, Number(ev.inscritos || 1) - 1)
-            });
-            await cargar();
-            toast.info("Inscripción cancelada.");
-        } catch (err) {
-            toast.error(err.message || "No se pudo cancelar la inscripción.");
-        }
-    };
+try {
+    await eventsApi.register(ev.id);
+    await cargar();
+    toast.success(`Te inscribiste a "${ev.nombre}".`);
+} catch (err) {
+    toast.error(err.message || "No se pudo completar la inscripción.");
+}
 
     const verDetalle = (ev) => setDetalleAbierto(ev);
 

@@ -47,7 +47,6 @@ const ESTADOS_PQRS = [
 
 const PRIORIDADES = ["Alta", "Media", "Baja"];
 
-// Transiciones de estado válidas: desde cada estado, hacia cuáles se puede pasar.
 const TRANSICIONES = {
     Registrada: ["En revisión", "Resuelta", "Cerrada"],
     "En revisión": ["Asignada", "En proceso", "Resuelta", "Cerrada"],
@@ -59,7 +58,6 @@ const TRANSICIONES = {
 
 const ESTADOS_FINALES = ["Resuelta", "Cerrada"];
 
-// Devuelve el estado siguiente del ciclo de vida (avance de un paso).
 function siguienteEstado(estado) {
     const idx = ESTADOS_PQRS.indexOf(estado);
     if (idx === -1 || idx >= ESTADOS_PQRS.length - 1) return estado;
@@ -111,7 +109,9 @@ function PQRS() {
 
     useEffect(() => {
         cargar();
-        usersApi.list().then((u) => setUsuarios(Array.isArray(u) ? u : [])).catch(() => {});
+        usersApi.list()
+            .then((u) => setUsuarios(Array.isArray(u) ? u : []))
+            .catch(() => {});
     }, []);
 
     const usuariosAsignables = useMemo(
@@ -145,7 +145,10 @@ function PQRS() {
         return lista;
     }, [items, filtroTipo, filtroEstado, busqueda]);
 
-    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } = usePagination(filtradas, puedeGestionar ? 6 : 8);
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } = usePagination(
+        filtradas,
+        puedeGestionar ? 6 : 8
+    );
 
     const contarPor = (campo, valor) => {
         if (valor === "Todos") return items.length;
@@ -203,23 +206,6 @@ function PQRS() {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
-    const guardarPqrsConHistorial = (todas, id, cambios) => {
-        const ahora = new Date();
-        const fecha = ahora.toISOString().slice(0, 10);
-        const hora = ahora.toTimeString().slice(0, 5);
-        const historial = [
-            ...(cambios.historial || []),
-            {
-                estado: cambios.estado,
-                fecha: `${fecha} ${hora}`,
-                detalle: cambios.detalle || ""
-            }
-        ];
-        return todas.map((p) =>
-            p.id === id ? { ...p, ...cambios, historial } : p
-        );
-    };
-
     const handleGuardar = (e) => {
         e.preventDefault();
         if (!seleccionada) return;
@@ -231,7 +217,6 @@ function PQRS() {
             form.respuesta !== (seleccionada.respuesta || "")
         ].some(Boolean);
 
-        // El estado avanza automáticamente un paso en el ciclo de vida.
         const estadoObjetivo = siguienteEstado(estadoInicial);
         const cambiarEstado = estadoObjetivo !== estadoInicial;
 
@@ -240,7 +225,6 @@ function PQRS() {
             return;
         }
 
-        // Al avanzar a Resuelta se exige una respuesta.
         if (cambiarEstado && estadoObjetivo === "Resuelta" && !form.respuesta.trim()) {
             mostrarAviso("Debes escribir una respuesta para avanzar a Resuelta.", true);
             return;

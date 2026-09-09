@@ -35,7 +35,47 @@ function AuthProvider({ children }) {
 
     const login = async (identificacion, password) => {
         try {
-            const data = await authApi.login(identificacion, password);
+const login = async (identificacion, password) => {
+    try {
+        const data = await authApi.login(identificacion, password);
+
+        const sesion = {
+            id: data.id_usuario,
+            usuario: data.usuario || data.identificacion,
+            nombre:
+                [data.nombre, data.apellido]
+                    .filter(Boolean)
+                    .join(" ")
+                    .trim() ||
+                data.nombre ||
+                data.usuario ||
+                "Usuario",
+            correo: data.correo || "",
+            rol: data.rol || data.tipo_usuario || "Estudiante",
+            programa: data.programa || "No especificado",
+            token: data.token,
+        };
+
+        setUser(sesion);
+
+        localStorage.setItem(
+            SESSION_KEY,
+            JSON.stringify(sesion)
+        );
+
+        return {
+            ok: true,
+            user: sesion,
+        };
+    } catch (err) {
+        console.error(err);
+
+        return {
+            ok: false,
+            mensaje: err.message || "No se pudo iniciar sesión.",
+        };
+    }
+};
 
             const sesion = {
                 id: data.id_usuario,

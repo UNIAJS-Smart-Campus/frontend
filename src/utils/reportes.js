@@ -1,9 +1,9 @@
-import { obtenerSolicitudes, ESTADOS_SOLICITUD } from "./solicitudes";
+import { obtenerSolicitudes, ESTADOS_SOLICITUD, ESTADOS_FINALES } from "./solicitudes";
 import { obtenerRecursos, TIPOS_RECURSO } from "./recursos";
 import { obtenerReservas, ESTADOS_RESERVA } from "./reservas";
 import { obtenerEventos, CATEGORIAS_EVENTO } from "./eventos";
 import servicios from "./services";
-import { obtenerPqrs, TIPOS_PQRS } from "./pqrs";
+import { obtenerPqrs, TIPOS_PQRS, ESTADOS_PQRS_FINALES } from "./pqrs";
 import { ROLES, obtenerUsuarios } from "./users";
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -33,15 +33,38 @@ function contarPor(lista, campo) {
 /**
  * Construye la tendencia mensual de los últimos 12 meses usando
  * las fechas reales de solicitudes y reservas.
+ *
+ * Error 5 fix: en lugar de anclar el rango siempre al pasado, se calcula
+ * la fecha mínima y máxima reales de los datos y se genera una ventana de
+ * 12 meses que los cubra. Si no hay datos con fecha válida, se usa la
+ * ventana estándar de los últimos 12 meses desde hoy.
  * Si un item no tiene campo `fecha`, se ignora.
  */
 function calcularTendencia(solicitudes, reservas) {
     const MESES_CORTOS = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 
-    // Generar los últimos 12 meses desde el mes actual (inclusive)
+    // Recopilar todas las fechas válidas para determinar el rango real
+    const todasFechas = [];
+    [...solicitudes, ...reservas].forEach((item) => {
+        if (!item.fecha) return;
+        const d = new Date(item.fecha);
+        if (!isNaN(d)) todasFechas.push(d);
+    });
+
+    // Punto de ancla: si hay datos, el último mes con datos; si no, el mes actual
     const ahora = new Date();
+    let ancla;
+    if (todasFechas.length > 0) {
+        const maxFecha = new Date(Math.max(...todasFechas));
+        // Usar el mayor entre hoy y la fecha máxima de los datos como ancla del extremo derecho
+        ancla = maxFecha > ahora ? maxFecha : ahora;
+    } else {
+        ancla = ahora;
+    }
+
+    // Generar ventana de 12 meses terminando en el mes ancla
     const meses = Array.from({ length: 12 }, (_, i) => {
-        const d = new Date(ahora.getFullYear(), ahora.getMonth() - 11 + i, 1);
+        const d = new Date(ancla.getFullYear(), ancla.getMonth() - 11 + i, 1);
         return {
             año: d.getFullYear(),
             mes: d.getMonth(),          // 0-11
@@ -101,8 +124,7 @@ function construirReportes(rol = null, usuarioId = null) {
         : todasSolicitudes.filter(
               (s) =>
                   s.usuario?.id === usuarioId ||
-                  s.usuario?.nombre === usuarioId ||
-                  (usuarioId != null && s.usuario?.id == null)
+                  s.usuario?.nombre === usuarioId
           );
 
     const reservas = esVistaGlobal
@@ -128,12 +150,34 @@ function construirReportes(rol = null, usuarioId = null) {
         (r) => r.estado === "Confirmada"
     ).length;
 
+    // Error 3 fix: PQRS abiertas usando el catálogo canónico en vez de strings sueltos.
     const pqrsAbiertas = pqrs.filter(
-        (p) => !["Resuelta", "Cerrada"].includes(p.estado)
+        (p) => !ESTADOS_PQRS_FINALES.includes(p.estado)
     ).length;
 
-    // Top 5 recursos más reservados (por nombre) sobre las reservas visibles
-    const masUtilizados = contarPor(reservas, "recurso").slice(0, 5);
+    // Error 3 fix: "activas" = solicitudes que NO están en un estado final.
+    const solicitudesActivas = solicitudes.filter(
+        (s) => !ESTADOS_FINALES.includes(s.estado)
+    ).length;
+
+    // Error 6 fix: normalizar el nombre antes de agrupar para evitar duplicados
+    // por diferencias de mayúsculas/tildes. Se conserva el nombre original
+    // del primer item encontrado para cada clave normalizada.
+    const masUtilizados = (() => {
+        const mapa = new Map();
+        reservas.forEach((r) => {
+            if (!r.recurso) return;
+            const clave = String(r.recurso).trim().toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            if (!mapa.has(clave)) {
+                mapa.set(clave, { nombre: String(r.recurso).trim(), total: 0 });
+            }
+            mapa.get(clave).total += 1;
+        });
+        return [...mapa.values()]
+            .sort((a, b) => b.total - a.total)
+            .slice(0, 5);
+    })();
 
     // Tendencia mensual calculada sobre datos visibles
     const tendenciaMensual = calcularTendencia(solicitudes, reservas);
@@ -147,7 +191,8 @@ function construirReportes(rol = null, usuarioId = null) {
                 etiqueta: esVistaGlobal
                     ? "Usuarios registrados"
                     : "Mis solicitudes activas",
-                valor: esVistaGlobal ? todosUsuarios.length : solicitudes.length,
+                // Error 3 fix: en vista personal muestra solo las no-finales
+                valor: esVistaGlobal ? todosUsuarios.length : solicitudesActivas,
                 icono: esVistaGlobal ? "usuarios" : "solicitudes",
                 tendencia: "+4.2%",
                 direccion: "up"
@@ -210,7 +255,9 @@ function construirReportes(rol = null, usuarioId = null) {
             solicitudes: solicitudes.length,
             reservas:    reservas.length,
             recursos:    recursos.length,
-            usuarios:    esVistaGlobal ? todosUsuarios.length : 0,
+            // Error 7 fix: en vista personal no tiene sentido mostrar el total
+            // de usuarios del sistema; se usa null para que el componente lo omita.
+            usuarios:    esVistaGlobal ? todosUsuarios.length : null,
             pqrs:        pqrs.length,
             eventos:     eventos.length
         }

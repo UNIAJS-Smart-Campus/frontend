@@ -4,13 +4,7 @@ import useAuth from "../../context/useAuth";
 import useSearch from "../../hooks/useSearch";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
-import { ESTADOS_FINALES } from "../../utils/solicitudes";
-import {
-    reservationsApi,
-    notificationsApi,
-    eventsApi,
-    requestsApi
-} from "../../utils/api";
+
 import services from "../../utils/services";
 import "./Dashboard.css";
 

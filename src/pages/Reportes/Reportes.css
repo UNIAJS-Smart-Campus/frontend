@@ -124,7 +124,8 @@
 /* ── STRIP DE ESTADÍSTICAS ── */
 .reportes__stats-strip {
     display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    /* auto-fit evita columnas vacías cuando se filtra algún item (ej: Usuarios en vista personal) */
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
     border: 1px solid var(--color-border);
     border-radius: 16px;
     overflow: hidden;
@@ -204,15 +205,28 @@
 .reportes__card-icon--green  { background: var(--color-success-100); color: var(--color-success);     }
 .reportes__card-icon--orange { background: var(--color-warning-100); color: var(--color-warning);     }
 
+/* ── KPIs — sobreescribir cursor heredado de summary__card ── */
+.reportes__summary .summary__card {
+    cursor: default;
+}
+.reportes__summary .summary__card:hover {
+    transform: none;
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08), 0 8px 16px rgba(15, 23, 42, 0.05);
+    border-color: rgba(148, 163, 184, 0.22);
+    filter: none;
+}
+
 /* ── BODY DEL TREND ── */
 .reportes__body {
     padding: var(--space-5) var(--space-6) var(--space-6);
+    /* Margen izquierdo extra para alinear el eje Y del gráfico con el borde de la card */
+    overflow: hidden;
 }
 
-/* ── DONUTS (3 columnas) ── */
+/* ── DONUTS (hasta 3 columnas, se adapta al número de cards) ── */
 .reportes__donuts {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 16px;
 }
 
@@ -313,7 +327,9 @@
     height: 100%;
     border-radius: 999px;
     transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    min-width: 4px;
+    /* No aplicar min-width aquí: se controla desde el JSX para no mostrar
+       stub cuando el valor es 0 */
+    min-width: 0;
 }
 
 .reportes__row-value {
@@ -387,10 +403,6 @@
 
 /* ── RESPONSIVE ── */
 @media (max-width: 1200px) {
-    .reportes__donuts {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .reportes__stats-strip {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
