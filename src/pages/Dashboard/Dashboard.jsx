@@ -6,6 +6,8 @@ import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
 
 import services from "../../utils/services";
+import { requestsApi, reservationsApi, notificationsApi, eventsApi } from "../../utils/api";
+import { ESTADOS_FINALES } from "../../utils/solicitudes";
 import "./Dashboard.css";
 
 function capitalizar(texto) {

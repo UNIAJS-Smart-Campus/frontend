@@ -35,70 +35,52 @@ function AuthProvider({ children }) {
 
     const login = async (identificacion, password) => {
         try {
-const login = async (identificacion, password) => {
-    try {
-        const data = await authApi.login(identificacion, password);
+            const data = await authApi.login(identificacion, password);
 
-        const sesion = {
-            id: data.id_usuario,
-            usuario: data.usuario || data.identificacion,
-            nombre:
-                [data.nombre, data.apellido]
-                    .filter(Boolean)
-                    .join(" ")
-                    .trim() ||
-                data.nombre ||
-                data.usuario ||
-                "Usuario",
-            correo: data.correo || "",
-            rol: data.rol || data.tipo_usuario || "Estudiante",
-            programa: data.programa || "No especificado",
-            token: data.token,
-        };
-
-        setUser(sesion);
-
-        localStorage.setItem(
-            SESSION_KEY,
-            JSON.stringify(sesion)
-        );
-
-        return {
-            ok: true,
-            user: sesion,
-        };
-    } catch (err) {
-        console.error(err);
-
-        return {
-            ok: false,
-            mensaje: err.message || "No se pudo iniciar sesión.",
-        };
-    }
-};
+            // Mapear ID de rol a nombre
+            const rolMap = {
+                1: 'Administrador',
+                2: 'Docente',
+                3: 'Estudiante',
+                4: 'Administrativo',
+                5: 'Funcionario',
+                6: 'Egresado',
+                7: 'Proveedor',
+                8: 'Visitante'
+            };
+            const rolNombre = rolMap[data.rol] || data.tipo_usuario || 'Estudiante';
 
             const sesion = {
                 id: data.id_usuario,
                 usuario: data.usuario || data.identificacion,
-                nombre: [data.nombre, data.apellido].filter(Boolean).join(" ").trim()
-                    || data.nombre || data.usuario || "Usuario",
+                nombre:
+                    [data.nombre, data.apellido]
+                        .filter(Boolean)
+                        .join(" ")
+                        .trim() ||
+                    data.nombre ||
+                    data.usuario ||
+                    "Usuario",
                 correo: data.correo || "",
-                rol: data.rol || data.tipo_usuario || "Estudiante",
+                rol: rolNombre,
                 programa: data.programa || "No especificado",
-                token: data.token
+                token: data.token,
             };
 
             setUser(sesion);
 
-            try {
-                localStorage.setItem(SESSION_KEY, JSON.stringify(sesion));
-            } catch (storageError) {
-                console.warn("No se pudo guardar en localStorage:", storageError);
-            }
+            localStorage.setItem(
+                SESSION_KEY,
+                JSON.stringify(sesion)
+            );
 
-            return { ok: true, user: sesion };
+            return {
+                ok: true,
+                user: sesion,
+            };
         } catch (err) {
-            console.error("Error en login:", err);
+            console.error(err);
+
             return {
                 ok: false,
                 mensaje: err.message || "No se pudo iniciar sesión.",

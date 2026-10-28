@@ -6,9 +6,6 @@ import useToast from "../../context/ToastContext";
 import {
     CATEGORIAS_EVENTO,
     ESTADOS_EVENTO,
-import {
-    CATEGORIAS_EVENTO,
-    ESTADOS_EVENTO,
     MODALIDADES_EVENTO
 } from "../../utils/eventos";
 import { eventsApi } from "../../utils/api";
