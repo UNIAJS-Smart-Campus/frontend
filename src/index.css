@@ -1,0 +1,29 @@
+/* ============================================================
+   UAJS SMART CAMPUS - Entry CSS
+   Nota: tokens de diseño y estilos base están en styles/main.css
+   ============================================================ */
+
+/* App Container */
+#root {
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-muted);
+}

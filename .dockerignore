@@ -1,0 +1,55 @@
+# Dependencias
+node_modules
+**/node_modules
+
+# Build
+dist
+dist-ssr
+build
+.vite
+coverage
+
+# Git
+.git
+.gitignore
+.dockerignore
+.github
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+.env.local
+.env.*.local
+*.local
+
+# Logs
+logs
+*.log
+
+# Editor / IDE
+.vscode
+.idea
+*.suo
+*.sln
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Archivos temporales
+*.tmp
+*.temp
+*.bak
+*~
+
+# Archivos comprimidos / grandes
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+
+# Documentacion
+README.md

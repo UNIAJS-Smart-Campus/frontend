@@ -1,0 +1,60 @@
+.notfound {
+    min-height: 100vh;
+
+    background-color: var(--color-bg);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    padding: 40px 20px;
+
+    box-sizing: border-box;
+}
+
+.notfound__code {
+    margin: 0;
+
+    font-size: 96px;
+    font-weight: 800;
+    line-height: 1;
+
+    color: var(--color-accent);
+}
+
+.notfound__title {
+    margin: 12px 0 8px;
+
+    font-size: 26px;
+}
+
+.notfound__text {
+    margin: 0 0 28px;
+
+    max-width: 420px;
+
+    color: var(--color-text-muted);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.notfound__actions {
+    display: flex;
+
+    gap: 12px;
+}
+
+.notfound__link {
+    text-decoration: none;
+}
+
+@media (max-width: 768px) {
+    .notfound__actions {
+        flex-direction: column;
+        width: 100%;
+        max-width: 280px;
+    }
+}

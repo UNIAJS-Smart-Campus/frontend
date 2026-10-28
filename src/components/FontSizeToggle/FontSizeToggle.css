@@ -1,0 +1,30 @@
+.font-size-toggle {
+    display: inline-flex;
+    gap: 2px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-md, 8px);
+    padding: 2px;
+}
+
+.font-size-toggle__btn {
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 6px;
+    min-width: 32px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.font-size-toggle__btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.font-size-toggle__btn--active {
+    background: var(--color-accent, #4f8cff);
+    color: #fff;
+}

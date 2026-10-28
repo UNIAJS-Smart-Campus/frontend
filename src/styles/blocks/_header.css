@@ -1,0 +1,59 @@
+/* ==========================================
+   Block: Header
+   BEM: .header, .header--modifier, .header__element
+   ========================================== */
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.header__title {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: clamp(22px, 3vw, 28px);
+    font-weight: 800;
+    color: var(--color-text);
+    line-height: 1.2;
+}
+
+.header__subtitle {
+    margin: 0;
+    font-size: 15px;
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
+.header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.header--centered {
+    text-align: center;
+    align-items: center;
+}
+
+.header--centered .header__actions {
+    justify-content: center;
+}
+
+.header--sm .header__title {
+    font-size: clamp(18px, 2.5vw, 22px);
+}
+
+.header--sm .header__subtitle {
+    font-size: 14px;
+}
+
+.header--lg .header__title {
+    font-size: clamp(26px, 4vw, 34px);
+}
+
+.header--lg .header__subtitle {
+    font-size: 16px;
+}
