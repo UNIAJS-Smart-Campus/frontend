@@ -5,9 +5,7 @@ import {
   notificationsApi,
   feedbackApi,
   resourcesApi,
-  reservationsApi,
-  servicesApi,
-  reportsApi
+  reservationsApi
 } from "../utils/api";
 
 export function useRequests() {
@@ -52,12 +50,4 @@ export function useResourceActions() {
 
 export function useReservations() {
   return useFetch(reservationsApi.list);
-}
-
-export function useServices() {
-  return useFetch(servicesApi.list);
-}
-
-export function useReports() {
-  return useFetch(reportsApi.get);
 }

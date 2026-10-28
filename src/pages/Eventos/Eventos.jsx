@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
-import useToast from "../../context/ToastContext";
+import useToast from "../../context/useToast";
 import {
     CATEGORIAS_EVENTO,
     ESTADOS_EVENTO,
@@ -14,11 +14,13 @@ import "./Eventos.css";
 const CATEGORIA_CLASE = {
     Académico: "blue",
     Cultural: "orange",
+    Deportivo: "teal",
     Formación: "green",
     Institucional: "purple"
 };
 
 const ESTADO_CLASE = {
+    Programado: "programmed",
     Activo: "active",
     Finalizado: "done",
     Cancelado: "canceled"
@@ -34,6 +36,7 @@ const formVacio = {
     nombre: "",
     fecha: "",
     hora: "",
+    horaFin: "",
     lugar: "",
     categoria: "Académico",
     descripcion: "",
@@ -66,6 +69,11 @@ function formatearHora(hora) {
     return `${h}:${min} ${sufijo}`;
 }
 
+function formatearRangoHora(inicio, fin) {
+    if (!fin) return formatearHora(inicio);
+    return `${formatearHora(inicio)} - ${formatearHora(fin)}`;
+}
+
 function Eventos() {
     const [items, setItems] = useState([]);
     const [cargando, setCargando] = useState(true);
@@ -73,8 +81,7 @@ function Eventos() {
     const toast = useToast();
     const esAdmin = puede("publicar_eventos");
 
-    const cargar = async () => {
-        setCargando(true);
+    const cargar = useCallback(async () => {
         try {
             const data = await eventsApi.list();
             setItems(Array.isArray(data) ? data : []);
@@ -84,11 +91,18 @@ function Eventos() {
         } finally {
             setCargando(false);
         }
-    };
+    }, [toast]);
 
     useEffect(() => {
-        cargar();
-    }, []);
+        // Se difiere al microtask para no ejecutar setState durante el efecto.
+        let activo = true;
+        Promise.resolve().then(() => {
+            if (activo) cargar();
+        });
+        return () => {
+            activo = false;
+        };
+    }, [cargar]);
 
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");
@@ -125,6 +139,8 @@ function Eventos() {
           )
         : porEstado;
 
+    const contarInscritos = (evento) => Number(evento?.inscritos || 0);
+
     const encontrados = [...porBusqueda].sort((a, b) => {
         if (orden === "fecha") {
             return (a.fecha || "").localeCompare(b.fecha || "");
@@ -134,8 +150,6 @@ function Eventos() {
         }
         return (a.nombre || "").localeCompare(b.nombre || "");
     });
-
-    const contarInscritos = (evento) => Number(evento?.inscritos || 0);
 
     const estaInscrito = (evento, usuarioId) => {
         if (!evento || usuarioId == null) return false;
@@ -174,6 +188,7 @@ function Eventos() {
             nombre: ev.nombre,
             fecha: ev.fecha,
             hora: ev.hora,
+            horaFin: ev.horaFin || "",
             lugar: ev.lugar,
             categoria: ev.categoria,
             descripcion: ev.descripcion,
@@ -196,7 +211,7 @@ function Eventos() {
         setForm({ ...form, [e.target.name]: value });
     };
 
-const handleSubmit = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         const nombreExiste = items.some(
@@ -210,35 +225,44 @@ const handleSubmit = async (e) => {
             return;
         }
 
-try {
-    const payload = {
-        nombre: form.nombre,
-        fecha: form.fecha,
-        hora: form.hora,
-        horaInicio: form.hora,
-        horaFin: form.hora,
-        lugar: form.lugar,
-        ubicacion: form.lugar,
-        categoria: form.categoria,
-        descripcion: form.descripcion,
-        estado: form.estado,
-        cupo: Number(form.cupo) || 0,
-        id_usuario: user?.id ?? null
-    };
+        if (!form.hora || !form.horaFin) {
+            setError("Indica la hora de inicio y la hora de finalización.");
+            return;
+        }
 
-    if (editandoId === null) {
-        await eventsApi.create(payload);
-        mostrarAviso("Evento creado correctamente.");
-    } else {
-        await eventsApi.update(editandoId, payload);
-        mostrarAviso("Evento actualizado correctamente.");
-    }
+        if (form.horaFin <= form.hora) {
+            setError("La hora de finalización debe ser posterior a la hora de inicio.");
+            return;
+        }
 
-    setModalAbierto(false);
-    await cargar();
-} catch (err) {
-    setError(err.message || "No se pudo guardar el evento.");
-}
+        try {
+            const payload = {
+                nombre: form.nombre,
+                fecha: form.fecha,
+                hora: form.hora,
+                horaInicio: form.hora,
+                horaFin: form.horaFin,
+                lugar: form.lugar,
+                ubicacion: form.lugar,
+                categoria: form.categoria,
+                descripcion: form.descripcion,
+                estado: form.estado,
+                cupo: Number(form.cupo) || 0,
+                id_usuario: user?.id ?? null
+            };
+
+            if (editandoId === null) {
+                await eventsApi.create(payload);
+                mostrarAviso("Evento creado correctamente.");
+            } else {
+                await eventsApi.update(editandoId, payload);
+                mostrarAviso("Evento actualizado correctamente.");
+            }
+
+            setModalAbierto(false);
+            await cargar();
+        } catch (err) {
+            setError(err.message || "No se pudo guardar el evento.");
         }
     };
 
@@ -254,31 +278,7 @@ try {
         }
     };
 
-    const cambiarEstado = async (ev, nuevoEstado) => {
-        try {
-            await eventsApi.update(ev.id, {
-                nombre: ev.nombre,
-                fecha: ev.fecha,
-                hora: ev.hora,
-                horaInicio: ev.hora,
-                horaFin: ev.horaFin,
-                lugar: ev.lugar,
-                ubicacion: ev.ubicacion ?? ev.lugar,
-                categoria: ev.categoria,
-                descripcion: ev.descripcion,
-                estado: nuevoEstado,
-                cupo: ev.cupo,
-                id_usuario: ev.id_usuario ?? user?.id ?? null
-            });
-            setDetalleAbierto({ ...ev, estado: nuevoEstado });
-            await cargar();
-            mostrarAviso(`Estado del evento actualizado a "${nuevoEstado}".`);
-        } catch (err) {
-            mostrarAviso(err.message || "No se pudo actualizar el estado.");
-        }
-    };
-
-const inscribirse = async (ev) => {
+    const inscribirse = async (ev) => {
         if (!user) {
             toast.warning("Inicia sesión para inscribirte.");
             return;
@@ -291,13 +291,27 @@ const inscribirse = async (ev) => {
             toast.error("El evento ya alcanzó su cupo máximo.");
             return;
         }
-try {
-    await eventsApi.register(ev.id);
-    await cargar();
-    toast.success(`Te inscribiste a "${ev.nombre}".`);
-} catch (err) {
-    toast.error(err.message || "No se pudo completar la inscripción.");
-}
+
+        try {
+            await eventsApi.register(ev.id);
+            await cargar();
+            toast.success(`Te inscribiste a "${ev.nombre}".`);
+        } catch (err) {
+            toast.error(err.message || "No se pudo completar la inscripción.");
+        }
+    };
+
+    const cancelarInscripcion = async (ev) => {
+        if (!user) return;
+
+        try {
+            await eventsApi.unregister(ev.id);
+            await cargar();
+            toast.success(`Cancelaste tu inscripción a "${ev.nombre}".`);
+        } catch (err) {
+            toast.error(err.message || "No se pudo cancelar la inscripción.");
+        }
+    };
 
     const verDetalle = (ev) => setDetalleAbierto(ev);
 
@@ -460,7 +474,7 @@ try {
                                 </span>
                                 <span className="eventos__meta-line">
                                     <Icon name="info" size={12} />
-                                    {formatearHora(ev.hora)}
+                                    {formatearRangoHora(ev.hora, ev.horaFin)}
                                 </span>
                                 <span className="eventos__meta-line">
                                     <Icon name="recursos" size={12} />
@@ -504,11 +518,11 @@ try {
                                                     : inscribirse(ev)
                                             }
                                             disabled={
-                                                ev.estado !== "Activo" ||
+                                                !["Activo", "Programado"].includes(ev.estado) ||
                                                 cuposDisponibles(ev) === 0
                                             }
                                         >
-                                            {ev.estado !== "Activo"
+                                            {!["Activo", "Programado"].includes(ev.estado)
                                                 ? "No disponible"
                                                 : cuposDisponibles(ev) === 0 && !estaInscrito(ev, user?.id)
                                                     ? "Cupo agotado"
@@ -582,13 +596,27 @@ try {
                                 </div>
 
                                 <div className="eventos__form-group">
-                                    <label htmlFor="ev-hora">Hora</label>
+                                    <label htmlFor="ev-hora">Hora de inicio</label>
                                     <input
                                         id="ev-hora"
                                         type="time"
                                         name="hora"
                                         value={form.hora}
                                         onChange={handleChange}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="eventos__form-grid">
+                                <div className="eventos__form-group">
+                                    <label htmlFor="ev-hora-fin">Hora de finalización</label>
+                                    <input
+                                        id="ev-hora-fin"
+                                        type="time"
+                                        name="horaFin"
+                                        value={form.horaFin}
+                                        onChange={handleChange}
+                                        min={form.hora || undefined}
                                     />
                                 </div>
                             </div>
@@ -710,6 +738,8 @@ try {
                                         !form.nombre ||
                                         !form.fecha ||
                                         !form.hora ||
+                                        !form.horaFin ||
+                                        form.horaFin <= form.hora ||
                                         !form.lugar ||
                                         !form.cupo
                                     }
@@ -769,7 +799,7 @@ try {
                             </div>
                             <div className="eventos__detail-item">
                                 <Icon name="info" size={14} />
-                                <span>{formatearHora(detalle.hora)}</span>
+                                <span>{formatearRangoHora(detalle.hora, detalle.horaFin)}</span>
                             </div>
                             <div className="eventos__detail-item">
                                 <Icon name="recursos" size={14} />
@@ -838,11 +868,11 @@ try {
                                             : inscribirse(detalle)
                                     }
                                     disabled={
-                                        detalle.estado !== "Activo" ||
+                                        !["Activo", "Programado"].includes(detalle.estado) ||
                                         (cuposDisponibles(detalle) === 0 && !estaInscrito(detalle, user?.id))
                                     }
                                 >
-                                    {detalle.estado !== "Activo"
+                                    {!["Activo", "Programado"].includes(detalle.estado)
                                         ? `No disponible (${detalle.estado})`
                                         : estaInscrito(detalle, user?.id)
                                             ? "Inscrito ✓ · Cancelar inscripción"

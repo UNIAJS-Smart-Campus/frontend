@@ -23,7 +23,6 @@ import "./TrendChart.css";
  */
 
 // Estos valores DEBEN coincidir con el CSS:
-const CHART_H      = 200;  // .trend__chart height
 const BAR_PAD_TOP  = 12;   // .trend__chart padding-top
 const LABEL_H      = 22;   // altura aproximada del .trend__label + gap
 const AXIS_W       = 36;   // .trend__chart padding-left (eje Y)
@@ -54,7 +53,6 @@ function TrendChart({ data = [], maxPoints = 12 }) {
             .join(" ");
 
     // Altura útil de la barra en px (para pasar como CSS var al SVG si se necesita)
-    const barAreaH = CHART_H - BAR_PAD_TOP - LABEL_H;
 
     return (
         <div className="trend">

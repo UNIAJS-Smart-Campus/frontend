@@ -17,18 +17,6 @@ function contar(lista, campo, categorias) {
 }
 
 /** Agrupa `lista` por `campo` y devuelve [{nombre, total}] ordenado desc */
-function contarPor(lista, campo) {
-    const mapa = new Map();
-    lista.forEach((item) => {
-        const valor = item[campo];
-        if (valor !== undefined) {
-            mapa.set(valor, (mapa.get(valor) || 0) + 1);
-        }
-    });
-    return [...mapa.entries()]
-        .map(([nombre, total]) => ({ nombre, total }))
-        .sort((a, b) => b.total - a.total);
-}
 
 /**
  * Construye la tendencia mensual de los últimos 12 meses usando

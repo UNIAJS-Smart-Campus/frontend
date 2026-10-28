@@ -1,6 +1,9 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useAuth from "../../context/useAuth";
 import Icon from "../../components/Icon/Icon";
+import Modal from "../../components/Modal/Modal";
+import Input from "../../components/Input/Input";
+import { configurationApi } from "../../utils/api";
 import {
     getAvatarStyle,
     getUserInitials,
@@ -17,6 +20,84 @@ function Perfil() {
     // Foto vigente: primero busca por userId, si no existe usa la de la sesión
     const [foto, setFoto] = useState(() => getPhotoByUserId(user?.id) || "");
     const [errorFoto, setErrorFoto] = useState("");
+
+    // Datos editables que no viven en `usuarios` (documento, teléfono, sede).
+    // Se guardan en `configuracion` bajo la sección "perfil".
+    const [perfilId, setPerfilId] = useState(null);
+    const [datos, setDatos] = useState({
+        documento: "",
+        telefono: "",
+        ubicacion: ""
+    });
+    const [modalAbierto, setModalAbierto] = useState(false);
+    const [form, setForm] = useState(datos);
+    const [guardando, setGuardando] = useState(false);
+    const [errorPerfil, setErrorPerfil] = useState("");
+
+    useEffect(() => {
+        if (!user?.id) return undefined;
+        let activo = true;
+        configurationApi
+            .byUserSection(user.id, "perfil")
+            .then((cfg) => {
+                if (!activo || !cfg?.valor || typeof cfg.valor !== "object") return;
+                const valor = cfg.valor;
+                setPerfilId(cfg.id);
+                setDatos({
+                    documento: valor.documento || "",
+                    telefono: valor.telefono || "",
+                    ubicacion: valor.ubicacion || ""
+                });
+            })
+            .catch(() => {
+                // 404 esperado mientras el usuario no haya guardado sus datos.
+            });
+        return () => {
+            activo = false;
+        };
+    }, [user?.id]);
+
+    const abrirEdicion = () => {
+        setForm(datos);
+        setErrorPerfil("");
+        setModalAbierto(true);
+    };
+
+    const handlePerfilChange = (e) => {
+        setForm({ ...form, [e.target.name]: e.target.value });
+    };
+
+    const guardarPerfil = async (e) => {
+        e.preventDefault();
+        if (!user?.id) return;
+
+        const valor = {
+            documento: form.documento.trim(),
+            telefono: form.telefono.trim(),
+            ubicacion: form.ubicacion.trim()
+        };
+
+        setGuardando(true);
+        setErrorPerfil("");
+        try {
+            if (perfilId) {
+                await configurationApi.update(perfilId, { valor });
+            } else {
+                const creada = await configurationApi.create({
+                    id_usuario: user.id,
+                    seccion: "perfil",
+                    valor
+                });
+                setPerfilId(creada.id);
+            }
+            setDatos(valor);
+            setModalAbierto(false);
+        } catch (err) {
+            setErrorPerfil(err.message || "No se pudieron guardar tus datos.");
+        } finally {
+            setGuardando(false);
+        }
+    };
 
     const iniciales = getUserInitials(user?.nombre, "U");
     const rol = user?.rol || "Usuario";
@@ -64,7 +145,7 @@ function Perfil() {
         { label: "Nombre completo", value: user?.nombre || "—" },
         { label: "Tipo de usuario", value: rol },
         { label: "Usuario", value: usuario },
-        { label: "Documento", value: "1.102.XXX.XXX" }
+        { label: "Documento", value: datos.documento || "No registrado" }
     ];
 
     const infoAcademica = [
@@ -88,7 +169,10 @@ function Perfil() {
                     <p>Consulta y administra tu información personal y académica.</p>
                 </div>
 
-                <button className="button button--outline button--md">
+                <button
+                    className="button button--outline button--md"
+                    onClick={abrirEdicion}
+                >
                     <Icon name="configuracion" size={14} />
                     Editar información
                 </button>
@@ -250,7 +334,7 @@ function Perfil() {
                         </div>
                         <div className="perfil__contact-info">
                             <span className="perfil__contact-label">Teléfono</span>
-                            <span className="perfil__contact-value">+57 300 XXX XXXX</span>
+                            <span className="perfil__contact-value">{datos.telefono || "No registrado"}</span>
                         </div>
                     </div>
 
@@ -260,7 +344,7 @@ function Perfil() {
                         </div>
                         <div className="perfil__contact-info">
                             <span className="perfil__contact-label">Ubicación</span>
-                            <span className="perfil__contact-value">Sincelejo, Sucre</span>
+                            <span className="perfil__contact-value">{datos.ubicacion || "No registrada"}</span>
                         </div>
                     </div>
                 </div>
@@ -331,6 +415,63 @@ function Perfil() {
                     </div>
                 </div>
             </div>
+
+            <Modal
+                isOpen={modalAbierto}
+                title="Editar información personal"
+                subtitle="Estos datos complementan tu cuenta y se guardan en el campus."
+                onClose={() => setModalAbierto(false)}
+            >
+                <form onSubmit={guardarPerfil}>
+                    <Input
+                        label="Documento de identidad"
+                        name="documento"
+                        value={form.documento}
+                        onChange={handlePerfilChange}
+                        placeholder="Ej. 1.102.345.678"
+                        id="perfil-documento"
+                    />
+                    <Input
+                        label="Teléfono"
+                        name="telefono"
+                        value={form.telefono}
+                        onChange={handlePerfilChange}
+                        placeholder="Ej. +57 300 123 4567"
+                        id="perfil-telefono"
+                    />
+                    <Input
+                        label="Ubicación"
+                        name="ubicacion"
+                        value={form.ubicacion}
+                        onChange={handlePerfilChange}
+                        placeholder="Ej. Sincelejo, Sucre"
+                        id="perfil-ubicacion"
+                    />
+
+                    {errorPerfil && (
+                        <p className="perfil__security-description" role="alert">
+                            {errorPerfil}
+                        </p>
+                    )}
+
+                    <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16 }}>
+                        <button
+                            type="button"
+                            className="button button--outline button--md"
+                            onClick={() => setModalAbierto(false)}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            className="button button--accent button--md"
+                            disabled={guardando}
+                        >
+                            {guardando ? "Guardando…" : "Guardar cambios"}
+                        </button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 }

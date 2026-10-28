@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Icon from "../../components/Icon/Icon";
 import Modal from "../../components/Modal/Modal";
 import Input from "../../components/Input/Input";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
-import useToast from "../../context/ToastContext";
+import useToast from "../../context/useToast";
 import { TIPOS_RECURSO, CATEGORIA_POR_TIPO, CATEGORIAS_RECURSO } from "../../utils/recursos";
 import { resourcesApi } from "../../utils/api";
 import "./Recursos.css";
@@ -54,26 +54,29 @@ function obtenerEdificio(ubicacion) {
 function Recursos() {
     const toast = useToast();
     const [items, setItems] = useState([]);
-    const [cargando, setCargando] = useState(true);
     const { puede } = useAuth();
     const puedeAdmin = puede("administrar_recursos");
 
-    const cargar = async () => {
-        setCargando(true);
+    const cargar = useCallback(async () => {
         try {
             const data = await resourcesApi.list();
             setItems(Array.isArray(data) ? data : []);
         } catch (err) {
             toast.error(err.message || "No se pudieron cargar los recursos.");
             setItems([]);
-        } finally {
-            setCargando(false);
         }
-    };
+    }, [toast]);
 
     useEffect(() => {
-        cargar();
-    }, []);
+        // Se difiere al microtask para no ejecutar setState durante el efecto.
+        let activo = true;
+        Promise.resolve().then(() => {
+            if (activo) cargar();
+        });
+        return () => {
+            activo = false;
+        };
+    }, [cargar]);
 
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");

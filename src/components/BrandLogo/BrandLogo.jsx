@@ -1,4 +1,4 @@
-import { useTheme } from "../../context/ThemeContext";
+import useTheme from "../../context/useTheme";
 
 const LOGO_DARK = "/Logo_UAJS.png";
 const LOGO_LIGHT = "/Logo_Light_UAJS.png";

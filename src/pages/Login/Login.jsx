@@ -6,7 +6,7 @@ import "./Login.css";
 
 const CREDENCIALES = [
     { rol: "Administrador", user: "1023456789", pass: "admin123", color: "#d32f2f" },
-    { rol: "Funcionario", user: "1023456788", pass: "func123", color: "#1976d2" },
+    { rol: "Administrativo", user: "1023456788", pass: "func123", color: "#1976d2" },
     { rol: "Docente", user: "1023456787", pass: "prof123", color: "#388e3c" },
     { rol: "Estudiante", user: "1023456786", pass: "est123", color: "#f57c00" },
 ];

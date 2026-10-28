@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Icon from "../../components/Icon/Icon";
 import Modal from "../../components/Modal/Modal";
 import Input from "../../components/Input/Input";
@@ -7,7 +7,7 @@ import Pagination from "../../components/Pagination/Pagination";
 import { esEscenario } from "../../utils/recursos";
 import { reservationsApi, resourcesApi } from "../../utils/api";
 import useAuth from "../../context/useAuth";
-import useToast from "../../context/ToastContext";
+import useToast from "../../context/useToast";
 import usePagination from "../../hooks/usePagination";
 import "./Reservas.css";
 
@@ -20,17 +20,32 @@ const TIPO_VARIANT = {
 
 const DIAS_SEMANA = ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"];
 
+// Franjas usadas por el filtro "Hora". Cada opción cubre una hora completa y
+// se compara contra las reservas reales de todos los usuarios.
+const HORAS_FILTRO = [
+    { value: "Cualquier hora", etiqueta: "Cualquier hora", inicio: "", fin: "" },
+    { value: "08:00", etiqueta: "8:00 a. m.", inicio: "08:00", fin: "09:00" },
+    { value: "10:00", etiqueta: "10:00 a. m.", inicio: "10:00", fin: "11:00" },
+    { value: "12:00", etiqueta: "12:00 p. m.", inicio: "12:00", fin: "13:00" },
+    { value: "14:00", etiqueta: "2:00 p. m.", inicio: "14:00", fin: "15:00" },
+    { value: "16:00", etiqueta: "4:00 p. m.", inicio: "16:00", fin: "17:00" }
+];
+
 const ESTADO_CLASE = {
     Confirmada: "confirmed",
     Pendiente: "pending",
     Cancelada: "finished"
 };
 
+// La columna `estado` de la BD usa los mismos valores que `disponibilidad`
+// (`Disponible`, `Ocupada`, `Mantenimiento`), no el `Activo` de los datos demo.
+// Por eso la disponibilidad es el criterio para habilitar una reserva.
 function esReservable(recurso) {
-    return (
-        recurso.estado === "Activo" &&
-        recurso.disponibilidad === "Disponible"
-    );
+    if (!recurso) return false;
+    const estado = String(recurso.estado || "").trim().toLowerCase();
+    const disponibilidad = String(recurso.disponibilidad || "").trim().toLowerCase();
+    if (estado === "inactivo" || estado.includes("mantenimiento")) return false;
+    return disponibilidad === "disponible";
 }
 
 function formatearHora(hora24) {
@@ -64,9 +79,12 @@ function Reservas() {
     const [errores, setErrores] = useState({});
     const [confirmacion, setConfirmacion] = useState("");
     const [busquedaAlerta, setBusquedaAlerta] = useState(false);
+    // Reservas de cualquier usuario para la fecha del filtro. Se guarda junto
+    // con la fecha consultada para no aplicar datos de un día anterior.
+    const [ocupados, setOcupados] = useState({ fecha: "", items: [] });
+    const [refrescoOcupados, setRefrescoOcupados] = useState(0);
 
-    const cargarRecursos = async () => {
-        setCargandoRecursos(true);
+    const cargarRecursos = useCallback(async () => {
         try {
             const data = await resourcesApi.list();
             setRecursos(Array.isArray(data) ? data : []);
@@ -76,10 +94,9 @@ function Reservas() {
         } finally {
             setCargandoRecursos(false);
         }
-    };
+    }, [toast]);
 
-    const cargarReservas = async () => {
-        setCargandoReservas(true);
+    const cargarReservas = useCallback(async () => {
         try {
             const data = await reservationsApi.list();
             setMisReservas(Array.isArray(data) ? data : []);
@@ -89,19 +106,78 @@ function Reservas() {
         } finally {
             setCargandoReservas(false);
         }
-    };
+    }, [toast]);
 
     useEffect(() => {
-        cargarRecursos();
-        cargarReservas();
-    }, []);
+        // Se difiere al microtask para no ejecutar setState durante el efecto.
+        let activo = true;
+        Promise.resolve().then(() => {
+            if (!activo) return;
+            cargarRecursos();
+            cargarReservas();
+        });
+        return () => {
+            activo = false;
+        };
+    }, [cargarRecursos, cargarReservas]);
+
+    useEffect(() => {
+        if (!fecha) return undefined;
+        let activo = true;
+        reservationsApi
+            .ocupados({ fecha })
+            .then((items) => {
+                if (activo) setOcupados({ fecha, items });
+            })
+            .catch(() => {
+                if (activo) setOcupados({ fecha, items: [] });
+            });
+        return () => {
+            activo = false;
+        };
+    }, [fecha, refrescoOcupados]);
 
     const hoy = new Date();
     const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
 
+    // Todos los recursos reservables, sin los filtros de la vista. El modal los
+    // usa para poder reservar aunque la búsqueda o el filtro no muestren nada.
+    const reservables = useMemo(() => recursos.filter(esReservable), [recursos]);
+
+    // Reservas conocidas para una fecha: las ocupaciones globales del backend
+    // más las propias (por si se acaba de crear una y aún no se recargó).
+    const reservasDelDia = useMemo(() => {
+        const propias = misReservas
+            .filter((r) => r.fecha === fecha && r.estado !== "Cancelada")
+            .map((r) => ({
+                recursoId: r.recursoId,
+                horaInicio: r.horaInicio,
+                horaFin: r.horaFin
+            }));
+        const otras = ocupados.fecha === fecha ? ocupados.items : [];
+        return [...otras, ...propias];
+    }, [misReservas, ocupados, fecha]);
+
+    const franjaHoraria = useMemo(
+        () => HORAS_FILTRO.find((h) => h.value === hora) || HORAS_FILTRO[0],
+        [hora]
+    );
+
+    // Mismas reservas, pero para la fecha que se está diligenciando en el modal.
+    const reservasParaFormulario = useMemo(() => {
+        const propias = misReservas
+            .filter((r) => r.fecha === form.fecha && r.estado !== "Cancelada")
+            .map((r) => ({
+                recursoId: r.recursoId,
+                horaInicio: r.horaInicio,
+                horaFin: r.horaFin
+            }));
+        const otras = ocupados.fecha === form.fecha ? ocupados.items : [];
+        return [...otras, ...propias];
+    }, [misReservas, ocupados, form.fecha]);
+
     const disponibles = useMemo(() => {
-        return recursos
-            .filter(esReservable)
+        return reservables
             .filter((recurso) => {
                 const texto = busqueda.toLowerCase().trim();
                 if (
@@ -119,15 +195,17 @@ function Reservas() {
             })
             .filter((recurso) => {
                 if (!fecha) return true;
-                const tieneReserva = misReservas.some(
-                    (r) =>
-                        r.recurso === recurso.nombre &&
-                        r.fecha === fecha &&
-                        r.estado !== "Cancelada"
+                const delRecurso = reservasDelDia.filter(
+                    (r) => r.recursoId === recurso.id
                 );
-                return !tieneReserva;
+                if (!franjaHoraria.inicio) return delRecurso.length === 0;
+                return !delRecurso.some(
+                    (r) =>
+                        franjaHoraria.inicio < r.horaFin &&
+                        r.horaInicio < franjaHoraria.fin
+                );
             });
-    }, [busqueda, tipo, fecha, misReservas]);
+    }, [busqueda, tipo, fecha, reservables, reservasDelDia, franjaHoraria]);
 
     const refrescar = () => {
         if (busquedaAlerta) {
@@ -161,10 +239,8 @@ function Reservas() {
         }
 
         if (Object.keys(nuevosErrores).length === 0 && recursoSeleccionado) {
-            const conflicto = misReservas.find((reserva) => {
-                if (reserva.recurso !== recursoSeleccionado.nombre) return false;
-                if (reserva.fecha !== form.fecha) return false;
-                if (reserva.estado === "Cancelada") return false;
+            const conflicto = reservasParaFormulario.find((reserva) => {
+                if (reserva.recursoId !== recursoSeleccionado.id) return false;
                 return (
                     form.horaInicio < reserva.horaFin &&
                     reserva.horaInicio < form.horaFin
@@ -186,10 +262,15 @@ function Reservas() {
     };
 
     const abrirModal = (recurso) => {
-        if (recurso) setRecursoSeleccionado(recurso);
+        const objetivo = recurso ?? reservables[0] ?? null;
+        if (!objetivo) {
+            toast.error("No hay recursos disponibles para reservar en este momento.");
+            return;
+        }
+        setRecursoSeleccionado(objetivo);
         setConfirmacion("");
         setErrores({});
-        setForm({ fecha: "", horaInicio: "", horaFin: "", proposito: "" });
+        setForm({ fecha: hoyStr, horaInicio: "", horaFin: "", proposito: "" });
         setModalAbierto(true);
     };
 
@@ -200,19 +281,23 @@ function Reservas() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!recursoSeleccionado) {
+            setErrores({ conflicto: "Selecciona un espacio o recurso para reservar." });
+            return;
+        }
         if (!validarFormulario()) return;
 
         try {
-            const nueva = await reservationsApi.create({
-                id_usuario: user?.id ?? null,
-                id_recurso: recursoSeleccionado.id,
-                fecha_reserva: form.fecha,
-                hora_inicio: form.horaInicio,
-                hora_fin: form.horaFin,
+            await reservationsApi.create({
+                recursoId: recursoSeleccionado.id,
+                fecha: form.fecha,
+                horaInicio: form.horaInicio,
+                horaFin: form.horaFin,
                 motivo: form.proposito,
                 estado: "Pendiente"
             });
             await cargarReservas();
+            setRefrescoOcupados((n) => n + 1);
             setConfirmacion(
                 `Reserva de "${recursoSeleccionado.nombre}" registrada correctamente.`
             );
@@ -224,17 +309,12 @@ function Reservas() {
 
     const cancelarReserva = async (id) => {
         if (!window.confirm("¿Estás seguro de que deseas cancelar esta reserva?")) return;
+        const reserva = misReservas.find((r) => r.id === id);
+        if (!reserva) return;
         try {
-            await reservationsApi.update(id, {
-                id_usuario: misReservas.find((r) => r.id === id)?.usuarioId,
-                id_recurso: misReservas.find((r) => r.id === id)?.id_recurso,
-                fecha_reserva: misReservas.find((r) => r.id === id)?.fecha,
-                hora_inicio: misReservas.find((r) => r.id === id)?.horaInicio,
-                hora_fin: misReservas.find((r) => r.id === id)?.horaFin,
-                motivo: misReservas.find((r) => r.id === id)?.motivo,
-                estado: "Cancelada"
-            });
+            await reservationsApi.update(id, { ...reserva, estado: "Cancelada" });
             await cargarReservas();
+            setRefrescoOcupados((n) => n + 1);
         } catch (err) {
             toast.error(err.message || "No se pudo cancelar la reserva.");
         }
@@ -253,7 +333,7 @@ function Reservas() {
                     .filter(Boolean)
             )
         ];
-    }, []);
+    }, [recursos]);
 
     const fechaReferencia = new Date(`${fecha || hoyStr}T00:00:00`);
     const inicioSemana = new Date(fechaReferencia);
@@ -292,6 +372,16 @@ function Reservas() {
                 <div className="page__title">
                     <p>Reserva espacios y recursos disponibles del campus.</p>
                 </div>
+
+                <button
+                    type="button"
+                    className="reservas__new-button"
+                    onClick={() => abrirModal()}
+                    disabled={cargandoRecursos}
+                >
+                    <Icon name="reservas" size={15} />
+                    Nueva reserva
+                </button>
             </div>
 
             <div className="filters">
@@ -344,12 +434,11 @@ function Reservas() {
                             value={hora}
                             onChange={(e) => setHora(e.target.value)}
                         >
-                            <option>Cualquier hora</option>
-                            <option>8:00 a. m.</option>
-                            <option>10:00 a. m.</option>
-                            <option>12:00 p. m.</option>
-                            <option>2:00 p. m.</option>
-                            <option>4:00 p. m.</option>
+                            {HORAS_FILTRO.map((opcion) => (
+                                <option key={opcion.value} value={opcion.value}>
+                                    {opcion.etiqueta}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -424,7 +513,9 @@ function Reservas() {
                     )}
                 </div>
 
-                {misReservasOrdenadas.length === 0 ? (
+                {cargandoReservas ? (
+                    <div className="empty">Cargando reservas...</div>
+                ) : misReservasOrdenadas.length === 0 ? (
                     <div className="empty">Aún no tienes reservas.</div>
                 ) : (
                     <>
@@ -556,10 +647,10 @@ function Reservas() {
                             <label>Espacio o recurso</label>
                             <select
                                 className="reservas__filter-select"
-                                value={recursoSeleccionado?.nombre ?? ""}
+                                value={recursoSeleccionado?.id ?? ""}
                                 onChange={(e) => {
-                                    const recurso = disponibles.find(
-                                        (r) => r.nombre === e.target.value
+                                    const recurso = reservables.find(
+                                        (r) => String(r.id) === e.target.value
                                     );
                                     if (recurso) {
                                         setRecursoSeleccionado(recurso);
@@ -567,8 +658,13 @@ function Reservas() {
                                     }
                                 }}
                             >
-                                {disponibles.map((recurso) => (
-                                    <option key={recurso.id} value={recurso.nombre}>
+                                {!recursoSeleccionado && (
+                                    <option value="" disabled>
+                                        Selecciona un recurso
+                                    </option>
+                                )}
+                                {reservables.map((recurso) => (
+                                    <option key={recurso.id} value={recurso.id}>
                                         {recurso.nombre}
                                     </option>
                                 ))}

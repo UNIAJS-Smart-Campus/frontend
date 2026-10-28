@@ -62,6 +62,13 @@
     box-shadow: var(--shadow-md);
 }
 
+.reservas__new-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 /* ============ FILTERS CARD ============ */
 .reservas__filters-card {
     background-color: var(--color-surface);

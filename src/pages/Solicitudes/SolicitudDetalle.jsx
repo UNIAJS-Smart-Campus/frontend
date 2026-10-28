@@ -1,13 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import useAuth from "../../context/useAuth";
-import useToast from "../../context/ToastContext";
+import useToast from "../../context/useToast";
 import Icon from "../../components/Icon/Icon";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import Modal from "../../components/Modal/Modal";
 import {
     ETIQUETA_ESTADO,
-    ESTADOS_FINALES,
     ACCIONES_POR_ESTADO,
     ORDEN_ESTADOS,
     progresoDe
@@ -57,15 +56,14 @@ const ACTION_LABELS = {
 
 function SolicitudDetalle() {
     const { id } = useParams();
-    const { user, puede } = useAuth();
+    const { puede } = useAuth();
     const toast = useToast();
 
     const [solicitud, setSolicitud] = useState(null);
     const [cargando, setCargando] = useState(true);
     const [usuarios, setUsuarios] = useState([]);
 
-    const cargarSolicitud = async (sid) => {
-        setCargando(true);
+    const cargarSolicitud = useCallback(async (sid) => {
         try {
             const data = await requestsApi.get(sid);
             setSolicitud(data);
@@ -75,12 +73,19 @@ function SolicitudDetalle() {
         } finally {
             setCargando(false);
         }
-    };
+    }, [toast]);
 
     useEffect(() => {
-        cargarSolicitud(id);
+        // Se difiere al microtask para no ejecutar setState durante el efecto.
+        let activo = true;
+        Promise.resolve().then(() => {
+            if (activo) cargarSolicitud(id);
+        });
         usersApi.list().then((u) => setUsuarios(Array.isArray(u) ? u : [])).catch(() => {});
-    }, [id]);
+        return () => {
+            activo = false;
+        };
+    }, [id, cargarSolicitud]);
     const [aviso, setAviso] = useState("");
 
     const [rechazarAbierto, setRechazarAbierto] = useState(false);
@@ -145,7 +150,7 @@ function SolicitudDetalle() {
             }
         });
         return estados;
-    }, [solicitud?.historial]);
+    }, [solicitud]);
 
     const abrirNota = () => {
         setNota("");
@@ -161,6 +166,11 @@ function SolicitudDetalle() {
         if (!solicitud) return;
         if (!puedeGestionar) {
             mostrarAviso("No tienes permiso para realizar esta acción.");
+            return;
+        }
+        const solicitudId = solicitud.id ?? solicitud.id_solicitud;
+        if (!solicitudId) {
+            toast.error("No se pudo identificar la solicitud. Recarga la página.");
             return;
         }
         try {
@@ -186,7 +196,11 @@ function SolicitudDetalle() {
                     payload = { ...solicitud, estado: "CERRADA" };
                     break;
                 case "pausar":
-                    payload = { ...solicitud, estado: "PAUSADA" };
+                    payload = {
+                        ...solicitud,
+                        estado: "PAUSADA",
+                        motivo: datos.descripcion || ""
+                    };
                     break;
                 case "reanudar":
                     payload = { ...solicitud, estado: "EN_PROCESO" };
@@ -195,24 +209,27 @@ function SolicitudDetalle() {
                     payload = {
                         ...solicitud,
                         estado: "RECHAZADA",
-                        respuesta: datos.descripcion || solicitud.respuesta
+                        respuesta: datos.descripcion || solicitud.respuesta,
+                        motivo: datos.descripcion || ""
                     };
                     break;
                 case "reabrir":
-                    payload = { ...solicitud, estado: "EN_REVISION" };
+                    payload = {
+                        ...solicitud,
+                        estado: "EN_REVISION",
+                        motivo: datos.descripcion || ""
+                    };
                     break;
                 case "nota":
                     payload = {
                         ...solicitud,
-                        respuesta: [solicitud.respuesta, datos.descripcion]
-                            .filter(Boolean)
-                            .join("\n---\n")
+                        motivo: datos.descripcion || ""
                     };
                     break;
                 default:
                     payload = solicitud;
             }
-            const updated = await requestsApi.update(solicitud.id, payload);
+            const updated = await requestsApi.update(solicitudId, payload);
             setSolicitud(updated);
             mostrarAviso("Acción ejecutada correctamente.");
         } catch (err) {
@@ -331,7 +348,6 @@ function SolicitudDetalle() {
     }
 
     const esRechazada = solicitud.estado === "RECHAZADA";
-    const esFinal = ESTADOS_FINALES.includes(solicitud.estado);
 
     return (
         <div className="page">

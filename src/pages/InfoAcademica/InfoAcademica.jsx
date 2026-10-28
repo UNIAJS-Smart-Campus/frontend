@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import useAuth from "../../context/useAuth";
-import useToast from "../../context/ToastContext";
+import useToast from "../../context/useToast";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
@@ -33,8 +33,7 @@ function InfoAcademica() {
     const [errores,      setErrores]      = useState({});
     const [aviso,        setAviso]        = useState("");
 
-    const cargar = async () => {
-        setCargando(true);
+    const cargar = useCallback(async () => {
         try {
             const data = await academicInfoApi.list();
             setItems(Array.isArray(data) ? data : []);
@@ -44,11 +43,18 @@ function InfoAcademica() {
         } finally {
             setCargando(false);
         }
-    };
+    }, [toast]);
 
     useEffect(() => {
-        cargar();
-    }, []);
+        // Se difiere al microtask para no ejecutar setState durante el efecto.
+        let activo = true;
+        Promise.resolve().then(() => {
+            if (activo) cargar();
+        });
+        return () => {
+            activo = false;
+        };
+    }, [cargar]);
 
     // ── Helpers ──────────────────────────────────────────────
     const mostrarAviso = (msg) => {

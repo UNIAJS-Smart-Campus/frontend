@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Icon from "../../components/Icon/Icon";
 import useAuth from "../../context/useAuth";
-import useToast from "../../context/ToastContext";
+import useToast from "../../context/useToast";
 import { notificationsApi } from "../../utils/api";
 import "./Notificaciones.css";
 
@@ -14,8 +14,7 @@ function Notificaciones() {
     const [cargando, setCargando] = useState(true);
     const [filtro, setFiltro] = useState("Todas");
 
-    const cargar = async () => {
-        setCargando(true);
+    const cargar = useCallback(async () => {
         try {
             const data = await notificationsApi.list(user?.id);
             setItems(Array.isArray(data) ? data : []);
@@ -25,11 +24,28 @@ function Notificaciones() {
         } finally {
             setCargando(false);
         }
-    };
+    }, [toast, user]);
 
     useEffect(() => {
-        cargar();
-    }, [user?.id]);
+        // Se difiere al microtask para no ejecutar setState durante el efecto.
+        let activo = true;
+        Promise.resolve().then(() => {
+            if (activo) cargar();
+        });
+        return () => {
+            activo = false;
+        };
+    }, [cargar]);
+
+    useEffect(() => {
+        const refrescar = () => cargar();
+        window.addEventListener("notificaciones-actualizadas", refrescar);
+        window.addEventListener("smart-campus:notification", refrescar);
+        return () => {
+            window.removeEventListener("notificaciones-actualizadas", refrescar);
+            window.removeEventListener("smart-campus:notification", refrescar);
+        };
+    }, [cargar]);
 
     const noLeidas = items.filter((item) => !item.leida).length;
 

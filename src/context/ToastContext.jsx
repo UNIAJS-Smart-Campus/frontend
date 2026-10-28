@@ -1,8 +1,7 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Icon from "../components/Icon/Icon";
+import { ToastContext } from "./toast-context";
 import "./Toast.css";
-
-const ToastContext = createContext(null);
 
 let _id = 0;
 
@@ -61,10 +60,4 @@ export function ToastProvider({ children }) {
             </div>
         </ToastContext.Provider>
     );
-}
-
-export default function useToast() {
-    const ctx = useContext(ToastContext);
-    if (!ctx) throw new Error("useToast debe usarse dentro de <ToastProvider>");
-    return ctx;
 }

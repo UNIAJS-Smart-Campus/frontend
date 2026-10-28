@@ -49,7 +49,9 @@ export async function apiFetch(path, { method = "GET", body, query } = {}) {
 
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json.error || `Error ${res.status}`);
-    return json.data;
+    // La mayoría de endpoints devuelve `{ data }`; los de búsqueda y salud
+    // responden directamente el objeto, por eso se conserva como respaldo.
+    return json.data ?? json;
 }
 
 // ============================================================
@@ -92,6 +94,8 @@ export function normalizeReserva(r = {}) {
     if (!r || typeof r !== "object") return r;
     return {
         id: r.id_reserva ?? r.id,
+        recursoId: r.id_recurso ?? r.recursoId ?? null,
+        id_recurso: r.id_recurso ?? r.recursoId ?? null,
         recurso: r.nombre_recurso ?? r.recurso ?? "",
         tipoRecurso: r.tipo_recurso ?? r.tipoRecurso ?? "",
         usuarioId: r.id_usuario ?? r.usuarioId ?? null,
@@ -107,11 +111,11 @@ export function normalizeReserva(r = {}) {
 
 export function denormalizeReserva(r = {}) {
     return {
-        id_usuario: r.usuarioId ?? null,
-        id_recurso: r.id_recurso ?? r.recursoId ?? null,
-        fecha_reserva: r.fecha,
-        hora_inicio: r.horaInicio,
-        hora_fin: r.horaFin,
+        id_usuario: r.usuarioId ?? r.id_usuario ?? null,
+        id_recurso: r.recursoId ?? r.id_recurso ?? null,
+        fecha_reserva: fechaCorta(r.fecha || r.fecha_reserva),
+        hora_inicio: r.horaInicio ?? r.hora_inicio,
+        hora_fin: r.horaFin ?? r.hora_fin,
         motivo: r.motivo ?? r.proposito ?? "",
         estado: r.estado || "Pendiente"
     };
@@ -145,7 +149,7 @@ export function denormalizeEvento(e = {}) {
     return {
         nombre_evento: e.nombre,
         descripcion: e.descripcion,
-        fecha: e.fecha,
+        fecha: fechaCorta(e.fecha),
         hora_inicio: e.hora || e.horaInicio,
         hora_fin: e.horaFin,
         ubicacion: e.lugar || e.ubicacion,
@@ -159,11 +163,17 @@ export function denormalizeEvento(e = {}) {
 export function normalizeNotificacion(n = {}) {
     if (!n || typeof n !== "object") return n;
     const fecha = n.fecha_envio ?? n.fecha ?? "";
+    const tipoRaw = String(n.tipo_notificacion ?? n.tipo ?? "").trim();
+    const tipo = tipoRaw.toLowerCase() === "pqrs"
+        ? "PQRS"
+        : tipoRaw
+            ? tipoRaw.charAt(0).toUpperCase() + tipoRaw.slice(1).toLowerCase()
+            : "";
     return {
         id: n.id_notificacion ?? n.id,
         titulo: n.titulo ?? "",
         mensaje: n.mensaje ?? "",
-        tipo: n.tipo_notificacion ?? n.tipo ?? "",
+        tipo,
         icono: n.icono ?? "notificaciones",
         leida: Boolean(Number(n.leida ?? 0)),
         fecha: typeof fecha === "string" ? fecha.slice(0, 10) : "",
@@ -175,6 +185,8 @@ export function normalizeSolicitud(s = {}) {
     if (!s || typeof s !== "object") return s;
     const fecha = s.fecha_solicitud ?? s.fecha ?? "";
     const isoFecha = typeof fecha === "string" ? fecha.slice(0, 10) : "";
+    const estadoCrudo = String(s.estado || "REGISTRADA").trim().toUpperCase();
+    const historialCrudo = typeof s.historial === "string" ? safeParse(s.historial) : s.historial;
     return {
         id: s.id_solicitud ?? s.id,
         codigo: s.codigo ?? "",
@@ -187,17 +199,20 @@ export function normalizeSolicitud(s = {}) {
             : { id: s.id_usuario ?? null, nombre: [s.usuario_nombre, s.usuario_apellido].filter(Boolean).join(" ").trim() },
         fecha: isoFecha,
         fechaCompleta: typeof fecha === "string" ? fecha : "",
-        estado: s.estado || "Registrada",
+        // La BD guarda los estados en mayúsculas; `RADICADA` es una variante
+        // vieja que quedó en datos semilla.
+        estado: estadoCrudo === "RADICADA" ? "REGISTRADA" : estadoCrudo,
         descripcion: s.descripcion ?? "",
         respuesta: s.respuesta ?? "",
         solicitante: s.solicitante ?? "",
         prioridad: s.prioridad || "Media",
+        dependencia: s.dependencia ?? "",
         responsable: s.responsable
             ? s.responsable
             : (s.responsable_nombre
-                ? { id: s.responsable_id ?? null, nombre: s.responsable_nombre }
+                ? { id: s.id_responsable ?? s.responsable_id ?? null, nombre: s.responsable_nombre }
                 : null),
-        historial: s.historial || []
+        historial: Array.isArray(historialCrudo) ? historialCrudo : []
     };
 }
 
@@ -206,13 +221,18 @@ export function denormalizeSolicitud(s = {}) {
         tipo: s.tipo,
         descripcion: s.descripcion,
         id_usuario: s.usuarioId ?? null,
+        servicio: s.servicio ?? "",
         id_servicio: s.id_servicio ?? null,
+        id_responsable: s.id_responsable ?? s.responsable?.id ?? null,
         solicitante: s.solicitante ?? s.usuario?.nombre ?? "",
-        estado: s.estado || "Registrada",
+        dependencia: s.dependencia ?? "",
+        estado: s.estado || "REGISTRADA",
         respuesta: s.respuesta ?? "",
         prioridad: s.prioridad || "Media",
         codigo: s.codigo ?? "",
-        fecha_solicitud: s.fechaCompleta || s.fecha
+        fecha_solicitud: fechaCorta(s.fecha || s.fechaCompleta),
+        historial: s.historial,
+        motivo: s.motivo
     };
 }
 
@@ -246,7 +266,7 @@ export function normalizePqrs(p = {}) {
 export function denormalizePqrs(p = {}) {
     return {
         tipo: p.tipo,
-        fecha: p.fecha,
+        fecha: fechaCorta(p.fecha),
         estado: p.estado || "Registrada",
         descripcion: p.descripcion,
         sede: p.sede,
@@ -284,7 +304,7 @@ export function denormalizePublicacion(p = {}) {
     return {
         titulo: p.titulo,
         categoria: p.categoria,
-        fecha: p.fecha,
+        fecha: fechaCorta(p.fecha),
         autor: p.autor,
         contenido: p.contenido,
         estado: p.estado || "Pendiente",
@@ -310,6 +330,14 @@ function safeParse(v) {
     }
 }
 
+// MySQL DATE no acepta el ISO completo (`2026-09-08T00:00:00.000Z`) y devuelve
+// error 1292, que el backend traduce a 500. Para columnas DATE se recorta a
+// `YYYY-MM-DD` antes de enviar.
+function fechaCorta(valor) {
+    if (!valor) return undefined;
+    return String(valor).slice(0, 10);
+}
+
 // ============================================================
 // AUTH
 // ============================================================
@@ -330,8 +358,8 @@ export const usersApi = {
         return Array.isArray(data) ? data.map(normalizeUsuario) : data;
     },
     get: async (id) => normalizeUsuario(await apiFetch(`/api/users/${id}`)),
-    create: (data) => apiFetch("/api/users", { method: "POST", body: data }),
-    update: (id, data) => apiFetch(`/api/users/${id}`, { method: "PUT", body: data }),
+    create: async (data) => normalizeUsuario(await apiFetch("/api/users", { method: "POST", body: data })),
+    update: async (id, data) => normalizeUsuario(await apiFetch(`/api/users/${id}`, { method: "PUT", body: data })),
     remove: (id) => apiFetch(`/api/users/${id}`, { method: "DELETE" })
 };
 
@@ -344,8 +372,8 @@ export const resourcesApi = {
         return Array.isArray(data) ? data.map(normalizeRecurso) : data;
     },
     get: async (id) => normalizeRecurso(await apiFetch(`/api/resources/${id}`)),
-    create: (data) => apiFetch("/api/resources", { method: "POST", body: data }),
-    update: (id, data) => apiFetch(`/api/resources/${id}`, { method: "PUT", body: data }),
+    create: async (data) => normalizeRecurso(await apiFetch("/api/resources", { method: "POST", body: data })),
+    update: async (id, data) => normalizeRecurso(await apiFetch(`/api/resources/${id}`, { method: "PUT", body: data })),
     remove: (id) => apiFetch(`/api/resources/${id}`, { method: "DELETE" })
 };
 
@@ -358,7 +386,25 @@ export const reservationsApi = {
         return Array.isArray(data) ? data.map(normalizeReserva) : data;
     },
     get: async (id) => normalizeReserva(await apiFetch(`/api/reservations/${id}`)),
-    create: (data) => apiFetch("/api/reservations", { method: "POST", body: denormalizeReserva(data) }),
+    // Reservas (de cualquier usuario) que ocupan un recurso en una fecha/hora.
+    ocupados: async ({ fecha, horaInicio, horaFin } = {}) => {
+        const data = await apiFetch("/api/reservations/ocupados", {
+            query: {
+                fecha,
+                hora_inicio: horaInicio,
+                hora_fin: horaFin
+            }
+        });
+        return Array.isArray(data)
+            ? data.map((r) => ({
+                id: r.id_reserva ?? r.id,
+                recursoId: r.id_recurso ?? r.recursoId ?? null,
+                horaInicio: (r.hora_inicio ?? r.horaInicio ?? "").slice(0, 5),
+                horaFin: (r.hora_fin ?? r.horaFin ?? "").slice(0, 5)
+            }))
+            : [];
+    },
+    create: async (data) => normalizeReserva(await apiFetch("/api/reservations", { method: "POST", body: denormalizeReserva(data) })),
     update: async (id, data) => {
         const payload = await denormalizeReserva(data);
         return normalizeReserva(await apiFetch(`/api/reservations/${id}`, { method: "PUT", body: payload }));
@@ -375,11 +421,12 @@ export const eventsApi = {
         return Array.isArray(data) ? data.map(normalizeEvento) : data;
     },
     get: async (id) => normalizeEvento(await apiFetch(`/api/events/${id}`)),
-    create: (data) => apiFetch("/api/events", { method: "POST", body: denormalizeEvento(data) }),
-    update: (id, data) =>
-        apiFetch(`/api/events/${id}`, { method: "PUT", body: denormalizeEvento(data) }),
+    create: async (data) => normalizeEvento(await apiFetch("/api/events", { method: "POST", body: denormalizeEvento(data) })),
+    update: async (id, data) =>
+        normalizeEvento(await apiFetch(`/api/events/${id}`, { method: "PUT", body: denormalizeEvento(data) })),
     remove: (id) => apiFetch(`/api/events/${id}`, { method: "DELETE" }),
-    register: (id) => apiFetch(`/api/events/${id}/register`, { method: "POST" })
+    register: (id) => apiFetch(`/api/events/${id}/register`, { method: "POST" }),
+    unregister: (id) => apiFetch(`/api/events/${id}/register`, { method: "DELETE" })
 };
 
 // ============================================================
@@ -404,9 +451,9 @@ export const requestsApi = {
         return Array.isArray(data) ? data.map(normalizeSolicitud) : data;
     },
     get: async (id) => normalizeSolicitud(await apiFetch(`/api/requests/${id}`)),
-    create: (data) => apiFetch("/api/requests", { method: "POST", body: denormalizeSolicitud(data) }),
-    update: (id, data) =>
-        apiFetch(`/api/requests/${id}`, { method: "PUT", body: denormalizeSolicitud(data) }),
+    create: async (data) => normalizeSolicitud(await apiFetch("/api/requests", { method: "POST", body: denormalizeSolicitud(data) })),
+    update: async (id, data) =>
+        normalizeSolicitud(await apiFetch(`/api/requests/${id}`, { method: "PUT", body: denormalizeSolicitud(data) })),
     remove: (id) => apiFetch(`/api/requests/${id}`, { method: "DELETE" })
 };
 
@@ -419,9 +466,9 @@ export const feedbackApi = {
         return Array.isArray(data) ? data.map(normalizePqrs) : data;
     },
     get: async (id) => normalizePqrs(await apiFetch(`/api/feedback/${id}`)),
-    create: (data) => apiFetch("/api/feedback", { method: "POST", body: denormalizePqrs(data) }),
-    update: (id, data) =>
-        apiFetch(`/api/feedback/${id}`, { method: "PUT", body: denormalizePqrs(data) }),
+    create: async (data) => normalizePqrs(await apiFetch("/api/feedback", { method: "POST", body: denormalizePqrs(data) })),
+    update: async (id, data) =>
+        normalizePqrs(await apiFetch(`/api/feedback/${id}`, { method: "PUT", body: denormalizePqrs(data) })),
     remove: (id) => apiFetch(`/api/feedback/${id}`, { method: "DELETE" })
 };
 
@@ -434,10 +481,35 @@ export const academicInfoApi = {
         return Array.isArray(data) ? data.map(normalizePublicacion) : data;
     },
     get: async (id) => normalizePublicacion(await apiFetch(`/api/academic-info/${id}`)),
-    create: (data) => apiFetch("/api/academic-info", { method: "POST", body: denormalizePublicacion(data) }),
-    update: (id, data) =>
-        apiFetch(`/api/academic-info/${id}`, { method: "PUT", body: denormalizePublicacion(data) }),
+    create: async (data) => normalizePublicacion(await apiFetch("/api/academic-info", { method: "POST", body: denormalizePublicacion(data) })),
+    update: async (id, data) =>
+        normalizePublicacion(await apiFetch(`/api/academic-info/${id}`, { method: "PUT", body: denormalizePublicacion(data) })),
     remove: (id) => apiFetch(`/api/academic-info/${id}`, { method: "DELETE" })
+};
+
+// ============================================================
+// SEARCH (ELASTICSEARCH)
+// ============================================================
+export const searchApi = {
+    search: async (q, { tipo, from = 0, size = 10 } = {}) => {
+        const data = await apiFetch("/api/search", {
+            query: { q, tipo, from, size }
+        });
+        return {
+            total: Number(data?.total) || 0,
+            results: Array.isArray(data?.results) ? data.results : []
+        };
+    },
+    byIndex: (index, q, { from = 0, size = 20 } = {}) =>
+        apiFetch(`/api/search/${index}`, { query: { q, from, size } }),
+    suggest: async (q) => {
+        const data = await apiFetch("/api/search/suggest", { query: { q } });
+        return Array.isArray(data?.suggestions) ? data.suggestions : [];
+    },
+    indices: async () => {
+        const data = await apiFetch("/api/search/indices");
+        return Array.isArray(data?.indices) ? data.indices : [];
+    }
 };
 
 // ============================================================
@@ -451,7 +523,7 @@ export const configurationApi = {
     get: async (id) => normalizeConfiguracion(await apiFetch(`/api/configuration/${id}`)),
     byUserSection: async (id_usuario, seccion) =>
         normalizeConfiguracion(await apiFetch(`/api/configuration/usuario/${id_usuario}/seccion/${encodeURIComponent(seccion)}`)),
-    create: (data) => apiFetch("/api/configuration", { method: "POST", body: data }),
-    update: (id, data) => apiFetch(`/api/configuration/${id}`, { method: "PUT", body: data }),
+    create: async (data) => normalizeConfiguracion(await apiFetch("/api/configuration", { method: "POST", body: data })),
+    update: async (id, data) => normalizeConfiguracion(await apiFetch(`/api/configuration/${id}`, { method: "PUT", body: data })),
     remove: (id) => apiFetch(`/api/configuration/${id}`, { method: "DELETE" })
 };

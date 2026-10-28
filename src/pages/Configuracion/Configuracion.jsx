@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useAuth from "../../context/useAuth";
-import { useTheme } from "../../context/ThemeContext";
+import useTheme from "../../context/useTheme";
 import Icon from "../../components/Icon/Icon";
+import { configurationApi } from "../../utils/api";
 import {
     getPhotoByUserId,
     savePhotoByUserId,
@@ -144,7 +145,7 @@ function normalizarConfiguracion(base, extra) {
 
 function Configuracion() {
     const { user, logout, updateUser } = useAuth();
-    const { tema, setTema } = useTheme();
+    const { setTema } = useTheme();
 
     const [config, setConfig] = useState(() => {
         try {
@@ -184,6 +185,10 @@ function Configuracion() {
     const [seccion, setSeccion] = useState("cuenta");
     const [guardado, setGuardado] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [cargandoConfig, setCargandoConfig] = useState(() => Boolean(user?.id));
+
+    // id_config por sección para decidir entre POST y PUT al persistir.
+    const configIds = useRef({});
 
     // Estado local del formulario de cuenta (se sincroniza con config.cuenta al guardar)
     const [correoEditable, setCorreoEditable] = useState(
@@ -218,6 +223,106 @@ function Configuracion() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
     }, [config]);
 
+    // Cargar la configuración guardada en la API (fuente de verdad).
+    useEffect(() => {
+        if (!user?.id) return undefined;
+        let activo = true;
+        configurationApi
+            .list(user.id)
+            .then((filas) => {
+                if (!activo) return;
+                const mapa = {};
+                const extra = {};
+                (Array.isArray(filas) ? filas : []).forEach((fila) => {
+                    if (!fila?.seccion || fila.seccion === "general") return;
+                    mapa[fila.seccion] = fila.id;
+                    if (fila.seccion === "cuenta") {
+                        const sinFoto = { ...(fila.valor || {}) };
+                        delete sinFoto.foto;
+                        extra.cuenta = sinFoto;
+                    } else {
+                        extra[fila.seccion] = fila.valor;
+                    }
+                    if (
+                        fila.seccion === "apariencia" &&
+                        ["claro", "oscuro", "sistema"].includes(fila.valor?.tema)
+                    ) {
+                        setTema(fila.valor.tema);
+                    }
+                });
+                configIds.current = mapa;
+                setConfig((prev) => normalizarConfiguracion(prev, extra));
+                if (extra.cuenta?.correo !== undefined) {
+                    setCorreoEditable(extra.cuenta.correo);
+                }
+                if (extra.cuenta?.telefono !== undefined) {
+                    setTelefonoEditable(extra.cuenta.telefono);
+                }
+            })
+            .catch(() => {
+                // Sin conexión o sin filas: se conserva la copia local.
+            })
+            .finally(() => {
+                if (activo) setCargandoConfig(false);
+            });
+        return () => {
+            activo = false;
+        };
+    }, [user?.id, setTema]);
+
+    // Sincronizar con la API por secciones. La foto se excluye porque
+    // `configuracion.valor` es TEXT y un data URL puede superar su límite.
+    useEffect(() => {
+        if (cargandoConfig || !user?.id) {
+            return undefined;
+        }
+
+        let cancelado = false;
+        const timer = setTimeout(async () => {
+            const secciones = [
+                "cuenta",
+                "seguridad",
+                "notificaciones",
+                "apariencia",
+                "preferencias",
+                "privacidad"
+            ];
+
+            for (const nombre of secciones) {
+                const valor = nombre === "cuenta"
+                    ? Object.fromEntries(
+                        Object.entries(config.cuenta || {}).filter(
+                            ([clave]) => clave !== "foto"
+                        )
+                    )
+                    : config[nombre];
+
+                if (valor === undefined) continue;
+
+                try {
+                    const id = configIds.current[nombre];
+                    const guardada = id
+                        ? await configurationApi.update(id, { valor })
+                        : await configurationApi.create({
+                            id_usuario: user.id,
+                            seccion: nombre,
+                            valor
+                        });
+                    configIds.current[nombre] = guardada.id;
+                } catch {
+                    // Se reintentará en el próximo cambio de configuración.
+                }
+
+                if (cancelado) return;
+            }
+        }, 700);
+
+        return () => {
+            cancelado = true;
+            clearTimeout(timer);
+        };
+    }, [config, cargandoConfig, user?.id]);
+
     // Auto-ocultar el aviso de guardado
     useEffect(() => {
         let timer;
@@ -227,7 +332,9 @@ function Configuracion() {
         return () => clearTimeout(timer);
     }, [guardado]);
 
-    const marcarGuardado = () => setGuardado(true);
+    const marcarGuardado = () => {
+        setGuardado(true);
+    };
 
     const cambiar = (ruta) => (e) => {
         setConfig((prev) => {
@@ -372,7 +479,7 @@ function Configuracion() {
     const cancelarConfirmacion = () => setConfirmando(null);
 
     // Cerrar sesión individual en un dispositivo
-    const cerrarSesionDispositivo = (dispositivo) => {
+    const cerrarSesionDispositivo = () => {
         // Simulación: en producción llamaría a /api/auth/sessions DELETE
         marcarGuardado();
     };

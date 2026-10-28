@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { notificationsApi } from "../../utils/api";
 import { getModuleName } from "../../utils/menu";
 import useAuth from "../../context/useAuth";
-import { useTheme } from "../../context/ThemeContext";
+import useTheme from "../../context/useTheme";
 import { getAvatarStyle, getUserInitials, getUserPhoto } from "../../utils/avatar";
 import Icon from "../Icon/Icon";
 import FontSizeToggle from "../FontSizeToggle/FontSizeToggle";

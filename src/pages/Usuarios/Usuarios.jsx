@@ -5,7 +5,7 @@ import DataTable from "../../components/DataTable/DataTable";
 import Pagination from "../../components/Pagination/Pagination";
 import Modal from "../../components/Modal/Modal";
 import useAuth from "../../context/useAuth";
-import useToast from "../../context/ToastContext";
+import useToast from "../../context/useToast";
 import { ROLES, ROL_IDS } from "../../utils/users";
 import { usersApi } from "../../utils/api";
 import { getUserInitials } from "../../utils/avatar";
@@ -86,7 +86,6 @@ function UsuariosAdmin() {
     const [mostrarPass, setMostrarPass] = useState(false);
 
     const cargarUsuarios = useCallback(async () => {
-        setCargando(true);
         try {
             const data = await usersApi.list();
             setItems(Array.isArray(data) ? data : []);
@@ -99,7 +98,14 @@ function UsuariosAdmin() {
     }, [toast]);
 
     useEffect(() => {
-        cargarUsuarios();
+        // Se difiere al microtask para no ejecutar setState durante el efecto.
+        let activo = true;
+        Promise.resolve().then(() => {
+            if (activo) cargarUsuarios();
+        });
+        return () => {
+            activo = false;
+        };
     }, [cargarUsuarios]);
 
     // Pipeline de filtros: búsqueda → rol → estado
@@ -269,7 +275,7 @@ function UsuariosAdmin() {
     const alternarEstado = useCallback(async (item) => {
         const activando = item.estado !== "Activo";
         try {
-            const [nombreP, ...rest] = (item.nombre || "").trim().split(/\s+/);
+            const [, ...rest] = (item.nombre || "").trim().split(/\s+/);
             await usersApi.update(item.id, {
                 identificacion: item.identificacion,
                 usuario: item.usuario,

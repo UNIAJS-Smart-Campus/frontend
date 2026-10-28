@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
@@ -7,7 +7,7 @@ import Modal from "../../components/Modal/Modal";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import useAuth from "../../context/useAuth";
-import useToast from "../../context/ToastContext";
+import useToast from "../../context/useToast";
 import { TIPOS_PQRS } from "../../utils/pqrs";
 import { feedbackApi, usersApi } from "../../utils/api";
 import usePagination from "../../hooks/usePagination";
@@ -47,17 +47,6 @@ const ESTADOS_PQRS = [
 
 const PRIORIDADES = ["Alta", "Media", "Baja"];
 
-const TRANSICIONES = {
-    Registrada: ["En revisión", "Resuelta", "Cerrada"],
-    "En revisión": ["Asignada", "En proceso", "Resuelta", "Cerrada"],
-    Asignada: ["En proceso", "Resuelta", "Cerrada"],
-    "En proceso": ["Resuelta", "Cerrada"],
-    Resuelta: ["Cerrada"],
-    Cerrada: []
-};
-
-const ESTADOS_FINALES = ["Resuelta", "Cerrada"];
-
 function siguienteEstado(estado) {
     const idx = ESTADOS_PQRS.indexOf(estado);
     if (idx === -1 || idx >= ESTADOS_PQRS.length - 1) return estado;
@@ -72,7 +61,7 @@ const formVacio = {
 };
 
 function PQRS() {
-    const { puede, user } = useAuth();
+    const { puede } = useAuth();
     const toast = useToast();
     const puedeGestionar = puede("gestionar_solicitudes") || puede("actualizar_estados");
 
@@ -94,8 +83,7 @@ function PQRS() {
     const [cargando, setCargando] = useState(true);
     const [usuarios, setUsuarios] = useState([]);
 
-    const cargar = async () => {
-        setCargando(true);
+    const cargar = useCallback(async () => {
         try {
             const data = await feedbackApi.list();
             setItems(Array.isArray(data) ? data : []);
@@ -105,14 +93,21 @@ function PQRS() {
         } finally {
             setCargando(false);
         }
-    };
+    }, [toast]);
 
     useEffect(() => {
-        cargar();
+        // Se difiere al microtask para no ejecutar setState durante el efecto.
+        let activo = true;
+        Promise.resolve().then(() => {
+            if (activo) cargar();
+        });
         usersApi.list()
             .then((u) => setUsuarios(Array.isArray(u) ? u : []))
             .catch(() => {});
-    }, []);
+        return () => {
+            activo = false;
+        };
+    }, [cargar]);
 
     const usuariosAsignables = useMemo(
         () =>

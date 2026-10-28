@@ -1,8 +1,8 @@
 import { obtenerUsuarios } from "./users";
 
-export const CATEGORIAS_EVENTO = ["Académico", "Cultural", "Formación", "Institucional"];
+export const CATEGORIAS_EVENTO = ["Académico", "Cultural", "Deportivo", "Formación", "Institucional"];
 
-export const ESTADOS_EVENTO = ["Activo", "Finalizado", "Cancelado"];
+export const ESTADOS_EVENTO = ["Programado", "Activo", "Finalizado", "Cancelado"];
 
 export const MODALIDADES_EVENTO = ["Presencial", "Virtual", "Híbrido"];
 

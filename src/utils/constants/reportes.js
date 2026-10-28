@@ -27,16 +27,6 @@ export function construirReportes(solicitudes, reservas, eventos, notificaciones
         return acc;
     }, {});
 
-    const eventosPorEstadoObj = eventos.reduce((acc, e) => {
-        acc[e.estado] = (acc[e.estado] || 0) + 1;
-        return acc;
-    }, {});
-
-    const solicitudesPorTipoObj = solicitudesFiltradas.reduce((acc, s) => {
-        acc[s.tipo] = (acc[s.tipo] || 0) + 1;
-        return acc;
-    }, {});
-
     const recursosPorTipoObj = recursos.reduce((acc, r) => {
         acc[r.tipo] = (acc[r.tipo] || 0) + 1;
         return acc;

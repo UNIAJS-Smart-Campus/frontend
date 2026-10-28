@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AuthContext } from "./auth-context";
 import { permisosDeRol, accionesDeRol } from "../utils/users";
 import { authApi } from "../utils/api";
@@ -37,16 +37,12 @@ function AuthProvider({ children }) {
         try {
             const data = await authApi.login(identificacion, password);
 
-            // Mapear ID de rol a nombre
+            // Mapear ID de rol a nombre (coincide con la tabla `roles` de la BD)
             const rolMap = {
                 1: 'Administrador',
-                2: 'Docente',
-                3: 'Estudiante',
-                4: 'Administrativo',
-                5: 'Funcionario',
-                6: 'Egresado',
-                7: 'Proveedor',
-                8: 'Visitante'
+                2: 'Estudiante',
+                3: 'Docente',
+                4: 'Administrativo'
             };
             const rolNombre = rolMap[data.rol] || data.tipo_usuario || 'Estudiante';
 
@@ -164,8 +160,20 @@ function SessionGuard({ onLogout }) {
     const idleTimerRef = useRef(null);
     const warningTimerRef = useRef(null);
     const countdownRef = useRef(null);
+    // Reflejos de estado/props para que los listeners no se re-registren en
+    // cada render y el efecto de inactividad no dependa de funciones nuevas.
+    const warningOpenRef = useRef(false);
+    const onLogoutRef = useRef(onLogout);
 
-    const limpiarTimers = () => {
+    useEffect(() => {
+        warningOpenRef.current = warningOpen;
+    }, [warningOpen]);
+
+    useEffect(() => {
+        onLogoutRef.current = onLogout;
+    }, [onLogout]);
+
+    const limpiarTimers = useCallback(() => {
         if (idleTimerRef.current) {
             clearTimeout(idleTimerRef.current);
             idleTimerRef.current = null;
@@ -178,34 +186,39 @@ function SessionGuard({ onLogout }) {
             clearInterval(countdownRef.current);
             countdownRef.current = null;
         }
-    };
+    }, []);
 
-    const iniciarAdvertencia = () => {
+    const iniciarAdvertencia = useCallback(() => {
         setRemaining(WARNING_COUNTDOWN_MS);
         countdownRef.current = setInterval(() => {
             setRemaining((prev) => Math.max(0, prev - 1000));
         }, 1000);
         warningTimerRef.current = setTimeout(() => {
             limpiarTimers();
-            onLogout();
+            onLogoutRef.current();
         }, WARNING_COUNTDOWN_MS);
-    };
+    }, [limpiarTimers]);
 
-    const reiniciarInactividad = () => {
+    // Solo programa el temporizador: no toca el estado durante el render/efecto.
+    const programarInactividad = useCallback(() => {
         limpiarTimers();
-        if (warningOpen) {
-            setWarningOpen(false);
-        }
         idleTimerRef.current = setTimeout(() => {
             setWarningOpen(true);
             iniciarAdvertencia();
         }, IDLE_BEFORE_WARNING_MS);
-    };
+    }, [limpiarTimers, iniciarAdvertencia]);
+
+    const reiniciarInactividad = useCallback(() => {
+        if (warningOpenRef.current) {
+            setWarningOpen(false);
+        }
+        programarInactividad();
+    }, [programarInactividad]);
 
     useEffect(() => {
-        reiniciarInactividad();
+        programarInactividad();
         const onActivity = () => {
-            if (!warningOpen) reiniciarInactividad();
+            if (!warningOpenRef.current) programarInactividad();
         };
         ACTIVITY_EVENTS.forEach((evt) =>
             window.addEventListener(evt, onActivity, { passive: true })
@@ -216,7 +229,7 @@ function SessionGuard({ onLogout }) {
                 window.removeEventListener(evt, onActivity)
             );
         };
-    }, []);
+    }, [programarInactividad, limpiarTimers]);
 
     const prolongar = () => {
         setWarningOpen(false);

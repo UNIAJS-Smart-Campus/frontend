@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import useAuth from "../../context/useAuth";
-import useToast from "../../context/ToastContext";
+import useToast from "../../context/useToast";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import Pagination from "../../components/Pagination/Pagination";
@@ -12,7 +12,6 @@ import {
     ESTADO_COLOR,
     ESTADOS_FINALES,
     ACCIONES_POR_ESTADO,
-    ORDEN_ESTADOS,
     progresoDe
 } from "../../utils/solicitudes";
 import { usersApi } from "../../utils/api";
@@ -63,8 +62,7 @@ function Solicitudes() {
     const [usuarios, setUsuarios] = useState([]);
     const toast = useToast();
 
-    const cargar = async () => {
-        setCargando(true);
+    const cargar = useCallback(async () => {
         try {
             const [sols, users] = await Promise.all([
                 requestsApi.list(),
@@ -78,11 +76,18 @@ function Solicitudes() {
         } finally {
             setCargando(false);
         }
-    };
+    }, [toast]);
 
     useEffect(() => {
-        cargar();
-    }, []);
+        // Se difiere al microtask para no ejecutar setState durante el efecto.
+        let activo = true;
+        Promise.resolve().then(() => {
+            if (activo) cargar();
+        });
+        return () => {
+            activo = false;
+        };
+    }, [cargar]);
 
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");
@@ -200,6 +205,10 @@ function Solicitudes() {
             mostrarAviso("No tienes permiso para realizar esta acción.");
             return;
         }
+        if (!id) {
+            toast.error("No se pudo identificar la solicitud. Recarga la página.");
+            return;
+        }
         try {
             const actual = items.find((s) => String(s.id) === String(id));
             if (!actual) return;
@@ -225,21 +234,34 @@ function Solicitudes() {
                     payload = { ...actual, estado: "CERRADA" };
                     break;
                 case "pausar":
-                    payload = { ...actual, estado: "PAUSADA" };
+                    payload = {
+                        ...actual,
+                        estado: "PAUSADA",
+                        motivo: datos.descripcion || ""
+                    };
                     break;
                 case "reanudar":
                     payload = { ...actual, estado: "EN_PROCESO" };
                     break;
                 case "rechazar":
-                    payload = { ...actual, estado: "RECHAZADA", respuesta: datos.descripcion || actual.respuesta };
+                    payload = {
+                        ...actual,
+                        estado: "RECHAZADA",
+                        respuesta: datos.descripcion || actual.respuesta,
+                        motivo: datos.descripcion || ""
+                    };
                     break;
                 case "reabrir":
-                    payload = { ...actual, estado: "EN_REVISION" };
+                    payload = {
+                        ...actual,
+                        estado: "EN_REVISION",
+                        motivo: datos.descripcion || ""
+                    };
                     break;
                 case "nota":
                     payload = {
                         ...actual,
-                        respuesta: [actual.respuesta, datos.descripcion].filter(Boolean).join("\n---\n")
+                        motivo: datos.descripcion || ""
                     };
                     break;
                 default:
@@ -372,7 +394,7 @@ function Solicitudes() {
                 prioridad: form.prioridad,
                 usuarioId: user?.id ?? null,
                 solicitante: user?.nombre ?? "Usuario",
-                estado: "Registrada"
+                estado: "REGISTRADA"
             });
             setItems((prev) => [nueva, ...prev]);
             setCrearAbierto(false);

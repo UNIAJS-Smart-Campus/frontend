@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../../../components/Icon/Icon";
 import useAuth from "../../../context/useAuth";
-import useToast from "../../../context/ToastContext";
+import useToast from "../../../context/useToast";
 import {
     TIPOS_PQRS,
     TIPOS_DOCUMENTO,
@@ -176,7 +176,7 @@ function NuevaPQRS() {
             });
 
             setConfirmacion(
-                `Tu ${form.tipo.toLowerCase()} fue registrada con el número ${numero?.id ?? "asignado"}.`
+                `Tu ${form.tipo.toLowerCase()} fue registrada con el número ${numero?.id_pqrs ?? numero?.id ?? "asignado"}.`
             );
         } catch (err) {
             toast.error(err.message || "No se pudo radicar la PQRS.");
