@@ -1,0 +1,27 @@
+/* ============================================================
+   PageLoader - pantalla de carga al cambiar de módulo (lazy)
+   ============================================================ */
+.page-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    min-height: 60vh;
+    padding: 32px;
+    animation: fade-in 0.2s ease;
+}
+
+.page-loader__logo {
+    width: 110px;
+    height: auto;
+    object-fit: contain;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.page-loader__text {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--color-primary-600, #025E73);
+    animation: pulse 1.4s ease-in-out infinite;
+}

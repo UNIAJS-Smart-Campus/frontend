@@ -1,0 +1,63 @@
+/* ==========================================
+   Block: Footer
+   BEM: .footer, .footer--modifier, .footer__element
+   ========================================== */
+
+.footer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-6);
+    background-color: var(--color-bg-alt);
+    border-top: 1px solid var(--color-border);
+    font-size: 13px;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+}
+
+.footer__content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+}
+
+.footer__links {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer__link {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+    white-space: nowrap;
+}
+
+.footer__link:hover {
+    color: var(--color-primary-500);
+}
+
+.footer--sm {
+    padding: var(--space-3) var(--space-4);
+    font-size: 12px;
+}
+
+.footer--lg {
+    padding: var(--space-5) var(--space-8);
+    font-size: 14px;
+}
+
+.footer--centered {
+    align-items: center;
+    text-align: center;
+}
+
+.footer--centered .footer__content {
+    justify-content: center;
+}
