@@ -1,8 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useAuth from "../../context/useAuth";
-import useTheme from "../../context/useTheme";
+import { useTheme } from "../../context/ThemeContext";
+import useFontSize from "../../hooks/useFontSize";
+import useColeccion from "../../hooks/useColeccion";
 import Icon from "../../components/Icon/Icon";
-import { configurationApi } from "../../utils/api";
+import { usersApi } from "../../utils/api";
+import {
+    CLAVE_CONFIGURACION,
+    configuracionDeUsuario,
+    cargarSeccion,
+    guardarSeccion,
+    eliminarSeccion
+} from "../../utils/configuration";
 import {
     getPhotoByUserId,
     savePhotoByUserId,
@@ -12,6 +21,8 @@ import "./Configuracion.css";
 
 const STORAGE_KEY = "uajs_config";
 
+// La tabla `configuracion` tiene una fila por (id_usuario, seccion) y guarda
+// `valor` como JSON; el configuration-service ya devuelve el valor parseado.
 const SECCIONES = [
     { id: "cuenta", icon: "perfil", titulo: "Cuenta" },
     { id: "seguridad", icon: "configuracion", titulo: "Seguridad" },
@@ -21,6 +32,11 @@ const SECCIONES = [
     { id: "privacidad", icon: "info", titulo: "Privacidad" },
     { id: "zona-peligro", icon: "recursos", titulo: "Zona de peligro" }
 ];
+
+// Secciones que se sincronizan con el backend. "zona-peligro" es solo UI.
+const SECCIONES_SINCRONIZABLES = SECCIONES
+    .map((item) => item.id)
+    .filter((id) => id !== "zona-peligro");
 
 const MODULOS_NOTIFICACION = [
     { id: "solicitudes", etiqueta: "Solicitudes" },
@@ -145,7 +161,19 @@ function normalizarConfiguracion(base, extra) {
 
 function Configuracion() {
     const { user, logout, updateUser } = useAuth();
-    const { setTema } = useTheme();
+    const { tema, setTema } = useTheme();
+    const { levels, level, setLevel } = useFontSize();
+    const { items: todasLasFilas, recargar: recargarConfig } = useColeccion(CLAVE_CONFIGURACION);
+    // La colección pide al servicio solo las filas del usuario en sesión
+    // (list(id_usuario)); el filtro por id se mantiene como red de seguridad.
+    const remotas = useMemo(
+        () => configuracionDeUsuario(user?.id),
+        // todasLasFilas entra como dependencia para recalcular al refrescar.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [todasLasFilas, user?.id]
+    );
+
+    const [errorConfig, setErrorConfig] = useState("");
 
     const [config, setConfig] = useState(() => {
         try {
@@ -185,10 +213,8 @@ function Configuracion() {
     const [seccion, setSeccion] = useState("cuenta");
     const [guardado, setGuardado] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [cargandoConfig, setCargandoConfig] = useState(() => Boolean(user?.id));
-
-    // id_config por sección para decidir entre POST y PUT al persistir.
-    const configIds = useRef({});
+    // Usuario al que ya se le aplicó la configuración que llegó del backend.
+    const [configAplicadaPara, setConfigAplicadaPara] = useState(null);
 
     // Estado local del formulario de cuenta (se sincroniza con config.cuenta al guardar)
     const [correoEditable, setCorreoEditable] = useState(
@@ -223,105 +249,117 @@ function Configuracion() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
     }, [config]);
 
-    // Cargar la configuración guardada en la API (fuente de verdad).
+    // ── Sincronización con el configuration-service ──────────
+    // Cada sección se guarda como una fila de `configuracion`
+    // (UNIQUE id_usuario + seccion) con el valor en JSON.
+    const configRef = useRef(config);
+    const idUsuarioRef = useRef(user?.id);
+    const pendientesRef = useRef(new Set());
+    const timerRef = useRef(null);
+
+    // Los refs se actualizan en un efecto (sin deps: en cada commit) y no
+    // durante el render: escribir un ref mientras se renderiza puede dejar el
+    // valor desincronizado si React descarta el render.
     useEffect(() => {
-        if (!user?.id) return undefined;
-        let activo = true;
-        configurationApi
-            .list(user.id)
-            .then((filas) => {
-                if (!activo) return;
-                const mapa = {};
-                const extra = {};
-                (Array.isArray(filas) ? filas : []).forEach((fila) => {
-                    if (!fila?.seccion || fila.seccion === "general") return;
-                    mapa[fila.seccion] = fila.id;
-                    if (fila.seccion === "cuenta") {
-                        const sinFoto = { ...(fila.valor || {}) };
-                        delete sinFoto.foto;
-                        extra.cuenta = sinFoto;
-                    } else {
-                        extra[fila.seccion] = fila.valor;
-                    }
-                    if (
-                        fila.seccion === "apariencia" &&
-                        ["claro", "oscuro", "sistema"].includes(fila.valor?.tema)
-                    ) {
-                        setTema(fila.valor.tema);
-                    }
-                });
-                configIds.current = mapa;
-                setConfig((prev) => normalizarConfiguracion(prev, extra));
-                if (extra.cuenta?.correo !== undefined) {
-                    setCorreoEditable(extra.cuenta.correo);
-                }
-                if (extra.cuenta?.telefono !== undefined) {
-                    setTelefonoEditable(extra.cuenta.telefono);
-                }
-            })
-            .catch(() => {
-                // Sin conexión o sin filas: se conserva la copia local.
-            })
-            .finally(() => {
-                if (activo) setCargandoConfig(false);
-            });
-        return () => {
-            activo = false;
-        };
-    }, [user?.id, setTema]);
+        configRef.current = config;
+        idUsuarioRef.current = user?.id;
+    });
 
-    // Sincronizar con la API por secciones. La foto se excluye porque
-    // `configuracion.valor` es TEXT y un data URL puede superar su límite.
-    useEffect(() => {
-        if (cargandoConfig || !user?.id) {
-            return undefined;
-        }
+    // La foto de perfil es un dataURL: pesa demasiado para la tabla
+    // `configuracion` y vive en `usuarios.foto_perfil`, así que no viaja
+    // al configuration-service. Se sincroniza a la BD directamente en
+    // manejarFoto / eliminarFoto mediante usersApi.update.
+    const valorParaBackend = (seccion, valor) => {
+        if (seccion !== "cuenta") return valor;
+        const resto = { ...(valor || {}) };
+        delete resto.foto;
+        return resto;
+    };
 
-        let cancelado = false;
-        const timer = setTimeout(async () => {
-            const secciones = [
-                "cuenta",
-                "seguridad",
-                "notificaciones",
-                "apariencia",
-                "preferencias",
-                "privacidad"
-            ];
+    const volcarPendientes = useCallback(async () => {
+        const pendientes = [...pendientesRef.current];
+        pendientesRef.current.clear();
+        const idUsuario = idUsuarioRef.current;
+        if (!pendientes.length || !idUsuario) return;
 
-            for (const nombre of secciones) {
-                const valor = nombre === "cuenta"
-                    ? Object.fromEntries(
-                        Object.entries(config.cuenta || {}).filter(
-                            ([clave]) => clave !== "foto"
-                        )
-                    )
-                    : config[nombre];
-
+        try {
+            for (const nombre of pendientes) {
+                const valor = valorParaBackend(nombre, configRef.current?.[nombre]);
                 if (valor === undefined) continue;
+                // guardarSeccion resuelve si hay que crear o actualizar la fila
+                // (id_usuario, seccion) usando el id_config real.
+                await guardarSeccion(idUsuario, nombre, valor);
 
-                try {
-                    const id = configIds.current[nombre];
-                    const guardada = id
-                        ? await configurationApi.update(id, { valor })
-                        : await configurationApi.create({
-                            id_usuario: user.id,
-                            seccion: nombre,
-                            valor
-                        });
-                    configIds.current[nombre] = guardada.id;
-                } catch {
-                    // Se reintentará en el próximo cambio de configuración.
-                }
-
-                if (cancelado) return;
+                // Confirmación puntual: se relee SOLO la sección guardada
+                // (getByUserAndSection) para verificar que quedó con el valor
+                // enviado, sin volver a traer toda la lista.
+                await cargarSeccion(idUsuario, nombre);
             }
-        }, 700);
+            setErrorConfig("");
+            await recargarConfig();
+        } catch (error) {
+            setErrorConfig(
+                error.message || "No se pudieron guardar los cambios en el servidor."
+            );
+        }
+    }, [recargarConfig]);
 
-        return () => {
-            cancelado = true;
-            clearTimeout(timer);
+    const programarGuardado = useCallback((secciones) => {
+        const lista = Array.isArray(secciones) ? secciones : [secciones];
+        lista
+            .filter((nombre) => SECCIONES_SINCRONIZABLES.includes(nombre))
+            .forEach((nombre) => pendientesRef.current.add(nombre));
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => {
+            volcarPendientes();
+        }, 700);
+    }, [volcarPendientes]);
+
+    // Limpia el temporizador si la pantalla se desmonta antes del volcado.
+    useEffect(() => () => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+    }, []);
+
+    // Mezcla la configuración que llega del backend sobre los valores por
+    // defecto. Solo se aplica una vez por usuario para no pisar lo que el
+    // usuario está editando en ese momento.
+    //
+    // Se ajusta durante el render (patrón oficial de React para derivar estado
+    // de props) en lugar de dentro de un efecto: el efecto provocaba un render
+    // en cascada y, con StrictMode, una doble ejecución.
+    const idUsuarioActual = user?.id ?? null;
+    if (configAplicadaPara !== idUsuarioActual && remotas.length) {
+        setConfigAplicadaPara(idUsuarioActual);
+
+        const porSeccion = {};
+        remotas.forEach((fila) => {
+            if (fila?.seccion) porSeccion[fila.seccion] = fila.valor;
+        });
+
+        const base = {
+            ...configBase,
+            cuenta: {
+                ...configBase.cuenta,
+                ...porSeccion.cuenta,
+                foto: config.cuenta?.foto || ""
+            }
         };
-    }, [config, cargandoConfig, user?.id]);
+        const mergeado = normalizarConfiguracion(base, {
+            ...porSeccion,
+            cuenta: porSeccion.cuenta
+        });
+        // El correo de la sesión es la fuente de verdad del perfil.
+        mergeado.cuenta = {
+            ...mergeado.cuenta,
+            correo: config.cuenta?.correo || user?.correo || ""
+        };
+
+        setConfig({ ...config, ...mergeado, cuenta: mergeado.cuenta });
+        if (!correoEditable) setCorreoEditable(user?.correo || "");
+        if (!telefonoEditable) {
+            setTelefonoEditable(porSeccion.cuenta?.telefono || "");
+        }
+    }
 
     // Auto-ocultar el aviso de guardado
     useEffect(() => {
@@ -332,8 +370,10 @@ function Configuracion() {
         return () => clearTimeout(timer);
     }, [guardado]);
 
-    const marcarGuardado = () => {
+    const marcarGuardado = (...secciones) => {
         setGuardado(true);
+        setErrorConfig("");
+        programarGuardado(secciones);
     };
 
     const cambiar = (ruta) => (e) => {
@@ -348,7 +388,7 @@ function Configuracion() {
                 e.target.type === "checkbox" ? e.target.checked : e.target.value;
             return copia;
         });
-        marcarGuardado();
+        marcarGuardado(ruta.split(".")[0]);
     };
 
     const alternar = (ruta) => () => {
@@ -362,7 +402,7 @@ function Configuracion() {
             obj[partes[partes.length - 1]] = !obj[partes[partes.length - 1]];
             return copia;
         });
-        marcarGuardado();
+        marcarGuardado(ruta.split(".")[0]);
     };
 
     // Guardar cuenta: persiste correo y teléfono en config.cuenta
@@ -376,15 +416,16 @@ function Configuracion() {
                 telefono: telefonoEditable.trim()
             }
         }));
-        marcarGuardado();
+        updateUser({ correo: correoEditable.trim() });
+        marcarGuardado("cuenta");
     };
 
-    const manejarFoto = (event) => {
+    const manejarFoto = async (event) => {
         const archivo = event.target.files?.[0];
         if (!archivo || !archivo.type.startsWith("image/")) return;
 
         const lector = new FileReader();
-        lector.onload = (e) => {
+        lector.onload = async (e) => {
             const dataUrl = e.target?.result;
             if (!dataUrl) return;
             setConfig((prev) => ({
@@ -393,6 +434,12 @@ function Configuracion() {
             }));
             savePhotoByUserId(user?.id, dataUrl);
             updateUser({ foto: dataUrl });
+            // Sincronizar foto_perfil en la BD (usuarios table)
+            try {
+                await usersApi.update(user?.id, { foto_perfil: dataUrl });
+            } catch (err) {
+                console.warn("No se pudo sincronizar la foto a la BD:", err);
+            }
             marcarGuardado();
         };
         lector.readAsDataURL(archivo);
@@ -402,13 +449,19 @@ function Configuracion() {
         }
     };
 
-    const eliminarFoto = () => {
+    const eliminarFoto = async () => {
         setConfig((prev) => ({
             ...prev,
             cuenta: { ...prev.cuenta, foto: "" }
         }));
         removePhotoByUserId(user?.id);
         updateUser({ foto: "" });
+        // Sincronizar el borrado de foto_perfil en la BD
+        try {
+            await usersApi.update(user?.id, { foto_perfil: "" });
+        } catch (err) {
+            console.warn("No se pudo limpiar la foto en la BD:", err);
+        }
         marcarGuardado();
     };
 
@@ -448,7 +501,11 @@ function Configuracion() {
     // Selector de tema (conectado al ThemeContext)
     const aplicarTema = (valor) => {
         setTema(valor);
-        marcarGuardado();
+        setConfig((prev) => ({
+            ...prev,
+            apariencia: { ...prev.apariencia, tema: valor }
+        }));
+        marcarGuardado("apariencia");
     };
 
     const temas = [
@@ -466,9 +523,24 @@ function Configuracion() {
         }
     };
 
-    const solicitarDesactivacion = () => {
+    const solicitarDesactivacion = async () => {
         if (confirmando === "desactivar") {
-            // Aquí iría la llamada a la API de desactivación
+            // Acción irreversible confirmada: se elimina la configuración
+            // guardada del usuario en el servidor (DELETE /configuration/:id).
+            try {
+                const secciones = configuracionDeUsuario(user?.id).map(
+                    (fila) => fila.seccion
+                );
+                for (const nombre of secciones) {
+                    await eliminarSeccion(user?.id, nombre);
+                }
+                setErrorConfig("");
+            } catch (error) {
+                setErrorConfig(
+                    error.message ||
+                        "No se pudo eliminar la configuración en el servidor."
+                );
+            }
             marcarGuardado();
             setConfirmando(null);
         } else {
@@ -491,10 +563,16 @@ function Configuracion() {
                     <p>Controla cómo funciona tu cuenta y tus preferencias.</p>
                 </div>
 
-                {guardado && (
+                {guardado && !errorConfig && (
                     <span className="badge badge--green">
                         <Icon name="info" size={12} />
                         Cambios guardados
+                    </span>
+                )}
+                {errorConfig && (
+                    <span className="badge badge--red" role="alert">
+                        <Icon name="solicitudes" size={12} />
+                        {errorConfig}
                     </span>
                 )}
             </div>
@@ -872,21 +950,21 @@ function Configuracion() {
                             </div>
 
                             <div className="config__themes">
-                                {temas.map((tema) => (
+                                {temas.map((opcion) => (
                                     <button
-                                        key={tema.valor}
+                                        key={opcion.valor}
                                         type="button"
                                         className={
-                                            tema === tema.valor
+                                            tema === opcion.valor
                                                 ? "config__theme config__theme--active"
                                                 : "config__theme"
                                         }
-                                        onClick={() => aplicarTema(tema.valor)}
+                                        onClick={() => aplicarTema(opcion.valor)}
                                     >
                                         <span className="config__theme-icon">
-                                            <Icon name={tema.icono} size={20} />
+                                            <Icon name={opcion.icono} size={20} />
                                         </span>
-                                        <span className="config__theme-label">{tema.etiqueta}</span>
+                                        <span className="config__theme-label">{opcion.etiqueta}</span>
                                     </button>
                                 ))}
                             </div>
@@ -896,6 +974,37 @@ function Configuracion() {
                                 operativo. <strong>Claro</strong> u <strong>Oscuro</strong> aplican
                                 el tema de forma permanente independientemente del SO.
                             </p>
+
+                            <div className="config__card-divider" />
+
+                            <div className="config__card-header">
+                                <div className="config__card-header-icon">
+                                    <Icon name="servicios" size={17} />
+                                </div>
+                                <div>
+                                    <h2>Tamaño de fuente</h2>
+                                    <p>Ajusta el tamaño del texto de la aplicación.</p>
+                                </div>
+                            </div>
+
+                            <div className="config__fontsize" role="group" aria-label="Tamaño de fuente">
+                                {levels.map((opcion) => (
+                                    <button
+                                        key={opcion.id}
+                                        type="button"
+                                        className={
+                                            opcion.id === level.id
+                                                ? "config__fontsize-btn config__fontsize-btn--active"
+                                                : "config__fontsize-btn"
+                                        }
+                                        aria-pressed={opcion.id === level.id}
+                                        onClick={() => setLevel(opcion)}
+                                    >
+                                        {opcion.label}
+                                        <span>{opcion.px}px</span>
+                                    </button>
+                                ))}
+                            </div>
                         </section>
                     )}
 

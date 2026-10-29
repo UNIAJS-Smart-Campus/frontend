@@ -31,33 +31,29 @@ function DonutChart({
     const center = size / 2;
     const circumference = 2 * Math.PI * radius;
 
-    // Construir segmentos con la matemática correcta. La fracción acumulada se
-    // calcula con `slice` para no reasignar variables durante el render.
-    const segmentos = data.map((item, i) => {
+    // Construir segmentos sin mutar variables durante el render
+    const segmentos = data.reduce((acc, item, i) => {
         const fraccion   = total > 0 ? item.total / total : 0;
         const pct        = Math.round(fraccion * 100);
         const dash       = fraccion * circumference;
         const gap        = circumference - dash;
-        const acumuladaAntes = data
-            .slice(0, i)
-            .reduce(
-                (acc, previo) => acc + (total > 0 ? previo.total / total : 0),
-                0
-            );
-        // Offset = circunferencia menos el arco ya consumido por segmentos anteriores.
-        // Esto posiciona el inicio de este segmento justo donde terminó el anterior.
-        const offsetFinal = circumference * (1 - acumuladaAntes);
-
+        const offsetFinal = circumference * (1 - acc.acumulada);
         return {
-            ...item,
-            index: i,
-            fraccion,
-            pct,
-            dash,
-            gap,
-            offsetFinal,
+            acumulada: acc.acumulada + fraccion,
+            items: [
+                ...acc.items,
+                {
+                    ...item,
+                    index: i,
+                    fraccion,
+                    pct,
+                    dash,
+                    gap,
+                    offsetFinal,
+                },
+            ],
         };
-    });
+    }, { acumulada: 0, items: [] }).items;
 
     const hoveredItem = hoveredIndex !== null ? segmentos[hoveredIndex] : null;
 

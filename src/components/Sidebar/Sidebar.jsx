@@ -5,7 +5,7 @@ import Icon from "../Icon/Icon";
 import BrandLogo from "../BrandLogo/BrandLogo";
 import "./Sidebar.css";
 
-function Sidebar({ collapsed }) {
+function Sidebar({ collapsed, open = false, onClose }) {
   const { tienePermiso } = useAuth();
 
   const seccionesVisibles = menuSections
@@ -15,9 +15,13 @@ function Sidebar({ collapsed }) {
     }))
     .filter((section) => section.items.length > 0);
 
-  const classes = collapsed
-    ? "sidebar sidebar--collapsed"
-    : "sidebar";
+  const classes = [
+    "sidebar",
+    collapsed ? "sidebar--collapsed" : "",
+    open ? "sidebar--open" : ""
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <nav className={classes}>
@@ -36,6 +40,7 @@ function Sidebar({ collapsed }) {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={onClose}
                 className={({ isActive }) =>
                   isActive
                     ? "sidebar__item sidebar__item--active"

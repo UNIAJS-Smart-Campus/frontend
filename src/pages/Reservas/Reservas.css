@@ -62,13 +62,6 @@
     box-shadow: var(--shadow-md);
 }
 
-.reservas__new-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
 /* ============ FILTERS CARD ============ */
 .reservas__filters-card {
     background-color: var(--color-surface);
@@ -808,13 +801,53 @@
     .reservas__reservation {
         align-items: flex-start;
         flex-wrap: wrap;
+        padding: 14px 16px;
     }
 
     .reservas__reservation-actions {
-        margin-left: 60px;
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .reservas__action-button {
+        width: 40px;
+        height: 40px;
+    }
+
+    .reservas__reservations-card {
+        padding: 16px;
     }
 
     .reservas__form-row {
         grid-template-columns: 1fr;
     }
+}
+
+@media (max-width: 480px) {
+    .reservas__filters-card {
+        padding: 14px;
+    }
+
+    .reservas__calendar-day {
+        min-height: 80px;
+        padding: 8px;
+    }
+
+    .reservas__reservation-details {
+        gap: 8px;
+    }
+}
+
+@media (max-width: 440px) {
+    .reservas__calendar {
+        margin: 0 calc(-1 * var(--space-2));
+    }
+}
+
+/* Ilustracion por tipo de recurso: ocupa todo el recuadro de la tarjeta. */
+.reservas__resource-image > .imagen-categoria {
+    position: absolute;
+    inset: 0;
+    border-radius: 0;
 }

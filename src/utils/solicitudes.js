@@ -1,8 +1,16 @@
 // ============================================================
 // SOLICITUDES — Utilidades del módulo
 // Modelo tipo mesa de ayuda (helpdesk) con historial de eventos
-// tipados y evolucion del estado de la solicitud.
+// tipados y evolución del estado de la solicitud.
+//
+// El almacenamiento es la colección "solicitudes" del store: primero se
+// pinta la caché local y después llega la data del requests-service
+// (vía gateway), que repinta la vista a través de useColeccion.
 // ============================================================
+
+import { requestsApi } from "./api";
+import { mapearSolicitud, mapearSolicitudAPayload } from "./mapeo";
+import { crearColeccion, listar, refrescar, crear, establecer } from "./store";
 
 // Estados en código (mayúsculas). ETIQUETA_ESTADO para mostrar.
 // Incluye RECHAZADA para que el gráfico de reportes la contabilice.
@@ -161,87 +169,80 @@ const SOLICITUDES_BASE = [
     }
 ];
 
-const STORAGE_KEY = "ua_js_solicitudes";
+// ---- Colección del módulo ----
 
-function esSolicitudValida(s) {
-    return s && typeof s === "object"
-        && typeof s.id === "string" && s.id.startsWith("SOL-")
-        && typeof s.estado === "string" && s.estado.length > 0
-        && typeof s.tipo === "string" && s.tipo.length > 0
-        && typeof s.servicio === "string"
-        && typeof s.fecha === "string"
-        && s.usuario && typeof s.usuario === "object"
-        && Array.isArray(s.historial);
+const CLAVE_COLECCION = "solicitudes";
+
+// Nombre del servicio -> id_servicio de la BD.
+const SERVICIO_ID = {
+    Solicitudes: 1,
+    Reservas: 2,
+    Eventos: 3,
+    Recursos: 4,
+    PQRS: 5
+};
+
+async function leerRemoto() {
+    return requestsApi.list();
 }
 
-function repararSolicitudes(lista) {
-    if (!Array.isArray(lista) || !lista.length) return SOLICITUDES_BASE;
-    const baseMap = {};
-    SOLICITUDES_BASE.forEach((s) => { baseMap[s.id] = s; });
+async function crearRemoto(modelo) {
+    const creado = await requestsApi.create(mapearSolicitudAPayload(modelo));
+    return mapearSolicitud(creado) || modelo;
+}
 
-    const reparadas = lista.map((s) => {
-        if (esSolicitudValida(s)) return s;
-        const base = baseMap[s.id];
-        return base || s;
-    });
+// Colección: caché local -> render inmediato -> refresco asíncrono desde la API.
+const coleccion = crearColeccion({
+    clave: CLAVE_COLECCION,
+    leer: leerRemoto,
+    mapear: mapearSolicitud,
+    semilla: SOLICITUDES_BASE,
+    crear: crearRemoto
+});
 
-    const idsBase = SOLICITUDES_BASE.map((s) => s.id);
-    const idsActuales = reparadas.map((s) => s.id);
-    idsBase.forEach((id) => {
-        if (!idsActuales.includes(id)) {
-            reparadas.push(baseMap[id]);
-        }
-    });
+function ahora() {
+    return new Date().toISOString().slice(0, 16).replace("T", " ");
+}
 
-    return reparadas;
+/** Fija la lista en la colección, la cachea y avisa a los suscriptores. */
+function fijarLista(lista) {
+    establecer(CLAVE_COLECCION, lista);
+}
+
+/** Inserta o reemplaza una solicitud dentro de la colección. */
+function guardarEnColeccion(solicitud) {
+    const lista = obtenerSolicitudes();
+    const existe = lista.some((s) => String(s.id) === String(solicitud.id));
+    const siguiente = existe
+        ? lista.map((s) => (String(s.id) === String(solicitud.id) ? solicitud : s))
+        : [solicitud, ...lista];
+    fijarLista(siguiente);
 }
 
 export function obtenerSolicitudes() {
-    if (typeof window === "undefined") return SOLICITUDES_BASE;
-
-    try {
-        const guardadas = localStorage.getItem(STORAGE_KEY);
-        if (!guardadas) {
-            guardarSolicitudes(SOLICITUDES_BASE);
-            return SOLICITUDES_BASE;
-        }
-        const parsed = JSON.parse(guardadas);
-        if (!Array.isArray(parsed) || !parsed.length) {
-            guardarSolicitudes(SOLICITUDES_BASE);
-            return SOLICITUDES_BASE;
-        }
-        const reparadas = repararSolicitudes(parsed);
-        if (JSON.stringify(reparadas) !== JSON.stringify(parsed)) {
-            guardarSolicitudes(reparadas);
-        }
-        return reparadas;
-    } catch {
-        guardarSolicitudes(SOLICITUDES_BASE);
-        return SOLICITUDES_BASE;
-    }
+    return listar(CLAVE_COLECCION);
 }
 
 export function guardarSolicitudes(solicitudes) {
-    if (typeof window === "undefined") return;
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(solicitudes));
-    } catch {
-        // si localStorage no está disponible se ignora
-    }
+    const lista = Array.isArray(solicitudes) && solicitudes.length
+        ? solicitudes
+        : SOLICITUDES_BASE;
+    fijarLista(lista);
 }
 
 export function resetSolicitudes() {
-    if (typeof window === "undefined") return;
-    try {
-        localStorage.removeItem(STORAGE_KEY);
-    } catch {
-        // si localStorage no está disponible se ignora
-    }
-    guardarSolicitudes(SOLICITUDES_BASE);
+    fijarLista(SOLICITUDES_BASE);
+    // La semilla queda en pantalla de inmediato; el store vuelve a pedirla
+    // al backend en segundo plano.
+    refrescar(CLAVE_COLECCION);
 }
 
 export function obtenerSolicitudPorId(id) {
-    return obtenerSolicitudes().find((s) => String(s.id) === String(id)) || null;
+    return (
+        obtenerSolicitudes().find(
+            (s) => String(s.id) === String(id) || String(s.id_solicitud) === String(id)
+        ) || null
+    );
 }
 
 // ---- Filtro por rol ----
@@ -448,62 +449,106 @@ function aplicarAccion(solicitud, accion, datos = {}) {
     }
 }
 
-// Aplica una acción y persiste. Devuelve la solicitud actualizada o null.
-export function ejecutarAccion(id, accion, datos = {}) {
-    const lista = obtenerSolicitudes();
-    const index = lista.findIndex((s) => String(s.id) === String(id));
-    if (index < 0) return null;
+// Aplica una acción contra el backend y refleja el resultado en la colección.
+// Devuelve la solicitud actualizada o null si la acción no aplica.
+export async function ejecutarAccion(id, accion, datos = {}) {
+    const solicitud = obtenerSolicitudPorId(id);
+    if (!solicitud) return null;
 
-    const solicitud = lista[index];
     const resultado = aplicarAccion(solicitud, accion, {
         ...datos,
-        fecha: datos.fecha || new Date().toISOString().slice(0, 16).replace("T", " ")
+        fecha: datos.fecha || ahora()
     });
     if (!resultado) return null;
 
-    const idsExistentes = (solicitud.historial || []).map((e) => Number(e.id) || 0);
+    const historial = solicitud.historial || [];
+    const idsExistentes = historial.map((e) => Number(e.id) || 0);
     const maxId = idsExistentes.length ? Math.max(...idsExistentes) : 0;
     const nuevoEvento = {
         ...resultado.evento,
         id: maxId + 1
     };
 
-    const actualizada = {
+    // Estado optimista por si el backend no responde.
+    const optimista = {
         ...solicitud,
         estado: resultado.estado,
         responsable: resultado.responsable,
-        historial: [...(solicitud.historial || []), nuevoEvento]
+        historial: [...historial, nuevoEvento]
     };
 
-    lista[index] = actualizada;
-    guardarSolicitudes(lista);
-    return actualizada;
+    const idBd = solicitud.id_solicitud ?? null;
+    if (!idBd) {
+        // Solo vive en la caché local: no hay fila que avanzar en la BD.
+        guardarEnColeccion(optimista);
+        return optimista;
+    }
+
+    const cuerpo = {
+        accion,
+        estado: resultado.estado,
+        responsable: resultado.responsable?.id ?? "",
+        usuario: datos.usuario || "Administrador",
+        descripcion: nuevoEvento.descripcion || ""
+    };
+
+    try {
+        const remoto = accion === "nota"
+            ? await requestsApi.addNote(idBd, {
+                  usuario: cuerpo.usuario,
+                  descripcion: cuerpo.descripcion
+              })
+            : await requestsApi.advance(idBd, cuerpo);
+
+        const actualizada = mapearSolicitud(remoto) || optimista;
+        guardarEnColeccion(actualizada);
+        coleccion.enLinea = true;
+        return actualizada;
+    } catch {
+        // Sin backend se conserva el cambio local para no perder la interacción.
+        guardarEnColeccion(optimista);
+        return optimista;
+    }
 }
 
-export function crearSolicitud({ tipo, servicio, descripcion, prioridad = "Media" }, usuario = "Usuario") {
+export async function crearSolicitud(
+    { tipo, servicio, descripcion, prioridad = "Media" },
+    usuario = "Usuario"
+) {
     const lista = obtenerSolicitudes();
-    const fecha = new Date().toISOString().slice(0, 16).replace("T", " ");
-    const fechaSolo = fecha.slice(0, 10);
+    const fecha = ahora();
+    const nombreUsuario =
+        typeof usuario === "string" ? usuario : usuario?.nombre || "Usuario";
+    const idUsuario = typeof usuario === "object" && usuario ? usuario?.id ?? null : null;
 
     const nueva = {
         id: `SOL-2026-${String(lista.length + 1).padStart(3, "0")}`,
         tipo,
         servicio,
+        id_servicio: SERVICIO_ID[servicio] ?? null,
         prioridad,
-        fecha: fechaSolo,
+        fecha: fecha.slice(0, 10),
         estado: "REGISTRADA",
-        usuario: { id: null, nombre: typeof usuario === "string" ? usuario : usuario?.nombre || "Usuario" },
+        solicitante: nombreUsuario,
+        usuario: { id: idUsuario, nombre: nombreUsuario },
         responsable: null,
         dependencia: "",
         descripcion,
         historial: [
-            { id: 1, tipo: "CREACION", fecha, usuario: typeof usuario === "string" ? usuario : usuario?.nombre || "Usuario", descripcion: "Solicitud registrada." }
+            {
+                id: 1,
+                tipo: TIPOS_EVENTO.CREACION,
+                fecha,
+                usuario: nombreUsuario,
+                descripcion: "Solicitud registrada."
+            }
         ]
     };
 
-    lista.unshift(nueva);
-    guardarSolicitudes(lista);
-    return nueva;
+    // El store hace el POST optimista y revierte si el backend rechaza;
+    // el error se propaga para que la UI lo muestre.
+    const creada = await crear(CLAVE_COLECCION, nueva);
+    return creada || nueva;
 }
 
 export function contarPorEstado(lista, estado) {

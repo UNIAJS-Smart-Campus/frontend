@@ -489,3 +489,16 @@
         padding: 16px;
     }
 }
+
+/* Miniatura de la publicacion, elegida por categoria. */
+.info-ac__item-media {
+    width: 118px;
+    height: 82px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+    .info-ac__item-media { display: none; }
+}

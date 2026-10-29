@@ -1,21 +1,23 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import useAuth from "../../context/useAuth";
-import useToast from "../../context/useToast";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import Pagination from "../../components/Pagination/Pagination";
 import Modal from "../../components/Modal/Modal";
+import useSugerencias from "../../hooks/useSugerencias";
 import {
     ESTADOS_SOLICITUD,
     ETIQUETA_ESTADO,
     ESTADO_COLOR,
     ESTADOS_FINALES,
     ACCIONES_POR_ESTADO,
+    crearSolicitud,
+    ejecutarAccion,
     progresoDe
 } from "../../utils/solicitudes";
-import { usersApi } from "../../utils/api";
-import { requestsApi } from "../../utils/api";
+import { obtenerUsuarios } from "../../utils/users";
+import useColeccion from "../../hooks/useColeccion";
 import usePagination from "../../hooks/usePagination";
 import "./Solicitudes.css";
 
@@ -49,6 +51,12 @@ const PRIORIDAD_SUMMARY_CLASE = {
 
 const PRIORIDADES = ["Alta", "Media", "Baja"];
 
+const MAX_PALABRAS_TIPO = 10;
+const MAX_PALABRAS_DESCRIPCION = 100;
+
+const contarPalabras = (texto = "") =>
+    texto.trim() ? texto.trim().split(/\s+/).length : 0;
+
 const formVacio = {
     tipo: "",
     servicio: "",
@@ -57,38 +65,7 @@ const formVacio = {
 };
 
 function Solicitudes() {
-    const [items, setItems] = useState([]);
-    const [cargando, setCargando] = useState(true);
-    const [usuarios, setUsuarios] = useState([]);
-    const toast = useToast();
-
-    const cargar = useCallback(async () => {
-        try {
-            const [sols, users] = await Promise.all([
-                requestsApi.list(),
-                usersApi.list().catch(() => [])
-            ]);
-            setItems(Array.isArray(sols) ? sols : []);
-            setUsuarios(Array.isArray(users) ? users : []);
-        } catch (err) {
-            toast.error(err.message || "No se pudieron cargar las solicitudes.");
-            setItems([]);
-        } finally {
-            setCargando(false);
-        }
-    }, [toast]);
-
-    useEffect(() => {
-        // Se difiere al microtask para no ejecutar setState durante el efecto.
-        let activo = true;
-        Promise.resolve().then(() => {
-            if (activo) cargar();
-        });
-        return () => {
-            activo = false;
-        };
-    }, [cargar]);
-
+    const { items, error, enLinea, recargar } = useColeccion("solicitudes");
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");
     const [estado, setEstado] = useState("");
@@ -110,7 +87,7 @@ function Solicitudes() {
     const [motivoPausa, setMotivoPausa] = useState("");
     const [motivoReabrir, setMotivoReabrir] = useState("");
     const [responsableSeleccionado, setResponsableSeleccionado] = useState(null);
-    const [aviso, setAviso] = useState("");
+    const [aviso, setAviso] = useState(null);
 
     const { user, puede } = useAuth();
     const puedeGestionar = puede("actualizar_estados") || puede("gestionar_solicitudes");
@@ -118,14 +95,14 @@ function Solicitudes() {
 
     const responsables = useMemo(
         () =>
-            usuarios
+            obtenerUsuarios()
                 .filter(
                     (u) =>
                         (u.rol === "Administrador" || u.rol === "Administrativo") &&
                         u.estado === "Activo"
                 )
                 .map((u) => ({ id: u.id, nombre: u.nombre })),
-        [usuarios]
+        []
     );
 
     const encontradas = useMemo(() => {
@@ -152,7 +129,8 @@ function Solicitudes() {
     const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
         usePagination(encontradas, 6);
 
-    const sugerencias = useMemo(() => {
+    // Respaldo local: se usa si Elasticsearch no responde.
+    const sugerenciasLocales = useMemo(() => {
         return [
             ...new Set(
                 items
@@ -166,6 +144,7 @@ function Solicitudes() {
             )
         ];
     }, [items]);
+    const sugerencias = useSugerencias(query, "SOLICITUDES", sugerenciasLocales);
 
     const fechasLegibles = (fecha) => {
         const partes = String(fecha).split("-");
@@ -177,9 +156,9 @@ function Solicitudes() {
         return `${partes[2]} ${meses[Number(partes[1]) - 1]} ${partes[0]}`;
     };
 
-    const mostrarAviso = (texto) => {
-        setAviso(texto);
-        setTimeout(() => setAviso(""), 2500);
+    const mostrarAviso = (texto, tipo = "success") => {
+        setAviso({ texto, tipo });
+        setTimeout(() => setAviso(null), 2500);
     };
 
     const cambiarEstado = (nuevoEstado) => {
@@ -194,84 +173,36 @@ function Solicitudes() {
         setBusqueda("");
     };
 
-    const actualizarItem = (actualizada) => {
-        setItems((prev) =>
-            prev.map((i) => (String(i.id) === String(actualizada.id) ? actualizada : i))
-        );
-    };
-
     const accionSimple = async (id, accion, datos = {}) => {
         if (!puedeGestionar) {
-            mostrarAviso("No tienes permiso para realizar esta acción.");
-            return;
-        }
-        if (!id) {
-            toast.error("No se pudo identificar la solicitud. Recarga la página.");
-            return;
+            mostrarAviso("No tienes permiso para realizar esta acción.", "error");
+            return null;
         }
         try {
-            const actual = items.find((s) => String(s.id) === String(id));
-            if (!actual) return;
-            let payload;
-            switch (accion) {
-                case "revisar":
-                    payload = { ...actual, estado: "EN_REVISION" };
-                    break;
-                case "asignar":
-                    payload = {
-                        ...actual,
-                        estado: "ASIGNADA",
-                        responsable: datos.responsable || actual.responsable
-                    };
-                    break;
-                case "proceso":
-                    payload = { ...actual, estado: "EN_PROCESO" };
-                    break;
-                case "resolver":
-                    payload = { ...actual, estado: "RESUELTA" };
-                    break;
-                case "cerrar":
-                    payload = { ...actual, estado: "CERRADA" };
-                    break;
-                case "pausar":
-                    payload = {
-                        ...actual,
-                        estado: "PAUSADA",
-                        motivo: datos.descripcion || ""
-                    };
-                    break;
-                case "reanudar":
-                    payload = { ...actual, estado: "EN_PROCESO" };
-                    break;
-                case "rechazar":
-                    payload = {
-                        ...actual,
-                        estado: "RECHAZADA",
-                        respuesta: datos.descripcion || actual.respuesta,
-                        motivo: datos.descripcion || ""
-                    };
-                    break;
-                case "reabrir":
-                    payload = {
-                        ...actual,
-                        estado: "EN_REVISION",
-                        motivo: datos.descripcion || ""
-                    };
-                    break;
-                case "nota":
-                    payload = {
-                        ...actual,
-                        motivo: datos.descripcion || ""
-                    };
-                    break;
-                default:
-                    payload = actual;
+            const act = await ejecutarAccion(id, accion, {
+                usuario: user?.nombre || "Administrador",
+                ...datos
+            });
+            if (!act) {
+                mostrarAviso(
+                    "La acción no aplica para el estado actual.",
+                    "error"
+                );
+                return null;
             }
-            const updated = await requestsApi.update(id, payload);
-            actualizarItem(updated);
-            mostrarAviso("Acción ejecutada correctamente.");
+            mostrarAviso(
+                enLinea
+                    ? "Acción ejecutada correctamente."
+                    : "Sin conexión con el servidor: el cambio quedó pendiente.",
+                enLinea ? "success" : "warning"
+            );
+            return act;
         } catch (err) {
-            toast.error(err.message || "No se pudo ejecutar la acción.");
+            mostrarAviso(
+                err?.message || "No se pudo ejecutar la acción.",
+                "error"
+            );
+            return null;
         }
     };
 
@@ -363,18 +294,20 @@ function Solicitudes() {
 
     const validarForm = () => {
         const errores = {};
+        const palabrasTipo = contarPalabras(form.tipo);
         if (!form.tipo.trim()) {
             errores.tipo = "El tipo es obligatorio.";
-        } else if (form.tipo.trim().length < 10) {
-            errores.tipo = `Mínimo 10 caracteres (faltan ${10 - form.tipo.trim().length}).`;
+        } else if (palabrasTipo > MAX_PALABRAS_TIPO) {
+            errores.tipo = `Máximo ${MAX_PALABRAS_TIPO} palabras (excede en ${palabrasTipo - MAX_PALABRAS_TIPO}).`;
         }
         if (!form.servicio) {
             errores.servicio = "Selecciona un servicio.";
         }
+        const palabrasDescripcion = contarPalabras(form.descripcion);
         if (!form.descripcion.trim()) {
             errores.descripcion = "La descripción es obligatoria.";
-        } else if (form.descripcion.trim().length < 20) {
-            errores.descripcion = `Mínimo 20 caracteres (faltan ${20 - form.descripcion.trim().length}).`;
+        } else if (palabrasDescripcion > MAX_PALABRAS_DESCRIPCION) {
+            errores.descripcion = `Máximo ${MAX_PALABRAS_DESCRIPCION} palabras (excede en ${palabrasDescripcion - MAX_PALABRAS_DESCRIPCION}).`;
         }
         return errores;
     };
@@ -387,22 +320,16 @@ function Solicitudes() {
             return;
         }
         try {
-            const nueva = await requestsApi.create({
-                tipo: form.tipo,
-                servicio: form.servicio,
-                descripcion: form.descripcion,
-                prioridad: form.prioridad,
-                usuarioId: user?.id ?? null,
-                solicitante: user?.nombre ?? "Usuario",
-                estado: "REGISTRADA"
-            });
-            setItems((prev) => [nueva, ...prev]);
+            await crearSolicitud(form, user ?? "Usuario");
             setCrearAbierto(false);
             setForm(formVacio);
             setFormErrores({});
             mostrarAviso("Solicitud registrada correctamente.");
         } catch (err) {
-            toast.error(err.message || "No se pudo registrar la solicitud.");
+            mostrarAviso(
+                err?.message || "No se pudo registrar la solicitud.",
+                "error"
+            );
         }
     };
 
@@ -495,9 +422,30 @@ function Solicitudes() {
             </div>
 
             {aviso && (
-                <div className="toast toast--success">
+                <div className={`toast toast--${aviso.tipo}`}>
                     <Icon name="info" size={14} />
-                    {aviso}
+                    {aviso.texto}
+                </div>
+            )}
+
+            {error && (
+                <div className="toast toast--warning">
+                    <Icon name="info" size={14} />
+                    No se pudo sincronizar con el servidor: {error}
+                </div>
+            )}
+
+            {aviso === null && !error && !enLinea && (
+                <div className="toast toast--warning">
+                    <Icon name="info" size={14} />
+                    Mostrando datos locales.{" "}
+                    <button
+                        type="button"
+                        className="button button--ghost button--sm"
+                        onClick={recargar}
+                    >
+                        Reintentar
+                    </button>
                 </div>
             )}
 
@@ -595,6 +543,8 @@ function Solicitudes() {
                             onChange={(e) => setQuery(e.target.value)}
                             onSearch={() => setBusqueda(query)}
                             suggestions={sugerencias}
+                            serverSide
+                            description=""
                         />
                     </div>
 
@@ -646,9 +596,7 @@ function Solicitudes() {
 
             {itemsPagina.length === 0 ? (
                 <div className="empty">
-                    {cargando
-                        ? "Cargando solicitudes..."
-                        : "No se encontraron solicitudes con los filtros aplicados."}
+                    No se encontraron solicitudes con los filtros aplicados.
                 </div>
             ) : (
                 <>
@@ -807,8 +755,9 @@ function Solicitudes() {
                             {formErrores.tipo ? (
                                 <span className="sols__field-error">{formErrores.tipo}</span>
                             ) : (
-                                <span className="sols__field-hint">
-                                    {form.tipo.trim().length}/10 caracteres mínimos
+<span className="sols__field-hint">
+                                    {contarPalabras(form.tipo)}/
+                                    {MAX_PALABRAS_TIPO} palabras como máximo
                                 </span>
                             )}
                         </div>
@@ -868,7 +817,9 @@ function Solicitudes() {
                             <span className="sols__field-error">{formErrores.descripcion}</span>
                         ) : (
                             <span className="sols__field-hint">
-                                {form.descripcion.trim().length}/20 caracteres mínimos
+                                {contarPalabras(form.descripcion)}/
+                                {MAX_PALABRAS_DESCRIPCION} palabras como
+                                máximo
                             </span>
                         )}
                     </div>

@@ -210,38 +210,95 @@
 }
 
 /* ============ MODAL FORM ============ */
+.users__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.users__form-note {
+    margin: 0;
+    font-size: 10px;
+    color: var(--color-text-muted);
+}
+
+.users__form-note span,
+.users__req {
+    color: var(--color-danger);
+    font-weight: 800;
+}
+
+.users__form-pending {
+    margin: 0;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    background: var(--color-surface-alt);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+}
+
 .users__form-group {
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 6px;
+    min-width: 0;
 }
 
 .users__form-group label {
+    display: block;
+    margin: 0;
     font-size: 11px;
-    color: var(--color-text-muted);
-    font-weight: 600;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    letter-spacing: 0.02em;
 }
 
 .users__form-group input,
 .users__form-group select {
-    border: 1px solid var(--color-border);
-    border-radius: 7px;
-    padding: 11px 12px;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 44px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius);
+    padding: 11px 13px;
     background-color: var(--color-input-bg);
     color: var(--color-text);
     font-family: inherit;
-    font-size: 12px;
+    font-size: 13px;
+    line-height: 1.4;
     outline: none;
-    transition: border-color var(--transition-fast);
+    transition: border-color var(--transition-fast),
+        box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+
+.users__form-group input::placeholder {
+    color: var(--color-text-faint);
 }
 
 .users__form-group select {
     cursor: pointer;
+    padding-right: 36px;
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%),
+        linear-gradient(135deg, var(--color-text-secondary) 50%, transparent 50%);
+    background-position: calc(100% - 18px) calc(50% - 1px),
+        calc(100% - 13px) calc(50% - 1px);
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
 }
 
 .users__form-group input:focus,
 .users__form-group select:focus {
     border-color: var(--color-primary-600);
+    box-shadow: 0 0 0 4px rgba(2, 94, 115, 0.08);
+    background-color: var(--color-surface);
+}
+
+.users__form-group input:disabled,
+.users__form-group select:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 .users__error {
@@ -249,9 +306,9 @@
     font-size: 11px;
     font-weight: 600;
     color: var(--color-danger);
-    background-color: var(--color-danger-100);
-    border: 1px solid var(--color-danger);
-    border-radius: 7px;
+    background-color: var(--color-danger-50);
+    border: 1px solid var(--color-danger-100);
+    border-radius: var(--radius);
     padding: 10px 12px;
 }
 
@@ -262,18 +319,18 @@
 }
 
 .users__password-wrap input {
-    padding-right: 74px;
+    padding-right: 78px;
 }
 
 .users__password-toggle {
     position: absolute;
     right: 6px;
-    height: 28px;
+    height: 32px;
     padding: 0 10px;
     border: none;
     background: var(--color-hover);
     color: var(--color-primary-600);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-size: 9px;
     font-weight: 700;
     cursor: pointer;
@@ -296,13 +353,46 @@
     }
 }
 
+@media (max-width: 480px) {
+    .users__filter-select {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .users__item {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .users__item-actions {
+        gap: 8px;
+    }
+
+    .users__edit-button,
+    .users__deactivate-button,
+    .users__activate-button {
+        min-height: 44px;
+        flex: 1;
+    }
+
+    .users__password-toggle {
+        min-height: 40px;
+        min-width: 44px;
+    }
+
+    .users__password-wrap input {
+        padding-right: 68px;
+    }
+}
+
 
 /* Hint de password en el modal */
 .users__password-hint {
+    margin: 0;
     font-size: 10px;
     color: var(--color-text-muted);
     background: var(--color-surface-alt);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     padding: 8px 10px;
 }
 

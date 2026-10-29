@@ -102,3 +102,20 @@
     justify-content: center;
     flex-shrink: 0;
 }
+
+@media (max-width: 480px) {
+    .dropdown__menu,
+    .dropdown__menu--left,
+    .dropdown__menu--center {
+        position: fixed;
+        left: var(--space-3);
+        right: var(--space-3);
+        min-width: 0;
+        top: auto;
+        bottom: var(--space-3);
+        transform: none;
+        border-radius: var(--radius-lg);
+        max-height: 80dvh;
+        overflow-y: auto;
+    }
+}

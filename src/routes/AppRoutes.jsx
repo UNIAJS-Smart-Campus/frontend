@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -7,31 +8,35 @@ import {
 import DashboardLayout from "../layouts/DashboardLayout";
 import ProtectedRoute from "../components/ProtectedRoute/ProtectedRoute";
 
-import Landing from "../pages/Landing/Landing";
-import Login from "../pages/Login/Login";
-import Recuperar from "../pages/Recuperar/Recuperar";
-import Servicio from "../pages/Servicio/Servicio";
-import NotFound from "../pages/NotFound/NotFound";
-
-import Dashboard from "../pages/Dashboard/Dashboard";
-import Solicitudes from "../pages/Solicitudes/Solicitudes";
-import SolicitudDetalle from "../pages/Solicitudes/SolicitudDetalle";
-import Reservas from "../pages/Reservas/Reservas";
-import Recursos from "../pages/Recursos/Recursos";
-import Eventos from "../pages/Eventos/Eventos";
-import Notificaciones from "../pages/Notificaciones/Notificaciones";
-import Perfil from "../pages/Perfil/Perfil";
-import Configuracion from "../pages/Configuracion/Configuracion";
-import PQRS from "../pages/PQRS/PQRS";
-import NuevaPQRS from "../pages/PQRS/NuevaPQRS/NuevaPQRS";
-import Usuarios from "../pages/Usuarios/Usuarios";
-import Reportes from "../pages/Reportes/Reportes";
-import InfoAcademica from "../pages/InfoAcademica/InfoAcademica";
-import Servicios from "../pages/Servicios/Servicios";
+const Landing = lazy(() => import("../pages/Landing/Landing"));
+const Login = lazy(() => import("../pages/Login/Login"));
+const Recuperar = lazy(() => import("../pages/Recuperar/Recuperar"));
+const Servicio = lazy(() => import("../pages/Servicio/Servicio"));
+const NotFound = lazy(() => import("../pages/NotFound/NotFound"));
+const Dashboard = lazy(() => import("../pages/Dashboard/Dashboard"));
+const Solicitudes = lazy(() => import("../pages/Solicitudes/Solicitudes"));
+const SolicitudDetalle = lazy(() => import("../pages/Solicitudes/SolicitudDetalle"));
+const Reservas = lazy(() => import("../pages/Reservas/Reservas"));
+const Recursos = lazy(() => import("../pages/Recursos/Recursos"));
+const Eventos = lazy(() => import("../pages/Eventos/Eventos"));
+const Notificaciones = lazy(() => import("../pages/Notificaciones/Notificaciones"));
+const Perfil = lazy(() => import("../pages/Perfil/Perfil"));
+const Configuracion = lazy(() => import("../pages/Configuracion/Configuracion"));
+const PQRS = lazy(() => import("../pages/PQRS/PQRS"));
+const NuevaPQRS = lazy(() => import("../pages/PQRS/NuevaPQRS/NuevaPQRS"));
+const Usuarios = lazy(() => import("../pages/Usuarios/Usuarios"));
+const Reportes = lazy(() => import("../pages/Reportes/Reportes"));
+const InfoAcademica = lazy(() => import("../pages/InfoAcademica/InfoAcademica"));
+const Servicios = lazy(() => import("../pages/Servicios/Servicios"));
 
 function AppRoutes() {
   return (
     <BrowserRouter>
+      <Suspense fallback={
+        <div role="status" aria-live="polite">
+          Cargando UAJS Smart Campus...
+        </div>
+      }>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
@@ -170,6 +175,7 @@ function AppRoutes() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

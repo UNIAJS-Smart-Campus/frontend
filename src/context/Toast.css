@@ -79,3 +79,12 @@
         transform: translateY(0) scale(1);
     }
 }
+
+@media (max-width: 480px) {
+    .toast-container {
+        right: 12px;
+        left: 12px;
+        bottom: 12px;
+        max-width: none;
+    }
+}

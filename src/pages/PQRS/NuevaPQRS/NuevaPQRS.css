@@ -194,6 +194,24 @@
     }
 }
 
+@media (max-width: 480px) {
+    .nueva-pqrs__file-row {
+        align-items: flex-start;
+    }
+
+    .nueva-pqrs__file {
+        min-width: 100%;
+    }
+
+    .nueva-pqrs__file-name {
+        overflow-wrap: anywhere;
+    }
+
+    .nueva-pqrs__check-group {
+        padding: 12px;
+    }
+}
+
 .nueva-pqrs__input {
     width: 100%;
     border: 1px solid var(--color-border);

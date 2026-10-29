@@ -1,3 +1,19 @@
+// ============================================================
+// SERVICIOS — catálogo de módulos de la plataforma.
+//
+// DECISIÓN: estos datos siguen siendo estáticos a propósito.
+// El backend no expone /api/services; la tabla `servicios` del esquema
+// (id_servicio, nombre, descripcion, estado) es la que usa el módulo de
+// Solicitudes para clasificar cada trámite (ver SERVICIO_NOMBRE en
+// mapeo.js), NO el catálogo de módulos que muestra esta pantalla.
+//
+// Cada tarjeta es un acceso a un módulo de la app (Solicitudes, Reservas,
+// Recursos, Eventos, Notificaciones, PQRS) con su ícono, categoría y
+// descripción: no existe tabla que los describa, así que inventar una
+// llamada a la API solo produciría errores. Para los datos vivos de cada
+// módulo se usan sus colecciones del store (recursos, eventos, pqrs...).
+// ============================================================
+
 const services = [
     {
         name: "Solicitudes",

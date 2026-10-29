@@ -532,3 +532,56 @@
         padding: 40px var(--space-4) 48px;
     }
 }
+
+@media (max-width: 480px) {
+    .landing__header {
+        padding: var(--space-4) var(--space-4);
+        gap: var(--space-3);
+    }
+
+    .landing__brand {
+        padding: 8px 12px;
+        gap: var(--space-3);
+    }
+
+    .landing__logo {
+        height: 44px;
+    }
+
+    .landing__brand-copy {
+        display: none;
+    }
+
+    .landing__title {
+        font-size: 26px;
+        margin: var(--space-4) 0;
+    }
+
+    .landing__subtitle {
+        font-size: 14px;
+    }
+
+    .landing__actions {
+        gap: var(--space-3);
+    }
+
+    .landing__primary,
+    .landing__secondary {
+        width: 100%;
+        justify-content: center;
+        display: inline-flex;
+        padding: 14px 20px;
+    }
+
+    .landing__section-title {
+        font-size: 23px;
+    }
+
+    .landing__card {
+        padding: var(--space-5);
+    }
+
+    .landing__eyebrow {
+        font-size: 9px;
+    }
+}

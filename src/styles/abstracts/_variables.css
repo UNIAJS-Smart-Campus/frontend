@@ -9,20 +9,26 @@
     --color-primary-700: #034D62;   /* Hover/active oscuro */
     --color-primary-600: #025E73;   /* Estado active */
     --color-primary-500: #0E7A92;
-    --color-primary-400: #2D99B0;
+    --color-primary-400: #38B396;
     --color-primary-300: #5CB5C9;
     --color-primary-200: #A0D4E0;
     --color-primary-100: #D0ECF1;
     --color-primary-50: #EBF6F9;
 
-    --color-accent: #F2B705;        /* Amarillo dorado */
-    --color-accent-dark: #CC9B04;
+    --color-accent: #E9BF2F;        /* Dorado institucional */
+    --color-accent-dark: #C49B10;
     --color-accent-light: #F7D466;
-    --color-accent-100: #FDE9A0;
-    --color-accent-50: #FEF5D6;
+    --color-accent-100: #FBEBB3;
+    --color-accent-50: #FDF6DC;
 
 /* Logo */
     --logo-width: 140px;
+
+/* Colores adicionales frontend */
+    --color-teal: #38B396;
+    --color-gold: #E9BF2F;
+    --color-slate: #7A848A;
+    --color-navy: #273E4E;
 
 /* Superficies */
     --color-bg: #F2F2F2;
@@ -36,9 +42,9 @@
     --color-input-bg: #FFFFFF;
 
 /* Texto */
-    --color-text: #10233A;
-    --color-text-secondary: #60748A;
-    --color-text-muted: #8890A0;
+    --color-text: #273E4E;
+    --color-text-secondary: #7A848A;
+    --color-text-muted: #98A1A6;
     --color-text-faint: #A0A5B0;
     --color-text-inverse: #FFFFFF;
 
@@ -117,17 +123,17 @@
     --color-primary-700: #1F4D5E;
     --color-primary-600: #4DB8D0;
     --color-primary-500: #6CC8DD;
-    --color-primary-400: #8ED5E6;
+    --color-primary-400: #38B396;
     --color-primary-300: #B0E3EF;
     --color-primary-200: #D0ECF1;
     --color-primary-100: #1A3A4A;
     --color-primary-50: #142F3D;
 
-    --color-accent: #F5C842;
-    --color-accent-dark: #D9AD1A;
-    --color-accent-light: #F9DC7A;
-    --color-accent-100: #FFF1BF;
-    --color-accent-50: #FFF9E6;
+    --color-accent: #E9BF2F;
+    --color-accent-dark: #B89410;
+    --color-accent-light: #F7D466;
+    --color-accent-100: #47360F;
+    --color-accent-50: #2E250E;
 
     --color-bg: #0A1520;
     --color-bg-alt: #0F1D2B;
@@ -189,7 +195,7 @@
         --color-primary-700: #1F4D5E;
         --color-primary-600: #4DB8D0;
         --color-primary-500: #6CC8DD;
-        --color-primary-400: #8ED5E6;
+        --color-primary-400: #38B396;
         --color-primary-300: #B0E3EF;
         --color-primary-200: #D0ECF1;
         --color-primary-100: #1A3A4A;

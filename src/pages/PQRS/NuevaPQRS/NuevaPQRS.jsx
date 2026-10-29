@@ -2,15 +2,15 @@ import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../../../components/Icon/Icon";
 import useAuth from "../../../context/useAuth";
-import useToast from "../../../context/useToast";
 import {
     TIPOS_PQRS,
     TIPOS_DOCUMENTO,
     TIPOS_PERFIL,
     SEDES,
-    AREAS_PQRS
+    AREAS_PQRS,
+    ESTADO_INICIAL,
+    crearPqrs
 } from "../../../utils/pqrs";
-import { feedbackApi } from "../../../utils/api";
 import "./NuevaPQRS.css";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -47,7 +47,6 @@ function extensionValida(nombre) {
 
 function NuevaPQRS() {
     const { user } = useAuth();
-    const toast = useToast();
     const [form, setForm] = useState(() => ({
         ...formVacio,
         nombre: user?.nombre || "",
@@ -150,36 +149,45 @@ function NuevaPQRS() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validar()) return;
-
         setEnviando(true);
-        try {
-            const numero = await feedbackApi.create({
-                tipo: form.tipo,
-                sede: form.sede,
-                tipoPerfil: form.tipoPerfil,
-                tipoDocumento: form.tipoDocumento,
-                identificacion: form.identificacion.trim(),
-                nombre: form.nombre.trim(),
-                telefono: form.telefono.trim(),
-                correo: form.correo.trim(),
-                area: form.area,
-                asunto: form.asunto.trim(),
-                descripcion: form.descripcion.trim(),
-                fecha: new Date().toISOString().slice(0, 10),
-                estado: "Registrada",
-                solicitante: user?.nombre || form.nombre.trim() || "Anónimo",
-                usuarioId: user?.id ?? null,
-                prioridad: "Media",
-                adjunto: adjunto
-                    ? { nombre: adjunto.nombre, tipo: adjunto.tipo, dataUrl: adjunto.dataUrl }
-                    : null
-            });
 
+        // El id lo asigna la tabla `pqrs` (AUTO_INCREMENT): el número visible
+        // se arma cuando el feedback-service responde.
+        const nueva = {
+            tipo: form.tipo,
+            sede: form.sede,
+            tipoPerfil: form.tipoPerfil,
+            tipoDocumento: form.tipoDocumento,
+            identificacion: form.identificacion.trim(),
+            nombre: form.nombre.trim(),
+            telefono: form.telefono.trim(),
+            correo: form.correo.trim(),
+            area: form.area,
+            asunto: form.asunto.trim(),
+            descripcion: form.descripcion.trim(),
+            fecha: new Date().toISOString().slice(0, 10),
+            estado: ESTADO_INICIAL,
+            solicitante: user?.nombre || form.nombre.trim() || "Anónimo",
+            usuarioId: user?.id ?? null,
+            // El tipo es ENUM estricto en la BD: solo se envían los valores
+            // de TIPOS_PQRS.
+            adjunto: adjunto
+                ? { nombre: adjunto.nombre, tipo: adjunto.tipo, dataUrl: adjunto.dataUrl }
+                : null
+        };
+
+        try {
+            const creada = await crearPqrs(nueva);
             setConfirmacion(
-                `Tu ${form.tipo.toLowerCase()} fue registrada con el número ${numero?.id_pqrs ?? numero?.id ?? "asignado"}.`
+                `Tu ${form.tipo.toLowerCase()} fue registrada con el número ${
+                    creada?.codigo || creada?.id || "pendiente"
+                }.`
             );
-        } catch (err) {
-            toast.error(err.message || "No se pudo radicar la PQRS.");
+        } catch (error) {
+            setErrores((prev) => ({
+                ...prev,
+                descripcion: error.message || "No se pudo registrar la PQRS."
+            }));
         } finally {
             setEnviando(false);
         }
@@ -475,7 +483,7 @@ function NuevaPQRS() {
                         disabled={enviando}
                     >
                         <Icon name="pqrs" size={15} />
-                        {enviando ? "Enviando..." : "Radicar PQRS"}
+                        {enviando ? "Registrando…" : "Radicar PQRS"}
                     </button>
                 </div>
             </form>

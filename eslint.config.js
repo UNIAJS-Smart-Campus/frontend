@@ -18,4 +18,11 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    // vite.config.js corre en Node, no en el navegador: process.env existe ahí.
+    files: ['vite.config.js', 'eslint.config.js'],
+    languageOptions: {
+      globals: { ...globals.node },
+    },
+  },
 ])

@@ -1,0 +1,10 @@
+/* La ilustración ocupa todo el recuadro de la tarjeta. */
+.imagen-categoria {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+    user-select: none;
+    pointer-events: none;
+}

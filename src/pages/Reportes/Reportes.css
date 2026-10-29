@@ -450,7 +450,39 @@
 
 @media (max-width: 480px) {
     .reportes__stats-strip {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
+    }
+
+    .reportes__row {
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "label value"
+            "track track";
+        gap: 6px 10px;
+    }
+
+    .reportes__row-label {
+        grid-area: label;
+    }
+
+    .reportes__bar-track {
+        grid-area: track;
+    }
+
+    .reportes__row-value {
+        grid-area: value;
+    }
+
+    .reportes__actions {
+        flex-wrap: wrap;
+    }
+
+    .reportes__period-wrap {
+        width: 100%;
+    }
+
+    .reportes__period {
+        width: 100%;
     }
 }
 
