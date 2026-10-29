@@ -40,6 +40,26 @@ export function removePhotoByUserId(userId) {
     }
 }
 
+/**
+ * Sincroniza la foto_perfil que viene de la base de datos (login/me) hacia
+ * localStorage, para que getUserPhoto la encuentre sin una petición extra.
+ * Si la foto viene vacía, limpia el localStorage.
+ */
+export function syncPhotoFromBackend(userId, fotoPerfil) {
+    const base64 = fotoPerfil || "";
+    if (userId == null) return;
+    try {
+        const key = fotoKey(userId);
+        if (base64) {
+            localStorage.setItem(key, base64);
+        } else {
+            localStorage.removeItem(key);
+        }
+    } catch {
+        // localStorage lleno u otro error — ignorar silenciosamente
+    }
+}
+
 // ─── Funciones legacy (foto del usuario en sesión desde uajs_config) ────────
 
 export function getUserConfig() {

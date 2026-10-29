@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import { ThemeContext } from "./theme-context";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const TEMA_KEY = "uajs_tema";
 const CONFIG_KEY = "uajs_config";
@@ -26,6 +25,8 @@ function esOscuro(tema) {
     if (tema === "claro") return false;
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
+
+const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
     const [tema, setTema] = useState(temaInicial);
@@ -69,4 +70,9 @@ export const ThemeProvider = ({ children }) => {
             {children}
         </ThemeContext.Provider>
     );
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const useTheme = () => {
+    return useContext(ThemeContext);
 };

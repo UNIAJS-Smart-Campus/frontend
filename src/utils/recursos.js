@@ -1,3 +1,28 @@
+// ============================================================
+// Recursos — colección conectada al resources-service.
+//
+// `tipo_recurso` es ENUM estricto en la BD, por eso TIPOS_RECURSO es la
+// lista exacta que acepta el servidor. `estado` y `disponibilidad` son
+// VARCHAR, pero el backend siembra con 'Disponible' / 'Ocupada' /
+// 'Mantenimiento', así que aquí se normaliza a un vocabulario estable
+// para que la UI no dependa de cómo estén escritas esas filas.
+// ============================================================
+
+import { resourcesApi } from "./api";
+import { mapearRecurso, mapearRecursoAPayload } from "./mapeo";
+import {
+    crearColeccion,
+    listar as listarColeccion,
+    refrescar as refrescarColeccion,
+    crear as crearEnColeccion,
+    actualizar as actualizarEnColeccion,
+    eliminar as eliminarDeColeccion,
+    limpiarCache
+} from "./store";
+
+export const CLAVE_RECURSO = "recursos";
+
+// ENUM estricto de la tabla recursos.
 export const TIPOS_RECURSO = ["Salas", "Laboratorios", "Auditorios", "Equipos"];
 
 // Categoría de cada tipo: Escenario = espacio físico reservable, Objeto = equipo/bien prestable
@@ -10,20 +35,101 @@ export const CATEGORIA_POR_TIPO = {
 
 export const CATEGORIAS_RECURSO = ["Escenario", "Objeto"];
 
+// Vocabulario normalizado de estado y disponibilidad.
+export const ESTADOS_RECURSO = ["Disponible", "Mantenimiento", "Inactivo"];
+export const DISPONIBILIDADES_RECURSO = ["Disponible", "Ocupado"];
+
+export const STORAGE_KEY = "uajs_recursos";
+
+function sinAcentos(texto) {
+    return String(texto ?? "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+}
+
+export function normalizarTipoRecurso(valor) {
+    const buscado = sinAcentos(valor);
+    return (
+        TIPOS_RECURSO.find((tipo) => sinAcentos(tipo) === buscado) ?? "Salas"
+    );
+}
+
+export function normalizarEstadoRecurso(valor) {
+    const v = sinAcentos(valor);
+    if (!v) return "Disponible";
+    if (v.includes("mantenimiento") || v.includes("reparacion") || v.includes("revision")) {
+        return "Mantenimiento";
+    }
+    if (v.includes("inactiv") || v.includes("baja") || v.includes("retirado")) {
+        return "Inactivo";
+    }
+    // 'Disponible' y también los estados antiguos tipo 'Activo' / 'Ocupada'.
+    return "Disponible";
+}
+
+export function normalizarDisponibilidad(valor) {
+    const v = sinAcentos(valor);
+    if (!v) return "Disponible";
+    if (
+        v.includes("no disponible") ||
+        v.includes("ocupad") ||
+        v.includes("reservad") ||
+        v.includes("prestad")
+    ) {
+        return "Ocupado";
+    }
+    return "Disponible";
+}
+
 export function esEscenario(recurso) {
     return (recurso.categoria ?? CATEGORIA_POR_TIPO[recurso.tipo]) === "Escenario";
 }
 
-const recursos = [
+/** Solo se puede reservar lo que está activo y sin uso en ese momento. */
+export function esReservable(recurso) {
+    return (
+        recurso?.estado === "Disponible" && recurso?.disponibilidad === "Disponible"
+    );
+}
+
+function normalizarRecurso(modelo) {
+    if (!modelo) return null;
+    const tipo = normalizarTipoRecurso(modelo.tipo);
+    return {
+        ...modelo,
+        tipo,
+        categoria: modelo.categoria || CATEGORIA_POR_TIPO[tipo] || "Escenario",
+        descripcion: modelo.descripcion || "",
+        estado: normalizarEstadoRecurso(modelo.estado),
+        disponibilidad: normalizarDisponibilidad(modelo.disponibilidad)
+    };
+}
+
+function payloadDe(modelo) {
+    return mapearRecursoAPayload({
+        ...modelo,
+        tipo: normalizarTipoRecurso(modelo.tipo),
+        estado: normalizarEstadoRecurso(modelo.estado),
+        disponibilidad: normalizarDisponibilidad(modelo.disponibilidad)
+    });
+}
+
+// ============================================================
+// SEMILLA (solo si el backend nunca responde)
+// ============================================================
+
+export const RECURSOS_BASE = [
     {
         id: "R-001",
         codigo: "REC-101",
         nombre: "Salón 101",
         tipo: "Salas",
         categoria: "Escenario",
+        descripcion: "Aula para clases y talleres.",
         capacidad: 40,
         ubicacion: "Bloque A · Piso 1",
-        estado: "Activo",
+        estado: "Disponible",
         disponibilidad: "Disponible"
     },
     {
@@ -32,10 +138,11 @@ const recursos = [
         nombre: "Salón 205",
         tipo: "Salas",
         categoria: "Escenario",
+        descripcion: "Aula para reuniones de trabajo.",
         capacidad: 30,
         ubicacion: "Bloque A · Piso 2",
-        estado: "Activo",
-        disponibilidad: "En uso"
+        estado: "Disponible",
+        disponibilidad: "Ocupado"
     },
     {
         id: "R-003",
@@ -43,9 +150,10 @@ const recursos = [
         nombre: "Laboratorio de informática 1",
         tipo: "Laboratorios",
         categoria: "Escenario",
+        descripcion: "Laboratorio de computación.",
         capacidad: 25,
         ubicacion: "Bloque B · Piso 1",
-        estado: "Activo",
+        estado: "Disponible",
         disponibilidad: "Disponible"
     },
     {
@@ -54,10 +162,11 @@ const recursos = [
         nombre: "Laboratorio de química",
         tipo: "Laboratorios",
         categoria: "Escenario",
+        descripcion: "Laboratorio de prácticas de química.",
         capacidad: 20,
         ubicacion: "Bloque B · Piso 2",
-        estado: "En mantenimiento",
-        disponibilidad: "No disponible"
+        estado: "Mantenimiento",
+        disponibilidad: "Ocupado"
     },
     {
         id: "R-005",
@@ -65,9 +174,10 @@ const recursos = [
         nombre: "Auditorio principal",
         tipo: "Auditorios",
         categoria: "Escenario",
+        descripcion: "Auditorio para eventos institucionales.",
         capacidad: 300,
         ubicacion: "Bloque C",
-        estado: "Activo",
+        estado: "Disponible",
         disponibilidad: "Disponible"
     },
     {
@@ -76,10 +186,11 @@ const recursos = [
         nombre: "Auditorio B",
         tipo: "Auditorios",
         categoria: "Escenario",
+        descripcion: "Auditorio mediano para eventos menores.",
         capacidad: 120,
         ubicacion: "Bloque C · Piso 2",
-        estado: "Activo",
-        disponibilidad: "En uso"
+        estado: "Disponible",
+        disponibilidad: "Ocupado"
     },
     {
         id: "R-007",
@@ -87,9 +198,10 @@ const recursos = [
         nombre: "Video proyector Epson 4K",
         tipo: "Equipos",
         categoria: "Objeto",
+        descripcion: "Proyector para presentaciones.",
         capacidad: 1,
         ubicacion: "Bodega de tecnología",
-        estado: "Activo",
+        estado: "Disponible",
         disponibilidad: "Disponible"
     },
     {
@@ -98,10 +210,11 @@ const recursos = [
         nombre: "Portátil Lenovo ThinkPad",
         tipo: "Equipos",
         categoria: "Objeto",
+        descripcion: "Equipo portátil para trabajo académico.",
         capacidad: 1,
         ubicacion: "Bodega de tecnología",
-        estado: "En revisión",
-        disponibilidad: "No disponible"
+        estado: "Mantenimiento",
+        disponibilidad: "Ocupado"
     },
     {
         id: "R-009",
@@ -109,9 +222,10 @@ const recursos = [
         nombre: "Salón 303",
         tipo: "Salas",
         categoria: "Escenario",
+        descripcion: "Aula para seminario de investigación.",
         capacidad: 50,
         ubicacion: "Bloque D · Piso 3",
-        estado: "Activo",
+        estado: "Disponible",
         disponibilidad: "Disponible"
     },
     {
@@ -120,24 +234,64 @@ const recursos = [
         nombre: "Laboratorio de redes",
         tipo: "Laboratorios",
         categoria: "Escenario",
+        descripcion: "Laboratorio de configuración de redes.",
         capacidad: 18,
         ubicacion: "Bloque B · Piso 3",
-        estado: "Activo",
-        disponibilidad: "En uso"
+        estado: "Disponible",
+        disponibilidad: "Ocupado"
     }
-];
+].map(normalizarRecurso);
 
-export const STORAGE_KEY = "uajs_recursos";
+// ============================================================
+// COLECCIÓN
+// ============================================================
+
+crearColeccion({
+    clave: CLAVE_RECURSO,
+    leer: () => resourcesApi.list(),
+    // La API devuelve la fila de BD (tipo_recurso, nombre_recurso...); primero
+    // se traduce al modelo de la UI y después se normaliza.
+    mapear: (raw) => normalizarRecurso(mapearRecurso(raw)),
+    semilla: RECURSOS_BASE,
+    crear: async (modelo) => {
+        const creado = await resourcesApi.create(payloadDe(modelo));
+        return normalizarRecurso(mapearRecurso(creado));
+    },
+    actualizar: async (modelo) => {
+        const guardado = await resourcesApi.update(modelo.id, payloadDe(modelo));
+        return normalizarRecurso(mapearRecurso(guardado));
+    },
+    eliminar: async (modelo) => {
+        await resourcesApi.remove(modelo.id);
+    }
+});
+
+// ============================================================
+// API PÚBLICA DEL MÓDULO
+// ============================================================
 
 export function obtenerRecursos() {
-    try {
-        const guardados = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-        if (guardados.length > 0) return guardados;
-        guardarRecursos(recursos);
-        return recursos;
-    } catch {
-        return recursos;
-    }
+    return listarColeccion(CLAVE_RECURSO);
+}
+
+export function refrescarRecursos() {
+    return refrescarColeccion(CLAVE_RECURSO);
+}
+
+export function limpiarCacheRecursos() {
+    limpiarCache(CLAVE_RECURSO);
+}
+
+export function crearRecurso(modelo) {
+    return crearEnColeccion(CLAVE_RECURSO, modelo);
+}
+
+export function actualizarRecurso(modelo, cambios) {
+    return actualizarEnColeccion(CLAVE_RECURSO, modelo, cambios);
+}
+
+export function eliminarRecurso(modelo) {
+    return eliminarDeColeccion(CLAVE_RECURSO, modelo);
 }
 
 export function guardarRecursos(lista) {
@@ -146,17 +300,34 @@ export function guardarRecursos(lista) {
     } catch {
         // si localStorage no está disponible se ignora
     }
+    refrescarColeccion(CLAVE_RECURSO);
 }
 
+const TIPOS_POR_ROL = {
+    Administrador: TIPOS_RECURSO,
+    Administrativo: ["Salas", "Laboratorios", "Auditorios"],
+    Docente: ["Salas", "Laboratorios", "Auditorios"],
+    Estudiante: ["Salas", "Laboratorios", "Auditorios", "Equipos"]
+};
+
 export const RECURSOS_POR_PERFIL = {
-    Administrador: recursos,
-    Administrativo: recursos.filter((recurso) => ["Salas", "Laboratorios", "Auditorios"].includes(recurso.tipo)),
-    Docente: recursos.filter((recurso) => ["Salas", "Laboratorios", "Auditorios"].includes(recurso.tipo)),
-    Estudiante: recursos.filter((recurso) => ["Salas", "Laboratorios", "Auditorios", "Equipos"].includes(recurso.tipo))
+    Administrador: RECURSOS_BASE,
+    Administrativo: RECURSOS_BASE.filter((recurso) =>
+        ["Salas", "Laboratorios", "Auditorios"].includes(recurso.tipo)
+    ),
+    Docente: RECURSOS_BASE.filter((recurso) =>
+        ["Salas", "Laboratorios", "Auditorios"].includes(recurso.tipo)
+    ),
+    Estudiante: RECURSOS_BASE.filter((recurso) =>
+        ["Salas", "Laboratorios", "Auditorios", "Equipos"].includes(recurso.tipo)
+    )
 };
 
 export function obtenerRecursosPorPerfil(rol = "Estudiante") {
-    return RECURSOS_POR_PERFIL[rol] || RECURSOS_POR_PERFIL.Estudiante;
+    const tipos = TIPOS_POR_ROL[rol];
+    const lista = obtenerRecursos();
+    if (!tipos) return lista;
+    return lista.filter((recurso) => tipos.includes(recurso.tipo));
 }
 
-export default recursos;
+export default RECURSOS_BASE;

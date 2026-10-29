@@ -1,50 +1,53 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Icon from "../../components/Icon/Icon";
+import ImagenCategoria from "../../components/ImagenCategoria/ImagenCategoria";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
-import useToast from "../../context/useToast";
+import { useToast } from "../../context/ToastContext";
+import useColeccion from "../../hooks/useColeccion";
+import useSugerencias from "../../hooks/useSugerencias";
 import {
+    CLAVE_EVENTOS,
     CATEGORIAS_EVENTO,
     ESTADOS_EVENTO,
-    MODALIDADES_EVENTO
+    crearEvento,
+    actualizarEvento,
+    eliminarEvento as eliminarEventoEnApi,
+    estaInscrito,
+    esEventoInscripcionAbierta,
+    cargarInscripciones,
+    participantesDe,
+    inscribirEvento,
+    desinscribirEvento,
+    cuposDisponibles,
+    contarInscritos
 } from "../../utils/eventos";
-import { eventsApi } from "../../utils/api";
 import "./Eventos.css";
 
 const CATEGORIA_CLASE = {
     Académico: "blue",
     Cultural: "orange",
-    Deportivo: "teal",
     Formación: "green",
-    Institucional: "purple"
+    Deportivo: "purple"
 };
 
 const ESTADO_CLASE = {
-    Programado: "programmed",
-    Activo: "active",
+    Programado: "active",
+    "En curso": "active",
     Finalizado: "done",
     Cancelado: "canceled"
-};
-
-const MODALIDAD_CLASE = {
-    Presencial: "presencial",
-    Virtual: "virtual",
-    "Híbrido": "hibrido"
 };
 
 const formVacio = {
     nombre: "",
     fecha: "",
-    hora: "",
-    horaFin: "",
-    lugar: "",
-    categoria: "Académico",
+    hora_inicio: "",
+    hora_fin: "",
+    ubicacion: "",
+    tipo: "Académico",
     descripcion: "",
     cupo: 0,
-    estado: "Activo",
-    ponente: "",
-    modalidad: "Presencial",
-    participantes: []
+    estado: "Programado"
 };
 
 function formatearFecha(iso) {
@@ -69,40 +72,11 @@ function formatearHora(hora) {
     return `${h}:${min} ${sufijo}`;
 }
 
-function formatearRangoHora(inicio, fin) {
-    if (!fin) return formatearHora(inicio);
-    return `${formatearHora(inicio)} - ${formatearHora(fin)}`;
-}
-
 function Eventos() {
-    const [items, setItems] = useState([]);
-    const [cargando, setCargando] = useState(true);
+    const { items, recargar, enLinea } = useColeccion(CLAVE_EVENTOS);
     const { user, puede } = useAuth();
     const toast = useToast();
     const esAdmin = puede("publicar_eventos");
-
-    const cargar = useCallback(async () => {
-        try {
-            const data = await eventsApi.list();
-            setItems(Array.isArray(data) ? data : []);
-        } catch (err) {
-            toast.error(err.message || "No se pudieron cargar los eventos.");
-            setItems([]);
-        } finally {
-            setCargando(false);
-        }
-    }, [toast]);
-
-    useEffect(() => {
-        // Se difiere al microtask para no ejecutar setState durante el efecto.
-        let activo = true;
-        Promise.resolve().then(() => {
-            if (activo) cargar();
-        });
-        return () => {
-            activo = false;
-        };
-    }, [cargar]);
 
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");
@@ -114,16 +88,25 @@ function Eventos() {
     const [editandoId, setEditandoId] = useState(null);
     const [form, setForm] = useState(formVacio);
     const [error, setError] = useState("");
+    const [guardando, setGuardando] = useState(false);
 
     const [detalleAbierto, setDetalleAbierto] = useState(null);
     const [inscritosDe, setInscritosDe] = useState(null);
     const [aviso, setAviso] = useState("");
 
+    // El padrón real de inscritos lo expone el backend; se pide al abrir el detalle.
+    useEffect(() => {
+        const idEvento = detalleAbierto?.id ?? inscritosDe?.id;
+        if (idEvento != null) {
+            cargarInscripciones(idEvento);
+        }
+    }, [detalleAbierto?.id, inscritosDe?.id]);
+
     const normalizar = (texto) =>
         texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
     const porCategoria = categoria
-        ? items.filter((e) => e.categoria === categoria)
+        ? items.filter((e) => e.tipo === categoria)
         : items;
 
     const porEstado = estado
@@ -132,14 +115,12 @@ function Eventos() {
 
     const porBusqueda = busqueda.trim()
         ? porEstado.filter((e) =>
-              [e.nombre, e.lugar, e.categoria, e.descripcion]
+              [e.nombre, e.ubicacion, e.tipo, e.descripcion]
                   .join(" ")
                   .toLowerCase()
                   .includes(normalizar(busqueda))
           )
         : porEstado;
-
-    const contarInscritos = (evento) => Number(evento?.inscritos || 0);
 
     const encontrados = [...porBusqueda].sort((a, b) => {
         if (orden === "fecha") {
@@ -151,24 +132,19 @@ function Eventos() {
         return (a.nombre || "").localeCompare(b.nombre || "");
     });
 
-    const estaInscrito = (evento, usuarioId) => {
-        if (!evento || usuarioId == null) return false;
-        const lista = Array.isArray(evento.participantes) ? evento.participantes : [];
-        return lista.some((p) => p.usuarioId === usuarioId || p.id_usuario === usuarioId);
-    };
 
-    const cuposDisponibles = (evento) => {
-        const libres = (Number(evento?.cupo) || 0) - contarInscritos(evento);
-        return Math.max(0, libres);
-    };
-
-    const sugerencias = [
-        ...new Set(
-            items
-                .flatMap((e) => [e.nombre, e.lugar, e.categoria])
-                .filter(Boolean)
-        )
-    ];
+    // Respaldo local: se usa si Elasticsearch no responde.
+    const sugerenciasLocales = useMemo(
+        () => [
+            ...new Set(
+                items
+                    .flatMap((e) => [e.nombre, e.ubicacion, e.tipo])
+                    .filter(Boolean)
+            )
+        ],
+        [items]
+    );
+    const sugerencias = useSugerencias(query, "EVENTOS", sugerenciasLocales);
 
     const mostrarAviso = (mensaje) => {
         setAviso(mensaje);
@@ -187,15 +163,13 @@ function Eventos() {
         setForm({
             nombre: ev.nombre,
             fecha: ev.fecha,
-            hora: ev.hora,
-            horaFin: ev.horaFin || "",
-            lugar: ev.lugar,
-            categoria: ev.categoria,
+            hora_inicio: ev.hora_inicio,
+            hora_fin: ev.hora_fin,
+            ubicacion: ev.ubicacion,
+            tipo: ev.tipo,
             descripcion: ev.descripcion,
             cupo: ev.cupo,
-            estado: ev.estado,
-            ponente: ev.ponente || "",
-            modalidad: ev.modalidad || "Presencial"
+            estado: ev.estado
         });
         setError("");
         setModalAbierto(true);
@@ -213,70 +187,68 @@ function Eventos() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setGuardando(true);
 
         const nombreExiste = items.some(
             (item) =>
-                (item.nombre || "").toLowerCase() === form.nombre.trim().toLowerCase() &&
+                item.nombre.toLowerCase() === form.nombre.trim().toLowerCase() &&
                 item.id !== editandoId
         );
 
         if (nombreExiste) {
             setError("Ya existe un evento con ese nombre.");
+            setGuardando(false);
             return;
         }
 
-        if (!form.hora || !form.horaFin) {
-            setError("Indica la hora de inicio y la hora de finalización.");
-            return;
-        }
+        const existente = editandoId !== null
+            ? items.find((item) => item.id === editandoId)
+            : null;
 
-        if (form.horaFin <= form.hora) {
-            setError("La hora de finalización debe ser posterior a la hora de inicio.");
+        if (editandoId !== null && !existente) {
+            setError("El evento ya no existe en la lista. Recarga la página.");
+            setGuardando(false);
             return;
         }
 
         try {
-            const payload = {
-                nombre: form.nombre,
-                fecha: form.fecha,
-                hora: form.hora,
-                horaInicio: form.hora,
-                horaFin: form.horaFin,
-                lugar: form.lugar,
-                ubicacion: form.lugar,
-                categoria: form.categoria,
-                descripcion: form.descripcion,
-                estado: form.estado,
-                cupo: Number(form.cupo) || 0,
-                id_usuario: user?.id ?? null
-            };
-
             if (editandoId === null) {
-                await eventsApi.create(payload);
+                await crearEvento({
+                    ...form,
+                    nombre: form.nombre.trim(),
+                    id_usuario: user?.id ?? null,
+                    inscritos: 0
+                });
                 mostrarAviso("Evento creado correctamente.");
             } else {
-                await eventsApi.update(editandoId, payload);
+                await actualizarEvento(existente, {
+                    ...form,
+                    nombre: form.nombre.trim()
+                });
                 mostrarAviso("Evento actualizado correctamente.");
             }
-
             setModalAbierto(false);
-            await cargar();
-        } catch (err) {
-            setError(err.message || "No se pudo guardar el evento.");
+        } catch (fallo) {
+            const mensaje =
+                fallo?.message || "No se pudo guardar el evento en el servidor.";
+            setError(mensaje);
+            toast.error(mensaje);
+        } finally {
+            setGuardando(false);
         }
     };
 
     const eliminarEvento = async (ev) => {
-        if (!window.confirm(`¿Eliminar el evento "${ev.nombre}"?`)) return;
         try {
-            await eventsApi.remove(ev.id);
+            await eliminarEventoEnApi(ev);
             setDetalleAbierto(null);
-            await cargar();
+            setInscritosDe(null);
             mostrarAviso(`Evento "${ev.nombre}" eliminado.`);
-        } catch (err) {
-            mostrarAviso(err.message || "No se pudo eliminar el evento.");
+        } catch (fallo) {
+            toast.error(fallo?.message || "No se pudo eliminar el evento.");
         }
     };
+
 
     const inscribirse = async (ev) => {
         if (!user) {
@@ -291,25 +263,30 @@ function Eventos() {
             toast.error("El evento ya alcanzó su cupo máximo.");
             return;
         }
-
         try {
-            await eventsApi.register(ev.id);
-            await cargar();
-            toast.success(`Te inscribiste a "${ev.nombre}".`);
-        } catch (err) {
-            toast.error(err.message || "No se pudo completar la inscripción.");
+            const resultado = await inscribirEvento(ev, user.id, user.nombre);
+            if (resultado.offline) {
+                toast.warning("No hay conexión con el servidor: la inscripción quedó solo local.");
+            } else {
+                toast.success(`Te inscribiste a "${ev.nombre}".`);
+            }
+        } catch (fallo) {
+            toast.error(fallo?.message || "No se pudo completar la inscripción.");
         }
     };
 
     const cancelarInscripcion = async (ev) => {
         if (!user) return;
-
+        if (!estaInscrito(ev, user.id)) return;
         try {
-            await eventsApi.unregister(ev.id);
-            await cargar();
-            toast.success(`Cancelaste tu inscripción a "${ev.nombre}".`);
-        } catch (err) {
-            toast.error(err.message || "No se pudo cancelar la inscripción.");
+            const resultado = await desinscribirEvento(ev, user.id);
+            if (resultado.offline) {
+                toast.warning("No hay conexión con el servidor: la cancelación quedó solo local.");
+            } else {
+                toast.info("Inscripción cancelada.");
+            }
+        } catch (fallo) {
+            toast.error(fallo?.message || "No se pudo cancelar la inscripción.");
         }
     };
 
@@ -338,6 +315,16 @@ function Eventos() {
                 <div className="toast toast--success">
                     <Icon name="info" size={14} />
                     {aviso}
+                </div>
+            )}
+
+            {enLinea === false && (
+                <div className="toast toast--error">
+                    <Icon name="info" size={14} />
+                    Sin conexión con el servidor: se muestra la última data sincronizada.
+                    <button className="button button--ghost button--sm" onClick={recargar}>
+                        Reintentar
+                    </button>
                 </div>
             )}
 
@@ -374,7 +361,7 @@ function Eventos() {
                         </div>
                         <div>
                             <div className="summary__number">
-                                {items.filter((e) => e.categoria === cat).length}
+                                {items.filter((e) => e.tipo === cat).length}
                             </div>
                             <div className="summary__label">{cat}</div>
                         </div>
@@ -393,6 +380,7 @@ function Eventos() {
                             onChange={(e) => setQuery(e.target.value)}
                             onSearch={() => setBusqueda(query)}
                             suggestions={sugerencias}
+                            serverSide
                         />
                     </div>
 
@@ -438,29 +426,26 @@ function Eventos() {
 
             {encontrados.length === 0 ? (
                 <div className="empty">
-                    {cargando
-                        ? "Cargando eventos..."
-                        : "No se encontraron eventos con los filtros aplicados."}
+                    No se encontraron eventos con los filtros aplicados.
                 </div>
             ) : (
                 <div className="eventos__grid">
                     {encontrados.map((ev) => (
                         <article className="eventos__item" key={ev.id}>
+                            <div className="eventos__item-media">
+                                <ImagenCategoria grupo="evento" tipo={ev.tipo} semilla={ev.id} />
+                            </div>
+
                             <div className="eventos__item-top">
                                 <span
-                                    className={`badge badge--${CATEGORIA_CLASE[ev.categoria] || "blue"}`}
+                                    className={`badge badge--${CATEGORIA_CLASE[ev.tipo] || "blue"}`}
                                 >
-                                    {ev.categoria}
+                                    {ev.tipo}
                                 </span>
                                 <span
                                     className={`eventos__item-state eventos__item-state--${ESTADO_CLASE[ev.estado] || "active"}`}
                                 >
                                     {ev.estado}
-                                </span>
-                                <span
-                                    className={`eventos__item-modalidad eventos__item-modalidad--${MODALIDAD_CLASE[ev.modalidad] || "presencial"}`}
-                                >
-                                    {ev.modalidad}
                                 </span>
                             </div>
 
@@ -474,18 +459,12 @@ function Eventos() {
                                 </span>
                                 <span className="eventos__meta-line">
                                     <Icon name="info" size={12} />
-                                    {formatearRangoHora(ev.hora, ev.horaFin)}
+                                    {formatearHora(ev.hora_inicio)}
                                 </span>
                                 <span className="eventos__meta-line">
                                     <Icon name="recursos" size={12} />
-                                    {ev.lugar}
+                                    {ev.ubicacion}
                                 </span>
-                                {ev.ponente && (
-                                    <span className="eventos__meta-line">
-                                        <Icon name="perfil" size={12} />
-                                        {ev.ponente}
-                                    </span>
-                                )}
                             </div>
 
                             <div className="eventos__item-footer">
@@ -518,11 +497,11 @@ function Eventos() {
                                                     : inscribirse(ev)
                                             }
                                             disabled={
-                                                !["Activo", "Programado"].includes(ev.estado) ||
+                                                !esEventoInscripcionAbierta(ev) ||
                                                 cuposDisponibles(ev) === 0
                                             }
                                         >
-                                            {!["Activo", "Programado"].includes(ev.estado)
+                                            {!esEventoInscripcionAbierta(ev)
                                                 ? "No disponible"
                                                 : cuposDisponibles(ev) === 0 && !estaInscrito(ev, user?.id)
                                                     ? "Cupo agotado"
@@ -583,40 +562,37 @@ function Eventos() {
                                 />
                             </div>
 
-                            <div className="eventos__form-grid">
-                                <div className="eventos__form-group">
-                                    <label htmlFor="ev-fecha">Fecha</label>
-                                    <input
-                                        id="ev-fecha"
-                                        type="date"
-                                        name="fecha"
-                                        value={form.fecha}
-                                        onChange={handleChange}
-                                    />
-                                </div>
+                            <div className="eventos__form-group">
+                                <label htmlFor="ev-fecha">Fecha</label>
+                                <input
+                                    id="ev-fecha"
+                                    type="date"
+                                    name="fecha"
+                                    value={form.fecha}
+                                    onChange={handleChange}
+                                />
+                            </div>
 
+                            <div className="eventos__form-grid">
                                 <div className="eventos__form-group">
                                     <label htmlFor="ev-hora">Hora de inicio</label>
                                     <input
                                         id="ev-hora"
                                         type="time"
-                                        name="hora"
-                                        value={form.hora}
+                                        name="hora_inicio"
+                                        value={form.hora_inicio}
                                         onChange={handleChange}
                                     />
                                 </div>
-                            </div>
 
-                            <div className="eventos__form-grid">
                                 <div className="eventos__form-group">
-                                    <label htmlFor="ev-hora-fin">Hora de finalización</label>
+                                    <label htmlFor="ev-hora-fin">Hora de fin</label>
                                     <input
                                         id="ev-hora-fin"
                                         type="time"
-                                        name="horaFin"
-                                        value={form.horaFin}
+                                        name="hora_fin"
+                                        value={form.hora_fin}
                                         onChange={handleChange}
-                                        min={form.hora || undefined}
                                     />
                                 </div>
                             </div>
@@ -626,8 +602,8 @@ function Eventos() {
                                 <input
                                     id="ev-lugar"
                                     type="text"
-                                    name="lugar"
-                                    value={form.lugar}
+                                    name="ubicacion"
+                                    value={form.ubicacion}
                                     onChange={handleChange}
                                     placeholder="ej. Auditorio principal"
                                 />
@@ -635,41 +611,11 @@ function Eventos() {
 
                             <div className="eventos__form-grid">
                                 <div className="eventos__form-group">
-                                    <label htmlFor="ev-ponente">Ponente / organizador</label>
-                                    <input
-                                        id="ev-ponente"
-                                        type="text"
-                                        name="ponente"
-                                        value={form.ponente}
-                                        onChange={handleChange}
-                                        placeholder="ej. Dra. Carolina Ruiz"
-                                    />
-                                </div>
-
-                                <div className="eventos__form-group">
-                                    <label htmlFor="ev-modalidad">Modalidad</label>
-                                    <select
-                                        id="ev-modalidad"
-                                        name="modalidad"
-                                        value={form.modalidad}
-                                        onChange={handleChange}
-                                    >
-                                        {MODALIDADES_EVENTO.map((mod) => (
-                                            <option key={mod} value={mod}>
-                                                {mod}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="eventos__form-grid">
-                                <div className="eventos__form-group">
                                     <label htmlFor="ev-categoria">Categoría</label>
                                     <select
                                         id="ev-categoria"
-                                        name="categoria"
-                                        value={form.categoria}
+                                        name="tipo"
+                                        value={form.tipo}
                                         onChange={handleChange}
                                     >
                                         {CATEGORIAS_EVENTO.map((cat) => (
@@ -735,18 +681,20 @@ function Eventos() {
                                     type="submit"
                                     className="eventos__confirm-button"
                                     disabled={
+                                        guardando ||
                                         !form.nombre ||
                                         !form.fecha ||
-                                        !form.hora ||
-                                        !form.horaFin ||
-                                        form.horaFin <= form.hora ||
-                                        !form.lugar ||
+                                        !form.hora_inicio ||
+                                        !form.hora_fin ||
+                                        !form.ubicacion ||
                                         !form.cupo
                                     }
                                 >
-                                    {editandoId === null
-                                        ? "Crear evento"
-                                        : "Guardar cambios"}
+                                    {guardando
+                                        ? "Guardando…"
+                                        : editandoId === null
+                                            ? "Crear evento"
+                                            : "Guardar cambios"}
                                 </button>
                             </div>
                         </form>
@@ -766,19 +714,14 @@ function Eventos() {
                         <div className="eventos__detail-header">
                             <div className="eventos__detail-title">
                                 <span
-                                    className={`badge badge--${CATEGORIA_CLASE[detalle.categoria] || "blue"}`}
+                                    className={`badge badge--${CATEGORIA_CLASE[detalle.tipo] || "blue"}`}
                                 >
-                                    {detalle.categoria}
+                                    {detalle.tipo}
                                 </span>
                                 <span
                                     className={`eventos__item-state eventos__item-state--${ESTADO_CLASE[detalle.estado] || "active"}`}
                                 >
                                     {detalle.estado}
-                                </span>
-                                <span
-                                    className={`eventos__item-modalidad eventos__item-modalidad--${MODALIDAD_CLASE[detalle.modalidad] || "presencial"}`}
-                                >
-                                    {detalle.modalidad}
                                 </span>
                             </div>
                             <button
@@ -799,15 +742,14 @@ function Eventos() {
                             </div>
                             <div className="eventos__detail-item">
                                 <Icon name="info" size={14} />
-                                <span>{formatearRangoHora(detalle.hora, detalle.horaFin)}</span>
+                                <span>
+                                    {formatearHora(detalle.hora_inicio)} -{" "}
+                                    {formatearHora(detalle.hora_fin)}
+                                </span>
                             </div>
                             <div className="eventos__detail-item">
                                 <Icon name="recursos" size={14} />
-                                <span>{detalle.lugar}</span>
-                            </div>
-                            <div className="eventos__detail-item">
-                                <Icon name="perfil" size={14} />
-                                <span>{detalle.ponente || "Por definir"}</span>
+                                <span>{detalle.ubicacion}</span>
                             </div>
                         </div>
 
@@ -868,11 +810,11 @@ function Eventos() {
                                             : inscribirse(detalle)
                                     }
                                     disabled={
-                                        !["Activo", "Programado"].includes(detalle.estado) ||
+                                        !esEventoInscripcionAbierta(detalle) ||
                                         (cuposDisponibles(detalle) === 0 && !estaInscrito(detalle, user?.id))
                                     }
                                 >
-                                    {!["Activo", "Programado"].includes(detalle.estado)
+                                    {!esEventoInscripcionAbierta(detalle)
                                         ? `No disponible (${detalle.estado})`
                                         : estaInscrito(detalle, user?.id)
                                             ? "Inscrito ✓ · Cancelar inscripción"
@@ -921,9 +863,9 @@ function Eventos() {
                                 const detalle = items.find(
                                     (i) => i.id === inscritosDe.id
                                 );
-                                const lista = Array.isArray(detalle?.participantes)
-                                    ? detalle.participantes
-                                    : [];
+                                const lista = participantesDe(
+                                    detalle || inscritosDe
+                                );
                                 if (lista.length === 0) {
                                     return (
                                         <p className="eventos__empty">

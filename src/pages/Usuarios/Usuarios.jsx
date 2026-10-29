@@ -1,15 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import DataTable from "../../components/DataTable/DataTable";
 import Pagination from "../../components/Pagination/Pagination";
 import Modal from "../../components/Modal/Modal";
 import useAuth from "../../context/useAuth";
-import useToast from "../../context/useToast";
-import { ROLES, ROL_IDS } from "../../utils/users";
-import { usersApi } from "../../utils/api";
+import { ROLES, crearUsuario, actualizarUsuario, alternarEstadoUsuario } from "../../utils/users";
 import { getUserInitials } from "../../utils/avatar";
+import useSearch from "../../hooks/useSearch";
 import usePagination from "../../hooks/usePagination";
+import useColeccion from "../../hooks/useColeccion";
+import useSugerencias from "../../hooks/useSugerencias";
 import "./Usuarios.css";
 
 const ROL_ICONO = {
@@ -28,6 +29,7 @@ const ROL_CLASE = {
 
 const ESTADOS = ["Activo", "Inactivo"];
 
+// TAREA 3: form unificado con "nombre" como campo completo, sin "apellido"
 const vacio = {
     cedula: "",
     usuario: "",
@@ -41,10 +43,12 @@ const vacio = {
     estado: "Activo"
 };
 
+// TAREA 1: genera iniciales basadas en el nombre de la fila, sin tocar la sesión
 function inicialesPorNombre(nombre) {
     return getUserInitials(nombre, "?");
 }
 
+// TAREA 1: estilo de avatar basado únicamente en el nombre de la fila
 function avatarStylePorNombre() {
     return {
         background: "linear-gradient(135deg, var(--color-primary-600), var(--color-primary))",
@@ -55,6 +59,7 @@ function avatarStylePorNombre() {
 function Usuarios() {
     const { user } = useAuth();
 
+    // TAREA 5: guarda de rol — acceso solo para Administrador
     if (!user || user.rol !== "Administrador") {
         return (
             <div className="page">
@@ -70,9 +75,8 @@ function Usuarios() {
 }
 
 function UsuariosAdmin() {
-    const toast = useToast();
-    const [items, setItems] = useState([]);
-    const [cargando, setCargando] = useState(true);
+    const { items, recargar, cargando, error: errorColeccion, enLinea } = useColeccion("usuarios");
+
     const [modalAbierto, setModalAbierto] = useState(false);
     const [editandoId, setEditandoId] = useState(null);
     const [form, setForm] = useState(vacio);
@@ -85,73 +89,45 @@ function UsuariosAdmin() {
     const [aviso, setAviso] = useState("");
     const [mostrarPass, setMostrarPass] = useState(false);
 
-    const cargarUsuarios = useCallback(async () => {
-        try {
-            const data = await usersApi.list();
-            setItems(Array.isArray(data) ? data : []);
-        } catch (err) {
-            toast.error(err.message || "No se pudieron cargar los usuarios.");
-            setItems([]);
-        } finally {
-            setCargando(false);
-        }
-    }, [toast]);
-
-    useEffect(() => {
-        // Se difiere al microtask para no ejecutar setState durante el efecto.
-        let activo = true;
-        Promise.resolve().then(() => {
-            if (activo) cargarUsuarios();
-        });
-        return () => {
-            activo = false;
-        };
-    }, [cargarUsuarios]);
-
     // Pipeline de filtros: búsqueda → rol → estado
-    const filtrados = useMemo(() => {
-        let lista = items;
-
-        if (busqueda.trim()) {
-            const q = busqueda.toLowerCase();
-            lista = lista.filter((item) =>
-                [item.identificacion, item.usuario, item.nombre, item.correo, item.rol, item.programa]
-                    .filter(Boolean)
-                    .some((campo) => String(campo).toLowerCase().includes(q))
-            );
-        }
-
-        if (filtroRol) {
-            lista = lista.filter((item) => item.rol === filtroRol);
-        }
-
-        if (filtroEstado) {
-            lista = lista.filter((item) => item.estado === filtroEstado);
-        }
-
-        return lista;
-    }, [items, busqueda, filtroRol, filtroEstado]);
+    const buscados = useSearch(items, busqueda, [
+        "cedula", "usuario", "nombre", "correo", "rol", "programa"
+    ]);
+    const porRol = filtroRol
+        ? buscados.filter((item) => item.rol === filtroRol)
+        : buscados;
+    const porEstado = filtroEstado
+        ? porRol.filter((item) => item.estado === filtroEstado)
+        : porRol;
 
     const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
-        usePagination(filtrados, 8);
+        usePagination(porEstado, 8);
 
-    const activos = items.filter((i) => i.estado === "Activo").length;
+    const activos   = items.filter((i) => i.estado === "Activo").length;
     const inactivos = items.filter((i) => i.estado === "Inactivo").length;
     const contarRol = (rol) => items.filter((i) => i.rol === rol).length;
 
-    const sugerencias = useMemo(() => [
+    const CAMPOS_OBLIGATORIOS = ["cedula", "usuario", "nombre", "correo", "programa"];
+    const faltantes = CAMPOS_OBLIGATORIOS.filter(
+        (campo) => !String(form[campo] ?? "").trim()
+    );
+
+    // Respaldo local: se usa si Elasticsearch no responde.
+    const sugerenciasLocales = useMemo(() => [
         ...new Set(
             items
-                .flatMap((i) => [i.identificacion, i.usuario, i.nombre, i.correo, i.rol, i.programa])
+                .flatMap((i) => [i.cedula, i.usuario, i.nombre, i.correo, i.rol, i.programa])
                 .filter(Boolean)
         )
     ], [items]);
+    const sugerencias = useSugerencias(query, "USUARIOS", sugerenciasLocales);
 
     const mostrarAviso = useCallback((mensaje) => {
         setAviso(mensaje);
         setTimeout(() => setAviso(""), 2500);
     }, []);
 
+    // TAREA 8: limpiar búsqueda al cambiar filtros
     const cambiarFiltroRol = (valor) => {
         setFiltroRol(valor);
         setQuery("");
@@ -172,19 +148,20 @@ function UsuariosAdmin() {
         setModalAbierto(true);
     };
 
+    // TAREA 3: abrirEditar ya no separa nombre/apellido
     const abrirEditar = useCallback((item) => {
         setEditandoId(item.id);
         setForm({
-            cedula: item.identificacion || "",
-            usuario: item.usuario,
-            password: "",
-            nombre: item.nombre,
-            correo: item.correo,
-            codigo: item.codigo || "",
-            telefono: item.telefono || "",
-            rol: item.rol,
-            programa: item.programa,
-            estado: item.estado || "Activo"
+            cedula:    item.cedula   || "",
+            usuario:   item.usuario,
+            password:  "",              // TAREA 2: campo vacío al editar — se preserva si no cambia
+            nombre:    item.nombre,
+            correo:    item.correo,
+            codigo:    item.codigo   || "",
+            telefono:  item.telefono || "",
+            rol:       item.rol,
+            programa:  item.programa,
+            estado:    item.estado   || "Activo"
         });
         setError("");
         setPwdError("");
@@ -205,6 +182,7 @@ function UsuariosAdmin() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // TAREA 9: validar contraseña en creación
         if (editandoId === null && !form.password.trim()) {
             setPwdError("La contraseña es obligatoria para crear un usuario.");
             return;
@@ -224,81 +202,81 @@ function UsuariosAdmin() {
             return;
         }
 
-        const identificacionExiste = items.some(
+        const cedulaExiste = items.some(
             (item) =>
-                String(item.identificacion || "") === String(form.cedula || "").trim() &&
+                String(item.cedula || "") === String(form.cedula || "").trim() &&
                 (String(form.cedula || "").trim() !== "") &&
                 item.id !== editandoId
         );
-        if (identificacionExiste) {
+        if (cedulaExiste) {
             setError("Esa cédula ya está registrada.");
             return;
         }
 
-        const [nombreP, ...apellidoRest] = form.nombre.trim().split(/\s+/);
-        const apellido = apellidoRest.join(" ");
-        const id_rol = ROL_IDS[form.rol] || 2;
-
-        const basePayload = {
-            identificacion: form.cedula.trim(),
-            usuario: form.usuario.trim(),
-            nombre: nombreP || form.nombre.trim(),
-            apellido,
-            correo: form.correo.trim(),
-            telefono: form.telefono.trim() || "",
-            id_rol,
-            tipo_usuario: form.rol,
-            programa: form.programa.trim(),
-            estado: form.estado
-        };
-
         try {
             if (editandoId === null) {
-                await usersApi.create({
-                    ...basePayload,
-                    password: form.password.trim()
-                });
+                // Crear nuevo usuario
+                const nuevo = {
+                    cedula:   form.cedula.trim(),
+                    usuario:  form.usuario.trim(),
+                    password: form.password.trim(),
+                    nombre:   form.nombre.trim(),       // TAREA 3: nombre completo directo
+                    correo:   form.correo.trim(),
+                    codigo:   form.codigo.trim(),
+                    telefono: form.telefono.trim(),
+                    rol:      form.rol,
+                    programa: form.programa.trim(),
+                    estado:   form.estado
+                };
+                await crearUsuario(nuevo);
                 mostrarAviso("Usuario creado correctamente.");
             } else {
-                const payload = { ...basePayload };
-                if (form.password.trim()) payload.password = form.password.trim();
-                await usersApi.update(editandoId, payload);
+                // Editar usuario existente
+                const item = items.find((u) => u.id === editandoId);
+                if (!item) {
+                    setError("Usuario no encontrado.");
+                    return;
+                }
+                const cambios = {
+                    cedula:    form.cedula.trim(),
+                    usuario:  form.usuario.trim(),
+                    // TAREA 2: preservar contraseña anterior si el campo queda vacío
+                    password: form.password.trim(),
+                    nombre:   form.nombre.trim(),   // TAREA 3: nombre completo directo
+                    correo:   form.correo.trim(),
+                    codigo:   form.codigo.trim(),
+                    telefono: form.telefono.trim(),
+                    rol:      form.rol,
+                    programa: form.programa.trim(),
+                    estado:   form.estado
+                };
+                await actualizarUsuario(item, cambios);
                 mostrarAviso("Usuario actualizado correctamente.");
             }
             setModalAbierto(false);
-            await cargarUsuarios();
+            // Forzar refresco para traer IDs reales del backend
+            await recargar();
         } catch (err) {
-            setError(err.message || "No se pudo guardar el usuario.");
+            setError(err.message || "Error al guardar el usuario.");
         }
     };
 
     const alternarEstado = useCallback(async (item) => {
-        const activando = item.estado !== "Activo";
         try {
-            const [, ...rest] = (item.nombre || "").trim().split(/\s+/);
-            await usersApi.update(item.id, {
-                identificacion: item.identificacion,
-                usuario: item.usuario,
-                nombre: item.nombre,
-                apellido: (rest || []).join(" "),
-                correo: item.correo,
-                telefono: item.telefono || "",
-                id_rol: ROL_IDS[item.rol] || item.id_rol || 2,
-                tipo_usuario: item.rol,
-                programa: item.programa,
-                estado: activando ? "Activo" : "Inactivo"
-            });
-            await cargarUsuarios();
+            await alternarEstadoUsuario(item);
+            const activando = item.estado !== "Activo";
             mostrarAviso(
                 activando
                     ? `Usuario "${item.usuario}" activado.`
                     : `Usuario "${item.usuario}" desactivado.`
             );
+            await recargar();
         } catch (err) {
-            mostrarAviso(err.message || "No se pudo cambiar el estado.", true);
+            setError(err.message || "Error al cambiar el estado del usuario.");
         }
-    }, [cargarUsuarios, mostrarAviso]);
+    }, [mostrarAviso, recargar]);
 
+    // TAREA 1: columnas con avatar por fila (sin foto de sesión)
     const columns = useMemo(() => [
         {
             key: "nombre",
@@ -331,9 +309,9 @@ function UsuariosAdmin() {
             )
         },
         {
-            key: "identificacion",
+            key: "cedula",
             label: "Cédula",
-            render: (row) => row.identificacion || "—"
+            render: (row) => row.cedula || "—"
         },
         {
             key: "estado",
@@ -384,7 +362,6 @@ function UsuariosAdmin() {
         <div className="page">
             <div className="page__header">
                 <div className="page__title">
-                    <h1>Gestión de Usuarios</h1>
                     <p>Administra usuarios, roles y estados de acceso.</p>
                 </div>
                 <button className="button button--accent button--md" onClick={abrirNuevo}>
@@ -392,6 +369,20 @@ function UsuariosAdmin() {
                     Nuevo usuario
                 </button>
             </div>
+
+            {/* Indicador de estado de conexión */}
+            {cargando && (
+                <div className="toast toast--info">
+                    <Icon name="cargando" size={14} />
+                    Sincronizando con el servidor…
+                </div>
+            )}
+            {errorColeccion && !enLinea && (
+                <div className="toast toast--warning">
+                    <Icon name="alerta" size={14} />
+                    Sin conexión al servidor. Mostrando datos locales.
+                </div>
+            )}
 
             {aviso && (
                 <div className="toast toast--success">
@@ -486,11 +477,13 @@ function UsuariosAdmin() {
                             onChange={(e) => setQuery(e.target.value)}
                             onSearch={() => setBusqueda(query)}
                             suggestions={sugerencias}
+                            serverSide
                         />
                     </div>
 
                     <div className="filters__group">
                         <label htmlFor="users-rol">Rol</label>
+                        {/* TAREA 8: onChange limpia búsqueda */}
                         <select
                             id="users-rol"
                             className="users__filter-select"
@@ -508,6 +501,7 @@ function UsuariosAdmin() {
 
                     <div className="filters__group">
                         <label htmlFor="users-estado">Estado</label>
+                        {/* TAREA 8: onChange limpia búsqueda */}
                         <select
                             id="users-estado"
                             className="users__filter-select"
@@ -523,20 +517,19 @@ function UsuariosAdmin() {
                 </div>
             </div>
 
-            {filtrados.length > 0 && (
+            {/* TAREA 4: contador usa porEstado.length (que ya incluye búsqueda) */}
+            {porEstado.length > 0 && (
                 <div className="list-header">
                     <h2>Usuarios del sistema</h2>
                     <span className="list-header__meta">
-                        {desde}–{hasta} de {filtrados.length} registros
+                        {desde}–{hasta} de {porEstado.length} registros
                     </span>
                 </div>
             )}
 
             {itemsPagina.length === 0 ? (
                 <div className="empty">
-                    {cargando
-                        ? "Cargando usuarios..."
-                        : "No se encontraron usuarios con los filtros aplicados."}
+                    No se encontraron usuarios con los filtros aplicados.
                 </div>
             ) : (
                 <>
@@ -552,7 +545,7 @@ function UsuariosAdmin() {
                         onChange={setPagina}
                         desde={desde}
                         hasta={hasta}
-                        total={filtrados.length}
+                        total={porEstado.length}
                     />
                 </>
             )}
@@ -564,11 +557,17 @@ function UsuariosAdmin() {
                 subtitle="Completa los datos del usuario."
                 onClose={cerrar}
             >
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} className="users__form">
                     {error && <p className="users__error">{error}</p>}
 
+                    <p className="users__form-note">
+                        Los campos marcados con <span>*</span> son obligatorios.
+                    </p>
+
                     <div className="users__form-group">
-                        <label htmlFor="u-usuario">Usuario</label>
+                        <label htmlFor="u-usuario">
+                            Usuario <span className="users__req">*</span>
+                        </label>
                         <input
                             id="u-usuario"
                             type="text"
@@ -580,7 +579,9 @@ function UsuariosAdmin() {
                     </div>
 
                     <div className="users__form-group">
-                        <label htmlFor="u-cedula">Cédula</label>
+                        <label htmlFor="u-cedula">
+                            Cédula <span className="users__req">*</span>
+                        </label>
                         <input
                             id="u-cedula"
                             type="text"
@@ -591,8 +592,11 @@ function UsuariosAdmin() {
                         />
                     </div>
 
+                    {/* TAREA 3: campo único "Nombre completo" */}
                     <div className="users__form-group">
-                        <label htmlFor="u-nombre">Nombre completo</label>
+                        <label htmlFor="u-nombre">
+                            Nombre completo <span className="users__req">*</span>
+                        </label>
                         <input
                             id="u-nombre"
                             type="text"
@@ -605,7 +609,9 @@ function UsuariosAdmin() {
 
                     <div className="form-grid">
                         <div className="users__form-group">
-                            <label htmlFor="u-correo">Correo</label>
+                            <label htmlFor="u-correo">
+                                Correo <span className="users__req">*</span>
+                            </label>
                             <input
                                 id="u-correo"
                                 type="email"
@@ -643,7 +649,10 @@ function UsuariosAdmin() {
                         </div>
 
                         <div className="users__form-group">
-                            <label htmlFor="u-programa">Programa / Dependencia</label>
+                            <label htmlFor="u-programa">
+                                Programa / Dependencia{" "}
+                                <span className="users__req">*</span>
+                            </label>
                             <input
                                 id="u-programa"
                                 type="text"
@@ -655,11 +664,17 @@ function UsuariosAdmin() {
                         </div>
                     </div>
 
+                    {/* TAREA 2 & 9: campo contraseña con validación y hint */}
                     <div className="users__form-group">
                         <label htmlFor="u-password">
-                            {editandoId === null
-                                ? "Contraseña *"
-                                : "Contraseña (dejar vacío para conservar la actual)"}
+                            {editandoId === null ? (
+                                <>
+                                    Contraseña{" "}
+                                    <span className="users__req">*</span>
+                                </>
+                            ) : (
+                                "Contraseña (dejar vacío para conservar la actual)"
+                            )}
                         </label>
                         <div className="users__password-wrap">
                             <input
@@ -720,6 +735,16 @@ function UsuariosAdmin() {
                         </div>
                     </div>
 
+                    {faltantes.length > 0 && (
+                        <p className="users__form-pending">
+                            Faltan {faltantes.length}{" "}
+                            {faltantes.length === 1
+                                ? "campo obligatorio por completar"
+                                : "campos obligatorios por completar"}
+                            .
+                        </p>
+                    )}
+
                     <div className="modal__footer">
                         <button
                             type="button"
@@ -731,13 +756,7 @@ function UsuariosAdmin() {
                         <button
                             type="submit"
                             className="button button--accent button--md"
-                            disabled={
-                                !form.cedula ||
-                                !form.usuario ||
-                                !form.nombre ||
-                                !form.correo ||
-                                !form.programa
-                            }
+                            disabled={faltantes.length > 0 || cargando}
                         >
                             {editandoId === null ? "Crear usuario" : "Guardar cambios"}
                         </button>

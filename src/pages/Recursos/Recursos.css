@@ -691,3 +691,18 @@
     background: var(--color-accent-50, #fff7ed);
     color: var(--color-accent-dark, #c2410c);
 }
+
+/* Ilustracion por tipo de recurso: ocupa todo el recuadro de la tarjeta. */
+.recursos__resource-image > .imagen-categoria {
+    position: absolute;
+    inset: 0;
+    border-radius: 0;
+}
+
+/* Portada del recurso en la ventana de detalles. */
+.recursos__detalle-media {
+    height: 150px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: var(--space-4);
+}

@@ -204,27 +204,60 @@
 
 @media (max-width: 768px) {
     .sidebar {
-        width: var(--sidebar-width-collapsed);
+        width: var(--sidebar-width);
+        height: 100dvh;
+        transform: translateX(-100%);
+        transition: transform var(--transition-base);
     }
 
+    .sidebar--open {
+        transform: translateX(0);
+    }
+
+    /* Al abrir el drawer se muestran etiquetas e ítems completos */
     .sidebar__title,
     .sidebar__section-label,
     .sidebar__item-name,
     .sidebar__footer {
-        display: none;
+        display: inherit;
+    }
+
+    .sidebar--collapsed .sidebar__title,
+    .sidebar--collapsed .sidebar__section-label,
+    .sidebar--collapsed .sidebar__item-name,
+    .sidebar--collapsed .sidebar__footer {
+        display: inherit;
     }
 
     .sidebar__brand {
-        padding: var(--space-4) 0;
-        justify-content: center;
+        padding: 0 var(--space-5);
+        justify-content: flex-start;
     }
 
     .sidebar__menu {
-        padding: var(--space-3) var(--space-2);
+        padding: var(--space-4);
     }
 
     .sidebar__item {
-        justify-content: center;
-        padding: var(--space-2) 0;
+        justify-content: flex-start;
+        padding: 10px 12px;
+    }
+
+    .sidebar--collapsed .sidebar__brand {
+        padding: 0 var(--space-5);
+        justify-content: flex-start;
+    }
+
+    .sidebar--collapsed .sidebar__menu {
+        padding: var(--space-4);
+    }
+
+    .sidebar--collapsed .sidebar__item {
+        justify-content: flex-start;
+        padding: 10px 12px;
+    }
+
+    .sidebar__footer {
+        display: block;
     }
 }

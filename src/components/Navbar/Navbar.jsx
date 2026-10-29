@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { notificationsApi } from "../../utils/api";
+import { obtenerNotificaciones } from "../../utils/notificaciones";
 import { getModuleName } from "../../utils/menu";
 import useAuth from "../../context/useAuth";
-import useTheme from "../../context/useTheme";
+import { useTheme } from "../../context/ThemeContext";
 import { getAvatarStyle, getUserInitials, getUserPhoto } from "../../utils/avatar";
 import Icon from "../Icon/Icon";
-import FontSizeToggle from "../FontSizeToggle/FontSizeToggle";
 import "./Navbar.css";
 
 function Navbar({ onToggle }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [noLeidas, setNoLeidas] = useState(0);
+    const [noLeidas, setNoLeidas] = useState(() =>
+        obtenerNotificaciones().filter((n) => !n.leida).length
+    );
     const { darkMode, toggleTheme } = useTheme();
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
@@ -20,42 +21,21 @@ function Navbar({ onToggle }) {
 
     const moduleName = getModuleName(location.pathname);
 
+    // Sincronizar el badge cuando cambia el localStorage (ej. al marcar leídas)
     useEffect(() => {
-        let cancelado = false;
-        const cargar = async () => {
-            try {
-                const data = await notificationsApi.list(user?.id);
-                if (!cancelado) {
-                    setNoLeidas(
-                        (Array.isArray(data) ? data : []).filter((n) => !n.leida).length
-                    );
-                }
-            } catch {
-                if (!cancelado) setNoLeidas(0);
-            }
+        const actualizarBadge = () => {
+            setNoLeidas(obtenerNotificaciones().filter((n) => !n.leida).length);
         };
-        cargar();
-        return () => { cancelado = true; };
-    }, [user?.id]);
 
-    useEffect(() => {
-        const actualizarBadge = async () => {
-            try {
-                const data = await notificationsApi.list(user?.id);
-                setNoLeidas(
-                    (Array.isArray(data) ? data : []).filter((n) => !n.leida).length
-                );
-            } catch {
-                setNoLeidas(0);
-            }
-        };
+        // Escuchar cambios de storage (pestañas distintas) y un evento custom para la misma pestaña
         window.addEventListener("storage", actualizarBadge);
         window.addEventListener("notificaciones-actualizadas", actualizarBadge);
+
         return () => {
             window.removeEventListener("storage", actualizarBadge);
             window.removeEventListener("notificaciones-actualizadas", actualizarBadge);
         };
-    }, [user?.id]);
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -94,8 +74,6 @@ function Navbar({ onToggle }) {
             </div>
 
             <div className="navbar__right">
-                <FontSizeToggle />
-
                 <Link to="/notificaciones" className="navbar__notification">
                     <Icon name="notificaciones" size={20} />
                     {noLeidas > 0 && (

@@ -101,3 +101,11 @@
     outline: 2px solid var(--color-primary-200);
     outline-offset: 2px;
 }
+/* Portada del servicio, elegida por nombre del modulo. */
+.service-card__media {
+    height: 118px;
+    margin: calc(4px - var(--space-5)) calc(-1 * var(--space-5)) var(--space-4);
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+    flex-shrink: 0;
+}

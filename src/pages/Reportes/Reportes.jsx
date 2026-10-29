@@ -3,7 +3,12 @@ import useAuth from "../../context/useAuth";
 import Icon from "../../components/Icon/Icon";
 import DonutChart from "../../components/DonutChart/DonutChart";
 import TrendChart from "../../components/TrendChart/TrendChart";
+import useColeccion from "../../hooks/useColeccion";
 import construirReportes from "../../utils/reportes";
+import { CLAVE_EVENTOS } from "../../utils/eventos";
+import { CLAVE_RESERVAS } from "../../utils/reservas";
+import { CLAVE_RECURSO } from "../../utils/recursos";
+import { CLAVE_COLECCION as CLAVE_PQRS } from "../../utils/pqrs";
 import "./Reportes.css";
 
 const PALETA = [
@@ -26,9 +31,38 @@ const PERIODO_PUNTOS = {
 
 function Reportes() {
     const { user } = useAuth();
+
+    // El backend no expone /api/reports: los indicadores se derivan de las
+    // colecciones que cada módulo ya mantiene sincronizadas con su
+    // microservicio. Si alguna todavía no tiene data, `reportes.js` recurre al
+    // almacenamiento local para que los gráficos no queden vacíos.
+    const { items: usuarios }       = useColeccion("usuarios");
+    const { items: solicitudes }    = useColeccion("solicitudes");
+    const { items: reservas }       = useColeccion(CLAVE_RESERVAS);
+    const { items: recursos }       = useColeccion(CLAVE_RECURSO);
+    const { items: eventos }        = useColeccion(CLAVE_EVENTOS);
+    const { items: pqrs, enLinea: enLineaPqrs } = useColeccion(CLAVE_PQRS);
+
     const datos = useMemo(
-        () => construirReportes(user?.rol, user?.id),
-        [user?.rol, user?.id]
+        () =>
+            construirReportes(user?.rol, user?.id, {
+                usuarios,
+                solicitudes,
+                reservas,
+                recursos,
+                eventos,
+                pqrs
+            }),
+        [
+            user?.rol,
+            user?.id,
+            usuarios,
+            solicitudes,
+            reservas,
+            recursos,
+            eventos,
+            pqrs
+        ]
     );
     const [periodo, setPeriodo] = useState("Último año");
 
@@ -96,6 +130,14 @@ function Reportes() {
                     </button>
                 </div>
             </div>
+
+            {/* ── AVISO DE SINCRONIZACIÓN ── */}
+            {!enLineaPqrs && (
+                <div className="toast toast--error">
+                    <Icon name="info" size={14} />
+                    No se pudo sincronizar con el servidor. Se muestran los datos locales.
+                </div>
+            )}
 
             {/* ── KPIs ── */}
             <section className="summary reportes__summary">

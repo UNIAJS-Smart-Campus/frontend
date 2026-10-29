@@ -847,6 +847,42 @@
     }
 }
 
+@media (max-width: 480px) {
+    .eventos__summary {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .eventos__summary-card {
+        padding: 12px 10px;
+    }
+
+    .eventos__new-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .eventos__detail {
+        padding: 18px;
+    }
+
+    .eventos__detail-header {
+        flex-wrap: wrap;
+    }
+
+    .eventos__subscribe-button,
+    .eventos__confirm-button,
+    .eventos__admin-btn {
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 380px) {
+    .eventos__summary {
+        grid-template-columns: 1fr;
+    }
+}
+
 .eventos__inscribir-button--done,
 .eventos__subscribe-button--done {
     background-color: var(--color-success-100, #d1fae5);
@@ -881,4 +917,13 @@
     font-size: 11px;
     color: var(--color-text-muted);
     margin-left: auto;
+}
+
+/* Portada del evento, elegida por tipo (Academico, Cultural...). */
+.eventos__item-media {
+    height: 108px;
+    margin: -16px -16px 4px;
+    border-radius: 11px 11px 0 0;
+    overflow: hidden;
+    flex-shrink: 0;
 }

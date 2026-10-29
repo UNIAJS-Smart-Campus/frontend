@@ -52,7 +52,6 @@ function TrendChart({ data = [], maxPoints = 12 }) {
             })
             .join(" ");
 
-    // Altura útil de la barra en px (para pasar como CSS var al SVG si se necesita)
 
     return (
         <div className="trend">

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
@@ -7,9 +7,19 @@ import Modal from "../../components/Modal/Modal";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import useAuth from "../../context/useAuth";
-import useToast from "../../context/useToast";
-import { TIPOS_PQRS } from "../../utils/pqrs";
-import { feedbackApi, usersApi } from "../../utils/api";
+import { useToast } from "../../context/ToastContext";
+import useColeccion from "../../hooks/useColeccion";
+import useSugerencias from "../../hooks/useSugerencias";
+import {
+    TIPOS_PQRS,
+    ESTADOS_PQRS_ABIERTOS,
+    CICLO_ESTADOS,
+    CLAVE_COLECCION,
+    obtenerPqrs,
+    actualizarPqrs,
+    eliminarPqrs
+} from "../../utils/pqrs";
+import { obtenerUsuarios } from "../../utils/users";
 import usePagination from "../../hooks/usePagination";
 import "./PQRS.css";
 
@@ -33,25 +43,24 @@ const ESTADO_CLASE = {
     Resuelta: "resolved",
     Cerrada: "closed",
     Registrada: "registered",
+    Abierta: "registered",
     "En proceso": "review"
 };
 
-const ESTADOS_PQRS = [
-    "Registrada",
-    "En revisión",
-    "Asignada",
-    "En proceso",
-    "Resuelta",
-    "Cerrada"
-];
+const ESTADOS_FILTRO = CICLO_ESTADOS;
 
 const PRIORIDADES = ["Alta", "Media", "Baja"];
 
+// Devuelve el estado siguiente del ciclo de vida (avance de un paso).
 function siguienteEstado(estado) {
-    const idx = ESTADOS_PQRS.indexOf(estado);
-    if (idx === -1 || idx >= ESTADOS_PQRS.length - 1) return estado;
-    return ESTADOS_PQRS[idx + 1];
+    const idx = CICLO_ESTADOS.indexOf(estado);
+    if (idx === -1 || idx >= CICLO_ESTADOS.length - 1) return estado;
+    return CICLO_ESTADOS[idx + 1];
 }
+
+// Identificador visible de la PQRS: la API devuelve el id de la tabla y
+// `codigo` ya viene formateado como "PQRS-<id>".
+const codigoDe = (item) => item.codigo || item.id;
 
 const formVacio = {
     estado: "En revisión",
@@ -61,7 +70,7 @@ const formVacio = {
 };
 
 function PQRS() {
-    const { puede } = useAuth();
+    const { puede, user } = useAuth();
     const toast = useToast();
     const puedeGestionar = puede("gestionar_solicitudes") || puede("actualizar_estados");
 
@@ -79,50 +88,32 @@ function PQRS() {
     const [form, setForm] = useState(formVacio);
     const [aviso, setAviso] = useState("");
     const [errorAviso, setErrorAviso] = useState("");
-    const [items, setItems] = useState([]);
-    const [cargando, setCargando] = useState(true);
-    const [usuarios, setUsuarios] = useState([]);
+    const { items, enLinea } = useColeccion(CLAVE_COLECCION);
 
-    const cargar = useCallback(async () => {
-        try {
-            const data = await feedbackApi.list();
-            setItems(Array.isArray(data) ? data : []);
-        } catch (err) {
-            toast.error(err.message || "No se pudieron cargar las PQRS.");
-            setItems([]);
-        } finally {
-            setCargando(false);
-        }
-    }, [toast]);
-
-    useEffect(() => {
-        // Se difiere al microtask para no ejecutar setState durante el efecto.
-        let activo = true;
-        Promise.resolve().then(() => {
-            if (activo) cargar();
-        });
-        usersApi.list()
-            .then((u) => setUsuarios(Array.isArray(u) ? u : []))
-            .catch(() => {});
-        return () => {
-            activo = false;
-        };
-    }, [cargar]);
+    // La API devuelve todas las PQRS del campus. Quien no gestiona ve solo
+    // las suyas; quien sí gestiona ve todas, agrupadas por tipo.
+    const visibles = useMemo(() => {
+        const todas = items.length > 0 || enLinea ? items : obtenerPqrs();
+        if (puedeGestionar) return todas;
+        return todas.filter(
+            (item) => item.usuarioId != null && String(item.usuarioId) === String(user?.id)
+        );
+    }, [items, enLinea, puedeGestionar, user?.id]);
 
     const usuariosAsignables = useMemo(
         () =>
-            usuarios
+            obtenerUsuarios()
                 .filter(
                     (u) =>
                         (u.rol === "Administrador" || u.rol === "Administrativo") &&
                         u.estado === "Activo"
                 )
                 .map((u) => ({ id: u.id, nombre: u.nombre })),
-        [usuarios]
+        []
     );
 
     const filtradas = useMemo(() => {
-        let lista = items;
+        let lista = visibles;
         if (filtroTipo !== "Todos") {
             lista = lista.filter((item) => item.tipo === filtroTipo);
         }
@@ -132,37 +123,36 @@ function PQRS() {
         if (busqueda.trim()) {
             const q = busqueda.toLowerCase();
             lista = lista.filter((item) =>
-                [item.id, item.tipo, item.estado, item.descripcion, item.solicitante, item.asignadoA]
+                [item.codigo, item.id, item.tipo, item.estado, item.descripcion, item.solicitante, item.asignadoA]
                     .filter(Boolean)
                     .some((campo) => String(campo).toLowerCase().includes(q))
             );
         }
         return lista;
-    }, [items, filtroTipo, filtroEstado, busqueda]);
+    }, [visibles, filtroTipo, filtroEstado, busqueda]);
 
-    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } = usePagination(
-        filtradas,
-        puedeGestionar ? 6 : 8
-    );
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } = usePagination(filtradas, puedeGestionar ? 6 : 8);
 
     const contarPor = (campo, valor) => {
-        if (valor === "Todos") return items.length;
-        return items.filter((item) => item[campo] === valor).length;
+        if (valor === "Todos") return visibles.length;
+        return visibles.filter((item) => item[campo] === valor).length;
     };
 
-    const contarAbiertas = items.filter(
-        (item) => !["Resuelta", "Cerrada"].includes(item.estado)
+    const contarAbiertas = visibles.filter(
+        (item) => ESTADOS_PQRS_ABIERTOS.includes(item.estado)
     ).length;
 
-    const sugerencias = useMemo(() => {
+    // Respaldo local: se usa si Elasticsearch no responde.
+    const sugerenciasLocales = useMemo(() => {
         const set = new Set();
-        items.forEach((item) => {
-            [item.id, item.tipo, item.estado, item.solicitante, item.asignadoA]
+        visibles.forEach((item) => {
+            [item.codigo, item.tipo, item.estado, item.solicitante, item.asignadoA]
                 .filter(Boolean)
                 .forEach((v) => set.add(String(v)));
         });
         return [...set];
-    }, [items]);
+    }, [visibles]);
+    const sugerencias = useSugerencias(query, "PQRS", sugerenciasLocales);
 
     const mostrarAviso = (texto, esError = false) => {
         if (esError) {
@@ -212,6 +202,7 @@ function PQRS() {
             form.respuesta !== (seleccionada.respuesta || "")
         ].some(Boolean);
 
+        // El estado avanza automáticamente un paso en el ciclo de vida.
         const estadoObjetivo = siguienteEstado(estadoInicial);
         const cambiarEstado = estadoObjetivo !== estadoInicial;
 
@@ -220,6 +211,7 @@ function PQRS() {
             return;
         }
 
+        // Al avanzar a Resuelta se exige una respuesta.
         if (cambiarEstado && estadoObjetivo === "Resuelta" && !form.respuesta.trim()) {
             mostrarAviso("Debes escribir una respuesta para avanzar a Resuelta.", true);
             return;
@@ -242,28 +234,38 @@ function PQRS() {
         const estadoInicial = seleccionada.estado || "En revisión";
         const estadoFinal = cambiarEstado ? estadoObjetivo : estadoInicial;
 
-        try {
-            await feedbackApi.update(seleccionada.id, {
-                tipo: seleccionada.tipo,
-                fecha: seleccionada.fecha,
+        const detalle = [];
+        if (cambiarEstado) detalle.push(`Estado: ${estadoInicial} → ${estadoFinal}`);
+        if (pendiente.asignadoA !== (seleccionada.asignadoA || ""))
+            detalle.push(`Asignada a ${pendiente.asignadoA || "ninguno"}`);
+        if (pendiente.prioridad !== (seleccionada.prioridad || "Media"))
+            detalle.push(`Prioridad: ${pendiente.prioridad}`);
+        if (pendiente.respuesta !== (seleccionada.respuesta || ""))
+            detalle.push("Respuesta registrada");
+
+        // La tabla `pqrs` solo tiene tipo, fecha, estado y descripcion.
+        // El historial se arma en la UI y viaja dentro del modelo.
+        const ahora = new Date();
+        const historial = [
+            ...(seleccionada.historial || []),
+            {
                 estado: estadoFinal,
-                descripcion: seleccionada.descripcion,
-                sede: seleccionada.sede,
-                tipoPerfil: seleccionada.tipoPerfil,
-                tipoDocumento: seleccionada.tipoDocumento,
-                identificacion: seleccionada.identificacion,
-                nombre: seleccionada.nombre,
-                telefono: seleccionada.telefono,
-                correo: seleccionada.correo,
-                area: seleccionada.area,
-                asunto: seleccionada.asunto,
-                solicitante: seleccionada.solicitante,
+                fecha: `${ahora.toISOString().slice(0, 10)} ${ahora.toTimeString().slice(0, 5)}`,
+                detalle: `Actualización por ${user?.nombre || "el gestor"}: ${detalle.join(" · ")}`
+            }
+        ];
+
+        try {
+            await actualizarPqrs(seleccionada, {
+                estado: estadoFinal,
                 asignadoA: pendiente.asignadoA,
                 prioridad: pendiente.prioridad,
                 respuesta: pendiente.respuesta,
-                usuarioId: seleccionada.usuarioId
+                fecha_respuesta: pendiente.respuesta
+                    ? ahora.toISOString().slice(0, 10)
+                    : seleccionada.fecha_respuesta || null,
+                historial
             });
-            await cargar();
             mostrarAviso(
                 cambiarEstado
                     ? `PQRS avanzó de "${estadoInicial}" a "${estadoFinal}".`
@@ -272,8 +274,8 @@ function PQRS() {
             setConfirmEstadoAbierto(false);
             setPendiente(null);
             cerrarModales();
-        } catch (err) {
-            toast.error(err.message || "No se pudo actualizar la PQRS.");
+        } catch (error) {
+            mostrarAviso(error.message || "No se pudo actualizar la PQRS.", true);
         }
     };
 
@@ -290,12 +292,11 @@ function PQRS() {
     const confirmarEliminar = async () => {
         if (!seleccionada) return;
         try {
-            await feedbackApi.remove(seleccionada.id);
-            await cargar();
+            await eliminarPqrs(seleccionada);
             toast.success("PQRS eliminada correctamente.");
             cerrarModales();
-        } catch (err) {
-            toast.error(err.message || "No se pudo eliminar la PQRS.");
+        } catch (error) {
+            toast.error(error.message || "No se pudo eliminar la PQRS.");
         }
     };
 
@@ -352,7 +353,7 @@ function PQRS() {
                                 <Icon name="pqrs" size={19} />
                             </div>
                             <div>
-                                <div className="summary__number">{items.length}</div>
+                                <div className="summary__number">{visibles.length}</div>
                                 <div className="summary__label">Totales</div>
                             </div>
                         </div>
@@ -405,7 +406,7 @@ function PQRS() {
                                 <Icon name="pqrs" size={19} />
                             </div>
                             <div>
-                                <div className="summary__number">{items.length}</div>
+                                <div className="summary__number">{visibles.length}</div>
                                 <div className="summary__label">Todos</div>
                             </div>
                         </button>
@@ -447,6 +448,7 @@ function PQRS() {
                             onChange={(e) => setQuery(e.target.value)}
                             onSearch={() => setBusqueda(query)}
                             suggestions={sugerencias}
+                            serverSide
                         />
                     </div>
 
@@ -477,7 +479,7 @@ function PQRS() {
                                 onChange={(e) => setFiltroEstado(e.target.value)}
                             >
                                 <option value="Todos">Todos los estados</option>
-                                {ESTADOS_PQRS.map((estado) => (
+                                {ESTADOS_FILTRO.map((estado) => (
                                     <option key={estado} value={estado}>
                                         {estado}
                                     </option>
@@ -497,9 +499,7 @@ function PQRS() {
 
             {itemsPagina.length === 0 ? (
                 <div className="empty">
-                    {cargando
-                        ? "Cargando PQRS..."
-                        : "No se encontraron PQRS con los filtros aplicados."}
+                    No se encontraron PQRS con los filtros aplicados.
                 </div>
             ) : (
                 <>
@@ -514,9 +514,9 @@ function PQRS() {
 
                                 <div className="pqrs__item-body">
                                     <div className="pqrs__item-meta">
-                                        <span className="pqrs__item-id">
-                                            {item.id}
-                                        </span>
+                                            <span className="pqrs__item-id">
+                                                {codigoDe(item)}
+                                            </span>
                                         <span
                                             className={`pqrs__item-status ${ESTADO_CLASE[item.estado] || "closed"}`}
                                         >
@@ -591,7 +591,7 @@ function PQRS() {
 
             <Modal
                 isOpen={gestionAbierto}
-                title={seleccionada ? `Gestionar ${seleccionada.id}` : "Gestionar PQRS"}
+                title={seleccionada ? `Gestionar ${codigoDe(seleccionada)}` : "Gestionar PQRS"}
                 subtitle={
                     seleccionada
                         ? `${seleccionada.tipo} · ${seleccionada.solicitante || "Anónimo"}`
@@ -699,7 +699,7 @@ function PQRS() {
 
             <Modal
                 isOpen={detalleAbierto}
-                title={seleccionada ? `Detalle ${seleccionada.id}` : "Detalle"}
+                title={seleccionada ? `Detalle ${codigoDe(seleccionada)}` : "Detalle"}
                 subtitle={seleccionada ? seleccionada.tipo : ""}
                 onClose={cerrarModales}
             >
@@ -779,7 +779,7 @@ function PQRS() {
                 title="Eliminar PQRS"
                 message={
                     seleccionada
-                        ? `¿Eliminar la PQRS ${seleccionada.id}? Esta acción no se puede deshacer.`
+                        ? `¿Eliminar la PQRS ${codigoDe(seleccionada)}? Esta acción no se puede deshacer.`
                         : ""
                 }
                 confirmText="Eliminar"
@@ -798,7 +798,7 @@ function PQRS() {
                 message={
                     seleccionada && pendiente
                         ? pendiente.cambiarEstado
-                            ? `¿Confirmas el avance de la PQRS ${seleccionada.id} de "${seleccionada.estado}" a "${pendiente.estadoObjetivo}"? Esta acción se registrará en el historial.`
+                            ? `¿Confirmas el avance de la PQRS ${codigoDe(seleccionada)} de "${seleccionada.estado}" a "${pendiente.estadoObjetivo}"? Esta acción se registrará en el historial.`
                             : "Esta PQRS ya está en su estado final. ¿Guardas los cambios sin modificar el estado?"
                         : ""
                 }

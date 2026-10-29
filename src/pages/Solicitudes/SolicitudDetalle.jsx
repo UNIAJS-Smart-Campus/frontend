@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import useAuth from "../../context/useAuth";
-import useToast from "../../context/useToast";
 import Icon from "../../components/Icon/Icon";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import Modal from "../../components/Modal/Modal";
@@ -9,9 +8,11 @@ import {
     ETIQUETA_ESTADO,
     ACCIONES_POR_ESTADO,
     ORDEN_ESTADOS,
+    ejecutarAccion,
     progresoDe
 } from "../../utils/solicitudes";
-import { requestsApi, usersApi } from "../../utils/api";
+import { obtenerUsuarios } from "../../utils/users";
+import useColeccion from "../../hooks/useColeccion";
 import "./SolicitudDetalle.css";
 
 const PRIORIDAD_CLASE = {
@@ -56,37 +57,23 @@ const ACTION_LABELS = {
 
 function SolicitudDetalle() {
     const { id } = useParams();
-    const { puede } = useAuth();
-    const toast = useToast();
+    const { user, puede } = useAuth();
 
-    const [solicitud, setSolicitud] = useState(null);
-    const [cargando, setCargando] = useState(true);
-    const [usuarios, setUsuarios] = useState([]);
+    // La solicitud se lee de la colección: cuando llega del backend la vista
+    // se repinta sola.
+    const { items, cargando, error, enLinea } = useColeccion("solicitudes");
 
-    const cargarSolicitud = useCallback(async (sid) => {
-        try {
-            const data = await requestsApi.get(sid);
-            setSolicitud(data);
-        } catch (err) {
-            toast.error(err.message || "No se pudo cargar la solicitud.");
-            setSolicitud(null);
-        } finally {
-            setCargando(false);
-        }
-    }, [toast]);
+    const solicitud = useMemo(
+        () =>
+            items.find(
+                (s) =>
+                    String(s.id) === String(id) ||
+                    String(s.id_solicitud) === String(id)
+            ) || null,
+        [items, id]
+    );
 
-    useEffect(() => {
-        // Se difiere al microtask para no ejecutar setState durante el efecto.
-        let activo = true;
-        Promise.resolve().then(() => {
-            if (activo) cargarSolicitud(id);
-        });
-        usersApi.list().then((u) => setUsuarios(Array.isArray(u) ? u : [])).catch(() => {});
-        return () => {
-            activo = false;
-        };
-    }, [id, cargarSolicitud]);
-    const [aviso, setAviso] = useState("");
+    const [aviso, setAviso] = useState(null);
 
     const [rechazarAbierto, setRechazarAbierto] = useState(false);
     const [notaAbierto, setNotaAbierto] = useState(false);
@@ -108,14 +95,15 @@ function SolicitudDetalle() {
 
     const responsables = useMemo(
         () =>
-            usuarios
+            obtenerUsuarios()
                 .filter(
                     (u) =>
-                        (u.rol === "Administrador" || u.rol === "Administrativo") &&
+                        (u.rol === "Administrador" ||
+                            u.rol === "Administrativo") &&
                         u.estado === "Activo"
                 )
                 .map((u) => ({ id: u.id, nombre: u.nombre })),
-        [usuarios]
+        []
     );
 
     const accionesDisponibles = useMemo(() => {
@@ -138,10 +126,11 @@ function SolicitudDetalle() {
         return lista;
     }, [solicitud?.estado]);
 
+    const historial = solicitud?.historial;
     const indicesAlcanzados = useMemo(() => {
-        if (!solicitud?.historial) return new Set();
+        if (!historial) return new Set();
         const estados = new Set();
-        solicitud.historial.forEach((h) => {
+        historial.forEach((h) => {
             if (h.estado && ORDEN_ESTADOS.includes(h.estado)) {
                 const idx = ORDEN_ESTADOS.indexOf(h.estado);
                 for (let i = 0; i <= idx; i++) {
@@ -150,90 +139,49 @@ function SolicitudDetalle() {
             }
         });
         return estados;
-    }, [solicitud]);
+    }, [historial]);
 
     const abrirNota = () => {
         setNota("");
         setNotaAbierto(true);
     };
 
-    const mostrarAviso = (texto) => {
-        setAviso(texto);
-        setTimeout(() => setAviso(""), 2500);
+    const mostrarAviso = (texto, tipo = "success") => {
+        setAviso({ texto, tipo });
+        setTimeout(() => setAviso(null), 2500);
     };
 
     const accionSimple = async (accion, datos = {}) => {
-        if (!solicitud) return;
+        if (!solicitud) return null;
         if (!puedeGestionar) {
-            mostrarAviso("No tienes permiso para realizar esta acción.");
-            return;
-        }
-        const solicitudId = solicitud.id ?? solicitud.id_solicitud;
-        if (!solicitudId) {
-            toast.error("No se pudo identificar la solicitud. Recarga la página.");
-            return;
+            mostrarAviso("No tienes permiso para realizar esta acción.", "error");
+            return null;
         }
         try {
-            let payload;
-            switch (accion) {
-                case "revisar":
-                    payload = { ...solicitud, estado: "EN_REVISION" };
-                    break;
-                case "asignar":
-                    payload = {
-                        ...solicitud,
-                        estado: "ASIGNADA",
-                        responsable: datos.responsable || solicitud.responsable
-                    };
-                    break;
-                case "proceso":
-                    payload = { ...solicitud, estado: "EN_PROCESO" };
-                    break;
-                case "resolver":
-                    payload = { ...solicitud, estado: "RESUELTA" };
-                    break;
-                case "cerrar":
-                    payload = { ...solicitud, estado: "CERRADA" };
-                    break;
-                case "pausar":
-                    payload = {
-                        ...solicitud,
-                        estado: "PAUSADA",
-                        motivo: datos.descripcion || ""
-                    };
-                    break;
-                case "reanudar":
-                    payload = { ...solicitud, estado: "EN_PROCESO" };
-                    break;
-                case "rechazar":
-                    payload = {
-                        ...solicitud,
-                        estado: "RECHAZADA",
-                        respuesta: datos.descripcion || solicitud.respuesta,
-                        motivo: datos.descripcion || ""
-                    };
-                    break;
-                case "reabrir":
-                    payload = {
-                        ...solicitud,
-                        estado: "EN_REVISION",
-                        motivo: datos.descripcion || ""
-                    };
-                    break;
-                case "nota":
-                    payload = {
-                        ...solicitud,
-                        motivo: datos.descripcion || ""
-                    };
-                    break;
-                default:
-                    payload = solicitud;
+            const act = await ejecutarAccion(solicitud.id, accion, {
+                usuario: user?.nombre || "Administrador",
+                ...datos
+            });
+            if (!act) {
+                mostrarAviso(
+                    "La acción no aplica para el estado actual.",
+                    "error"
+                );
+                return null;
             }
-            const updated = await requestsApi.update(solicitudId, payload);
-            setSolicitud(updated);
-            mostrarAviso("Acción ejecutada correctamente.");
+            mostrarAviso(
+                enLinea
+                    ? "Acción ejecutada correctamente."
+                    : "Sin conexión con el servidor: el cambio quedó pendiente.",
+                enLinea ? "success" : "warning"
+            );
+            return act;
         } catch (err) {
-            toast.error(err.message || "No se pudo ejecutar la acción.");
+            mostrarAviso(
+                err?.message || "No se pudo ejecutar la acción.",
+                "error"
+            );
+            return null;
         }
     };
 
@@ -341,7 +289,9 @@ function SolicitudDetalle() {
                     ← Volver a solicitudes
                 </Link>
                 <div className="empty">
-                    {cargando ? "Cargando solicitud..." : "Solicitud no encontrada."}
+                    {cargando
+                        ? "Cargando solicitud…"
+                        : "Solicitud no encontrada."}
                 </div>
             </div>
         );
@@ -359,9 +309,16 @@ function SolicitudDetalle() {
             </Link>
 
             {aviso && (
-                <div className="toast toast--success">
+                <div className={`toast toast--${aviso.tipo}`}>
                     <Icon name="info" size={14} />
-                    {aviso}
+                    {aviso.texto}
+                </div>
+            )}
+
+            {error && (
+                <div className="toast toast--warning">
+                    <Icon name="info" size={14} />
+                    No se pudo sincronizar con el servidor: {error}
                 </div>
             )}
 

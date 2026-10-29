@@ -11,6 +11,10 @@ function SearchBar({
     suggestions = [],
     description = "Escribe para filtrar",
     maxSuggestions = 8,
+    // Cuando las sugerencias vienen ya filtradas del search-service
+    // (Elasticsearch con fuzziness), no deben re-filtrarse por coincidencia
+    // literal: se muestran tal cual.
+    serverSide = false,
 }) {
     const [abierto, setAbierto] = useState(false);
     const [activa, setActiva] = useState(-1);
@@ -21,7 +25,11 @@ function SearchBar({
 
     const termino = normalizar(value.trim());
     const filtradas = termino
-        ? suggestions.filter((s) => normalizar(s).includes(termino)).slice(0, maxSuggestions)
+        ? serverSide
+            ? suggestions.slice(0, maxSuggestions)
+            : suggestions
+                  .filter((s) => normalizar(s).includes(termino))
+                  .slice(0, maxSuggestions)
         : [];
 
     const limpiar = () => {

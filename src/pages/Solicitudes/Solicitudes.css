@@ -409,6 +409,17 @@
     }
 }
 
+@media (max-width: 480px) {
+    .sols__summary {
+        grid-template-columns: 1fr;
+    }
+
+    .sols__filter-select {
+        min-width: 0;
+        width: 100%;
+    }
+}
+
 /* ── Validación de formulario ── */
 .sols__field-error {
     display: block;

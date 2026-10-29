@@ -1,103 +1,17 @@
-import { useEffect, useRef, useState } from "react";
 import useAuth from "../../context/useAuth";
 import Icon from "../../components/Icon/Icon";
-import Modal from "../../components/Modal/Modal";
-import Input from "../../components/Input/Input";
-import { configurationApi } from "../../utils/api";
 import {
     getAvatarStyle,
     getUserInitials,
     getPhotoByUserId,
-    savePhotoByUserId,
-    removePhotoByUserId,
 } from "../../utils/avatar";
 import "./Perfil.css";
 
 function Perfil() {
-    const { user, updateUser } = useAuth();
-    const inputRef = useRef(null);
+    const { user } = useAuth();
 
-    // Foto vigente: primero busca por userId, si no existe usa la de la sesión
-    const [foto, setFoto] = useState(() => getPhotoByUserId(user?.id) || "");
-    const [errorFoto, setErrorFoto] = useState("");
-
-    // Datos editables que no viven en `usuarios` (documento, teléfono, sede).
-    // Se guardan en `configuracion` bajo la sección "perfil".
-    const [perfilId, setPerfilId] = useState(null);
-    const [datos, setDatos] = useState({
-        documento: "",
-        telefono: "",
-        ubicacion: ""
-    });
-    const [modalAbierto, setModalAbierto] = useState(false);
-    const [form, setForm] = useState(datos);
-    const [guardando, setGuardando] = useState(false);
-    const [errorPerfil, setErrorPerfil] = useState("");
-
-    useEffect(() => {
-        if (!user?.id) return undefined;
-        let activo = true;
-        configurationApi
-            .byUserSection(user.id, "perfil")
-            .then((cfg) => {
-                if (!activo || !cfg?.valor || typeof cfg.valor !== "object") return;
-                const valor = cfg.valor;
-                setPerfilId(cfg.id);
-                setDatos({
-                    documento: valor.documento || "",
-                    telefono: valor.telefono || "",
-                    ubicacion: valor.ubicacion || ""
-                });
-            })
-            .catch(() => {
-                // 404 esperado mientras el usuario no haya guardado sus datos.
-            });
-        return () => {
-            activo = false;
-        };
-    }, [user?.id]);
-
-    const abrirEdicion = () => {
-        setForm(datos);
-        setErrorPerfil("");
-        setModalAbierto(true);
-    };
-
-    const handlePerfilChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-    };
-
-    const guardarPerfil = async (e) => {
-        e.preventDefault();
-        if (!user?.id) return;
-
-        const valor = {
-            documento: form.documento.trim(),
-            telefono: form.telefono.trim(),
-            ubicacion: form.ubicacion.trim()
-        };
-
-        setGuardando(true);
-        setErrorPerfil("");
-        try {
-            if (perfilId) {
-                await configurationApi.update(perfilId, { valor });
-            } else {
-                const creada = await configurationApi.create({
-                    id_usuario: user.id,
-                    seccion: "perfil",
-                    valor
-                });
-                setPerfilId(creada.id);
-            }
-            setDatos(valor);
-            setModalAbierto(false);
-        } catch (err) {
-            setErrorPerfil(err.message || "No se pudieron guardar tus datos.");
-        } finally {
-            setGuardando(false);
-        }
-    };
+    // La foto es de solo lectura aquí: se cambia desde Configuración.
+    const foto = getPhotoByUserId(user?.id) || "";
 
     const iniciales = getUserInitials(user?.nombre, "U");
     const rol = user?.rol || "Usuario";
@@ -105,47 +19,11 @@ function Perfil() {
     const correo = user?.correo || "—";
     const usuario = user?.usuario || "—";
 
-    // ── Subir foto ──────────────────────────────────────────────────────────
-    const handleFotoChange = (e) => {
-        const archivo = e.target.files?.[0];
-        if (!archivo) return;
-
-        // Validar tipo
-        if (!archivo.type.startsWith("image/")) {
-            setErrorFoto("Solo se permiten imágenes (JPG, PNG, WEBP).");
-            return;
-        }
-        // Límite 2 MB
-        if (archivo.size > 2 * 1024 * 1024) {
-            setErrorFoto("La imagen no debe superar 2 MB.");
-            return;
-        }
-
-        setErrorFoto("");
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            const base64 = ev.target.result;
-            savePhotoByUserId(user?.id, base64);
-            setFoto(base64);
-            updateUser({ foto: base64 });
-        };
-        reader.readAsDataURL(archivo);
-        // Limpiar el input para que vuelva a disparar si se selecciona el mismo archivo
-        e.target.value = "";
-    };
-
-    // ── Eliminar foto ───────────────────────────────────────────────────────
-    const handleEliminarFoto = () => {
-        removePhotoByUserId(user?.id);
-        setFoto("");
-        updateUser({ foto: "" });
-    };
-
     const infoPersonal = [
         { label: "Nombre completo", value: user?.nombre || "—" },
         { label: "Tipo de usuario", value: rol },
         { label: "Usuario", value: usuario },
-        { label: "Documento", value: datos.documento || "No registrado" }
+        { label: "Documento", value: "1.102.XXX.XXX" }
     ];
 
     const infoAcademica = [
@@ -169,17 +47,14 @@ function Perfil() {
                     <p>Consulta y administra tu información personal y académica.</p>
                 </div>
 
-                <button
-                    className="button button--outline button--md"
-                    onClick={abrirEdicion}
-                >
+                <button className="button button--outline button--md">
                     <Icon name="configuracion" size={14} />
                     Editar información
                 </button>
             </div>
 
             <div className="perfil__hero">
-                {/* ── Avatar con uploader ── */}
+                {/* Avatar de solo lectura: se cambia desde Configuración. */}
                 <div className="perfil__avatar-wrap">
                     <div
                         className="perfil__big-avatar"
@@ -201,49 +76,6 @@ function Perfil() {
                     >
                         {!foto && iniciales}
                     </div>
-
-                    {/* Overlay de cámara */}
-                    <button
-                        type="button"
-                        className="perfil__avatar-overlay"
-                        onClick={() => inputRef.current?.click()}
-                        title="Cambiar foto de perfil"
-                        aria-label="Cambiar foto de perfil"
-                    >
-                        <span className="perfil__avatar-overlay-icon">📷</span>
-                        <span className="perfil__avatar-overlay-text">
-                            {foto ? "Cambiar" : "Subir foto"}
-                        </span>
-                    </button>
-
-                    {/* Input oculto */}
-                    <input
-                        ref={inputRef}
-                        type="file"
-                        accept="image/*"
-                        className="perfil__avatar-input"
-                        onChange={handleFotoChange}
-                        aria-label="Seleccionar foto de perfil"
-                    />
-
-                    {/* Botón eliminar — solo visible si hay foto */}
-                    {foto && (
-                        <button
-                            type="button"
-                            className="perfil__avatar-remove"
-                            onClick={handleEliminarFoto}
-                            title="Eliminar foto"
-                        >
-                            ✕ Eliminar
-                        </button>
-                    )}
-
-                    {/* Error de validación */}
-                    {errorFoto && (
-                        <p style={{ fontSize: 9, color: "var(--color-danger)", marginTop: 4, textAlign: "center", maxWidth: 110 }}>
-                            {errorFoto}
-                        </p>
-                    )}
                 </div>
 
                 <div className="perfil__hero-main">
@@ -334,7 +166,7 @@ function Perfil() {
                         </div>
                         <div className="perfil__contact-info">
                             <span className="perfil__contact-label">Teléfono</span>
-                            <span className="perfil__contact-value">{datos.telefono || "No registrado"}</span>
+                            <span className="perfil__contact-value">+57 300 XXX XXXX</span>
                         </div>
                     </div>
 
@@ -344,7 +176,7 @@ function Perfil() {
                         </div>
                         <div className="perfil__contact-info">
                             <span className="perfil__contact-label">Ubicación</span>
-                            <span className="perfil__contact-value">{datos.ubicacion || "No registrada"}</span>
+                            <span className="perfil__contact-value">Sincelejo, Sucre</span>
                         </div>
                     </div>
                 </div>
@@ -415,63 +247,6 @@ function Perfil() {
                     </div>
                 </div>
             </div>
-
-            <Modal
-                isOpen={modalAbierto}
-                title="Editar información personal"
-                subtitle="Estos datos complementan tu cuenta y se guardan en el campus."
-                onClose={() => setModalAbierto(false)}
-            >
-                <form onSubmit={guardarPerfil}>
-                    <Input
-                        label="Documento de identidad"
-                        name="documento"
-                        value={form.documento}
-                        onChange={handlePerfilChange}
-                        placeholder="Ej. 1.102.345.678"
-                        id="perfil-documento"
-                    />
-                    <Input
-                        label="Teléfono"
-                        name="telefono"
-                        value={form.telefono}
-                        onChange={handlePerfilChange}
-                        placeholder="Ej. +57 300 123 4567"
-                        id="perfil-telefono"
-                    />
-                    <Input
-                        label="Ubicación"
-                        name="ubicacion"
-                        value={form.ubicacion}
-                        onChange={handlePerfilChange}
-                        placeholder="Ej. Sincelejo, Sucre"
-                        id="perfil-ubicacion"
-                    />
-
-                    {errorPerfil && (
-                        <p className="perfil__security-description" role="alert">
-                            {errorPerfil}
-                        </p>
-                    )}
-
-                    <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16 }}>
-                        <button
-                            type="button"
-                            className="button button--outline button--md"
-                            onClick={() => setModalAbierto(false)}
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="submit"
-                            className="button button--accent button--md"
-                            disabled={guardando}
-                        >
-                            {guardando ? "Guardando…" : "Guardar cambios"}
-                        </button>
-                    </div>
-                </form>
-            </Modal>
         </div>
     );
 }

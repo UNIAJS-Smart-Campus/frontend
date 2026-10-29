@@ -607,3 +607,56 @@
         align-items: flex-start;
     }
 }
+
+@media (max-width: 480px) {
+    .pqrs__summary {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .pqrs__summary-card {
+        padding: 12px 10px;
+        gap: 10px;
+    }
+
+    .pqrs__summary-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .pqrs__new-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .pqrs__filter-card {
+        padding: 14px;
+    }
+
+    .pqrs__item {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .gpqrs__item-actions {
+        gap: 8px;
+    }
+
+    .gpqrs__action {
+        min-height: 44px;
+    }
+
+    .gpqrs__modal-actions {
+        flex-direction: column;
+    }
+
+    .gpqrs__timeline li {
+        padding: 8px 10px;
+    }
+}
+
+@media (max-width: 380px) {
+    .pqrs__summary {
+        grid-template-columns: 1fr;
+    }
+}

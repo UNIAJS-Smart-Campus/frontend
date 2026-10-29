@@ -1,10 +1,15 @@
 import { Link } from "react-router-dom";
 import Icon from "../Icon/Icon";
+import ImagenCategoria from "../ImagenCategoria/ImagenCategoria";
 import "./ServiceCard.css";
 
 function ServiceCard({ service }) {
     return (
         <article className="service-card">
+            <div className="service-card__media">
+                <ImagenCategoria grupo="servicio" tipo={service.name} semilla={service.name} />
+            </div>
+
             <div className="service-card__header">
                 <span className="service-card__icon">
                     <Icon name={service.icon} />

@@ -1,51 +1,26 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import Icon from "../../components/Icon/Icon";
-import useAuth from "../../context/useAuth";
-import useToast from "../../context/useToast";
-import { notificationsApi } from "../../utils/api";
+import useColeccion from "../../hooks/useColeccion";
+import {
+    CLAVE_COLECCION,
+    obtenerNotificaciones,
+    marcarLeida,
+    marcarTodasLeidas
+} from "../../utils/notificaciones";
 import "./Notificaciones.css";
 
 const TIPOS = ["Todas", "Solicitud", "Reserva", "Evento", "PQRS"];
 
 function Notificaciones() {
-    const { user } = useAuth();
-    const toast = useToast();
-    const [items, setItems] = useState([]);
-    const [cargando, setCargando] = useState(true);
+    const { items: remotas, enLinea } = useColeccion(CLAVE_COLECCION);
     const [filtro, setFiltro] = useState("Todas");
+    const [errorAviso, setErrorAviso] = useState("");
+    const [enviando, setEnviando] = useState(false);
 
-    const cargar = useCallback(async () => {
-        try {
-            const data = await notificationsApi.list(user?.id);
-            setItems(Array.isArray(data) ? data : []);
-        } catch (err) {
-            toast.error(err.message || "No se pudieron cargar las notificaciones.");
-            setItems([]);
-        } finally {
-            setCargando(false);
-        }
-    }, [toast, user]);
-
-    useEffect(() => {
-        // Se difiere al microtask para no ejecutar setState durante el efecto.
-        let activo = true;
-        Promise.resolve().then(() => {
-            if (activo) cargar();
-        });
-        return () => {
-            activo = false;
-        };
-    }, [cargar]);
-
-    useEffect(() => {
-        const refrescar = () => cargar();
-        window.addEventListener("notificaciones-actualizadas", refrescar);
-        window.addEventListener("smart-campus:notification", refrescar);
-        return () => {
-            window.removeEventListener("notificaciones-actualizadas", refrescar);
-            window.removeEventListener("smart-campus:notification", refrescar);
-        };
-    }, [cargar]);
+    // La API ya devuelve solo las notificaciones del usuario en sesión, así
+    // que no hace falta filtrar por perfil. Mientras el backend no responde
+    // se pintan los datos precargados para no dejar la vista vacía.
+    const items = remotas.length > 0 || enLinea ? remotas : obtenerNotificaciones();
 
     const noLeidas = items.filter((item) => !item.leida).length;
 
@@ -57,39 +32,38 @@ function Notificaciones() {
     const conteoTipo = (tipo) =>
         tipo === "Todas" ? items.length : items.filter((i) => i.tipo === tipo).length;
 
-    const marcarLeida = async (id) => {
+    const mostrarError = (texto) => {
+        setErrorAviso(texto);
+        setTimeout(() => setErrorAviso(""), 4000);
+    };
+
+    const manejarMarcarLeida = async (item) => {
         try {
-            await notificationsApi.markRead(id);
-            setItems((prev) =>
-                prev.map((item) => (item.id === id ? { ...item, leida: true } : item))
-            );
-            window.dispatchEvent(new Event("notificaciones-actualizadas"));
-        } catch (err) {
-            toast.error(err.message || "No se pudo marcar como leída.");
+            await marcarLeida(item);
+        } catch (error) {
+            mostrarError(error.message || "No se pudo marcar la notificación como leída.");
         }
     };
 
-    const marcarTodasLeidas = async () => {
+    const manejarTodasLeidas = async () => {
+        setEnviando(true);
         try {
-            await notificationsApi.markAllRead();
-            setItems((prev) => prev.map((item) => ({ ...item, leida: true })));
-            window.dispatchEvent(new Event("notificaciones-actualizadas"));
-        } catch (err) {
-            toast.error(err.message || "No se pudo marcar todas como leídas.");
+            await marcarTodasLeidas();
+        } catch (error) {
+            mostrarError(error.message || "No se pudieron marcar las notificaciones como leídas.");
+        } finally {
+            setEnviando(false);
         }
     };
 
     const nuevaNoLeida = (item) => {
-        try {
-            const dias = Math.floor(
-                (new Date() - new Date(item.fecha + "T00:00:00")) / 86400000
-            );
-            if (dias <= 0) return "Hoy";
-            if (dias === 1) return "Ayer";
-            return `Hace ${dias} días`;
-        } catch {
-            return "";
-        }
+        if (!item.fecha) return "";
+        const fecha = new Date(String(item.fecha).slice(0, 10) + "T00:00:00");
+        if (isNaN(fecha)) return "";
+        const dias = Math.floor((new Date() - fecha) / 86400000);
+        if (dias <= 0) return "Hoy";
+        if (dias === 1) return "Ayer";
+        return `Hace ${dias} días`;
     };
 
     return (
@@ -101,13 +75,20 @@ function Notificaciones() {
 
                 <button
                     className="button button--outline button--md"
-                    onClick={marcarTodasLeidas}
-                    disabled={noLeidas === 0}
+                    onClick={manejarTodasLeidas}
+                    disabled={noLeidas === 0 || enviando}
                 >
                     <Icon name="notificaciones" size={14} />
                     Marcar todas como leídas
                 </button>
             </div>
+
+            {errorAviso && (
+                <div className="toast toast--error">
+                    <Icon name="info" size={14} />
+                    {errorAviso}
+                </div>
+            )}
 
             <div className="summary">
                 {TIPOS.map((tipo) => (
@@ -137,9 +118,7 @@ function Notificaciones() {
 
             {filtradas.length === 0 ? (
                 <div className="empty">
-                    {cargando
-                        ? "Cargando notificaciones..."
-                        : `No hay notificaciones ${filtro !== "Todas" ? `de tipo ${filtro}` : "disponibles"}.`}
+                    No hay notificaciones {filtro !== "Todas" ? `de tipo ${filtro}` : "disponibles"}.
                 </div>
             ) : (
                 <div className="notifs__list">
@@ -179,7 +158,7 @@ function Notificaciones() {
                                 {!item.leida ? (
                                     <button
                                         className="notifs__read-button"
-                                        onClick={() => marcarLeida(item.id)}
+                                        onClick={() => manejarMarcarLeida(item)}
                                     >
                                         Marcar leída
                                     </button>
