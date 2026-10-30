@@ -5,11 +5,33 @@ import { authApi } from "../utils/api";
 import { mapearUsuarioSesion } from "../utils/mapeo";
 import { syncPhotoFromBackend } from "../utils/avatar";
 import { setToken, clearToken } from "../utils/authToken";
+import { establecer, limpiarCache } from "../utils/store";
 import Modal from "../components/Modal/Modal";
 import "../components/Modal/Modal.css";
 import "./session-warning.css";
 
 const SESSION_KEY = "uajs_session";
+
+// Colecciones personales: al cambiar de sesión se descartan para no mostrar
+// datos ni estados (leída/no leída) del usuario anterior.
+const CLAVES_USUARIO = [
+    "notificaciones",
+    "solicitudes",
+    "reservas",
+    "pqrs",
+    "configuracion"
+];
+
+function limpiarDatosDeUsuario() {
+    for (const clave of CLAVES_USUARIO) {
+        try {
+            establecer(clave, []);
+            limpiarCache(clave);
+        } catch {
+            // sin store disponible
+        }
+    }
+}
 const IDLE_BEFORE_WARNING_MS = 10 * 60 * 1000;
 const WARNING_COUNTDOWN_MS = 2 * 60 * 1000;
 const ACTIVITY_EVENTS = ["mousemove", "keydown", "click", "scroll", "touchstart"];
@@ -37,6 +59,7 @@ function getSession() {
             // Ignorar errores al limpiar
         }
         clearToken();
+        limpiarDatosDeUsuario();
         return null;
     }
 }
@@ -54,6 +77,7 @@ function AuthProvider({ children }) {
 
             const sesion = mapearUsuarioSesion(data);
 
+            limpiarDatosDeUsuario();
             setUser(sesion);
 
             // Sincronizar la foto de perfil desde la BD hacia localStorage
@@ -89,6 +113,7 @@ function AuthProvider({ children }) {
             // Si localStorage no está disponible se ignora
         }
         clearToken();
+        limpiarDatosDeUsuario();
     };
 
     // El cliente HTTP avisa con este evento cuando el gateway responde 401
@@ -106,6 +131,7 @@ function AuthProvider({ children }) {
                         // sin localStorage no hay nada que limpiar
                     }
                     clearToken();
+                    limpiarDatosDeUsuario();
                 }
                 return null;
             });

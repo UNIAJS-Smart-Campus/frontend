@@ -14,7 +14,6 @@ import { mapearNotificacion, mapearNotificacionAPayload } from "./mapeo";
 import {
     crearColeccion,
     listar,
-    estadoDe,
     refrescar,
     crear,
     actualizar,
@@ -132,71 +131,21 @@ function payloadDe(modelo) {
     });
 }
 
-/** Datos precargados: solo se usan mientras la API no responde. */
-const notificaciones = [
-    {
-        id: 1,
-        tipo: "Solicitud",
-        icono: "solicitudes",
-        mensaje: "Tu solicitud SOL-2026-001 cambió a 'En proceso' para la reserva del auditorio principal.",
-        fecha: "2026-09-03",
-        leida: false
-    },
-    {
-        id: 2,
-        tipo: "Reserva",
-        icono: "reservas",
-        mensaje: "La reserva del laboratorio de informática 3 quedó confirmada para el 6 de septiembre.",
-        fecha: "2026-09-05",
-        leida: false
-    },
-    {
-        id: 3,
-        tipo: "Evento",
-        icono: "eventos",
-        mensaje: "Nuevo evento: Cátedra de inteligencia artificial aplicada, abierta a toda la comunidad.",
-        fecha: "2026-09-06",
-        leida: true
-    },
-    {
-        id: 4,
-        tipo: "PQRS",
-        icono: "pqrs",
-        mensaje: "Tu caso de soporte técnico fue asignado al equipo de infraestructura tecnológica.",
-        fecha: "2026-09-07",
-        leida: false
-    },
-    {
-        id: 5,
-        tipo: "Reserva",
-        icono: "reservas",
-        mensaje: "Recordatorio: la reserva del salón 205 vence mañana y requiere confirmación final.",
-        fecha: "2026-09-08",
-        leida: true
-    },
-    {
-        id: 6,
-        tipo: "Evento",
-        icono: "eventos",
-        mensaje: "Publicación: Feria de empleabilidad 2026 con empresas y oportunidades de práctica.",
-        fecha: "2026-09-09",
-        leida: true
-    }
-];
+
 
 // ============================================================
 // COLECCIÓN
 // ============================================================
 
-// La semilla entra por `semilla`: el store la pinta en el primer render y la
-// reemplaza en cuanto llega la data del notifications-service.
+// Sin semilla: las notificaciones son datos personales. Hasta que responda
+// la API no se muestran avisos de ejemplo de otro usuario.
 crearColeccion({
     clave: CLAVE_COLECCION,
     // El id se resuelve en cada lectura: si cambia la sesión, la siguiente
     // refresco ya trae las notificaciones del usuario nuevo.
     leer: () => notificationsApi.list(idUsuarioActual()),
     mapear: normalizarNotificacion,
-    semilla: notificaciones,
+    semilla: [],
     crear: async (modelo) =>
         normalizarNotificacion(
             await notificationsApi.create(
@@ -244,9 +193,9 @@ suscribir(() => {
 export function obtenerNotificaciones() {
     const lista = listar(CLAVE_COLECCION);
     if (lista.length > 0) return lista;
-    // Lista vacía de verdad (usuario sin avisos) o backend caído: en el primer
-    // caso se respeta el vacío; en el segundo se pintan los datos precargados.
-    return estadoDe(CLAVE_COLECCION).enLinea ? [] : notificaciones;
+    // Sin datos remotos no se inventan notificaciones: un usuario sin avisos
+    // debe ver la bandeja vacía y el badge en 0.
+    return [];
 }
 
 export function guardarNotificaciones(lista) {
@@ -268,13 +217,18 @@ export function refrescarNotificaciones() {
  * dejaría titulo/mensaje en NULL, que son NOT NULL).
  */
 export async function marcarLeida(item) {
+    if (item?.id_usuario == null) {
+        throw new Error("La notificación no está sincronizada con el servidor.");
+    }
     return actualizar(CLAVE_COLECCION, item, { leida: true });
 }
 
 /** Marca como leídas todas las notificaciones del usuario en sesión. */
 export async function marcarTodasLeidas() {
     const idUsuario = idUsuarioActual();
-    const lista = listar(CLAVE_COLECCION).filter((item) => !item.leida);
+    const lista = listar(CLAVE_COLECCION).filter(
+        (item) => !item.leida && item.id_usuario != null
+    );
     if (!lista.length) return lista;
 
     if (idUsuario == null) {
@@ -315,4 +269,4 @@ export function obtenerNotificacionesPorPerfil(rol = "Estudiante") {
     return lista.filter(filtro);
 }
 
-export default notificaciones;
+export default obtenerNotificaciones;
