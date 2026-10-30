@@ -1,13 +1,25 @@
 import { useEffect } from "react";
 import useAuth from "./useAuth";
 import { getToken } from "../utils/authToken";
+import { refrescar } from "../utils/store";
+
+// Al llegar un evento, se refresca la colección para que el badge y la lista
+// usen la misma fuente que el resto de la app (en vez de quedar desfasados).
+function refrescarNotificaciones() {
+    refrescar("notificaciones")
+        .catch(() => {})
+        .finally(() => emitirEvento("notificaciones-actualizadas", {}));
+}
 
 function resolverUrlWebSocket() {
     const explicita = import.meta.env.VITE_WS_URL;
     if (explicita) return explicita.replace(/\/+$/, "");
 
-    // Sin URL explícita no se intenta conectar: el mock y Vercel no exponen
-    // Socket.IO, y el navegador quedaría reintentando en bucle.
+    // En desarrollo, Vite reenvía /socket.io al gateway (vite.config.js).
+    if (import.meta.env.DEV) return window.location.origin;
+
+    // En producción no se intenta si no hay URL: el mock/Vercel no exponen
+    // Socket.IO y el navegador quedaría reintentando en bucle.
     return null;
 }
 
@@ -56,7 +68,7 @@ function RealtimeProvider({ children }) {
                 // Llega una notificación nueva para el usuario.
                 socket.on("notification:new", (payload = {}) => {
                     emitirEvento("smart-campus:notification", payload);
-                    emitirEvento("notificaciones-actualizadas", payload);
+                    refrescarNotificaciones();
                     if (typeof payload.unreadCount === "number") {
                         emitirEvento("notificaciones-contador", {
                             unreadCount: payload.unreadCount
@@ -66,6 +78,7 @@ function RealtimeProvider({ children }) {
 
                 // Cambió el estado de una notificación (por ejemplo, fue leída).
                 socket.on("notification:updated", (payload = {}) => {
+                    refrescarNotificaciones();
                     if (typeof payload.unreadCount === "number") {
                         emitirEvento("notificaciones-contador", {
                             unreadCount: payload.unreadCount
@@ -82,7 +95,7 @@ function RealtimeProvider({ children }) {
                 });
 
                 socket.on("notifications:all-read", () => {
-                    emitirEvento("notificaciones-actualizadas", { unreadCount: 0, leida: true });
+                    refrescarNotificaciones();
                     emitirEvento("notificaciones-contador", { unreadCount: 0 });
                 });
 

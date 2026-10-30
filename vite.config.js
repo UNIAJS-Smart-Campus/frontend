@@ -27,6 +27,13 @@ export default defineConfig({
         target: process.env.VITE_PROXY_TARGET || 'http://localhost:3000',
         changeOrigin: true,
         secure: false
+      },
+      // Socket.IO: mismo destino que la API, pero conservando el upgrade.
+      '/socket.io': {
+        target: process.env.VITE_PROXY_TARGET || 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+        ws: true
       }
     }
   },
