@@ -320,7 +320,7 @@ export function mapearPqrs(raw) {
     if (!raw) return null;
     return {
         id: raw.id_pqrs,
-        codigo: `PQRS-${raw.id_pqrs}`,
+        codigo: texto(raw.codigo, `PQRS-${raw.id_pqrs}`),
         id_usuario: raw.id_usuario,
         usuarioId: raw.id_usuario ?? null,
         tipo: texto(raw.tipo),
