@@ -6,8 +6,9 @@ function resolverUrlWebSocket() {
     const explicita = import.meta.env.VITE_WS_URL;
     if (explicita) return explicita.replace(/\/+$/, "");
 
-    const api = import.meta.env.VITE_API_URL || window.location.origin;
-    return api.replace(/\/api\/?$/, "").replace(/\/+$/, "");
+    // Sin URL explícita no se intenta conectar: el mock y Vercel no exponen
+    // Socket.IO, y el navegador quedaría reintentando en bucle.
+    return null;
 }
 
 function emitirEvento(nombre, detail) {
@@ -24,6 +25,9 @@ function RealtimeProvider({ children }) {
         const token = getToken();
         if (!token) return undefined;
 
+        const wsUrl = resolverUrlWebSocket();
+        if (!wsUrl) return undefined;
+
         let cancelado = false;
         let socket;
 
@@ -33,7 +37,7 @@ function RealtimeProvider({ children }) {
             .then(({ io }) => {
                 if (cancelado) return;
 
-                socket = io(resolverUrlWebSocket(), {
+                socket = io(wsUrl, {
                     path: "/socket.io",
                     transports: ["websocket", "polling"],
                     auth: { token },
