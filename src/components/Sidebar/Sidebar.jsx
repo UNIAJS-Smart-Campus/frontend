@@ -26,7 +26,7 @@ function Sidebar({ collapsed, open = false, onClose }) {
   return (
     <nav className={classes}>
       <div className="sidebar__brand">
-        <BrandLogo className="sidebar__logo" />
+        <BrandLogo className="sidebar__logo" forceLight />
       </div>
 
       <div className="sidebar__menu">
