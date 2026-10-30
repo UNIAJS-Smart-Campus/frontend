@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Navbar from "../components/Navbar/Navbar";
+import PageLoading from "../components/PageLoading/PageLoading";
 import useKeyboardShortcuts from "../hooks/useKeyboardShortcuts";
 import "./DashboardLayout.css";
 
@@ -79,6 +80,7 @@ function DashboardLayout() {
 
                 <main className="app__content">
                     <div className="app__content-inner" key={location.pathname}>
+                        <PageLoading />
                         <Outlet />
                     </div>
                 </main>

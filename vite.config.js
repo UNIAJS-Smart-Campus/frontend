@@ -9,8 +9,6 @@ export default defineConfig({
     watch: {
       usePolling: true
     },
-    // El navegador habla siempre con el mismo origen: /api lo resuelve el gateway.
-    // Evita CORS y hace que el JWT viaje en la misma conexion que la SPA.
     proxy: {
       '/api': {
         target: process.env.VITE_PROXY_TARGET || 'http://localhost:3000',
@@ -18,5 +16,28 @@ export default defineConfig({
         secure: false
       }
     }
+  },
+  build: {
+    outDir: 'dist',
+    minify: 'terser',
+    sourcemap: false,
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
+        chunkFileNames: (chunkInfo) => {
+          if (chunkInfo.name === 'vendor') {
+            return 'js/vendor-[hash].js';
+          }
+          return 'js/[name]-[hash].js';
+        },
+        entryFileNames: 'js/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
+      }
+    }
   }
-})
+});
