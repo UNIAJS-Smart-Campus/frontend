@@ -203,7 +203,6 @@ function InfoAcademica() {
             {/* ── HEADER ── */}
             <div className="page__header">
                 <div className="page__title">
-                    <h1>Información académica</h1>
                     <p>Consulta los avisos, convocatorias y resultados publicados.</p>
                 </div>
 

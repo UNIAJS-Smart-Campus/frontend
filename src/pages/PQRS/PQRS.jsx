@@ -318,7 +318,6 @@ function PQRS() {
         <div className="page">
             <div className="page__header">
                 <div className="page__title">
-                    <h1>{puedeGestionar ? "Gestión de PQRS" : "Mis PQRS"}</h1>
                     <p>
                         {puedeGestionar
                             ? "Revisa, asigna y responde las peticiones, quejas, reclamos y sugerencias registradas."

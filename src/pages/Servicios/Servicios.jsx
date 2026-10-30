@@ -58,7 +58,6 @@ function Servicios() {
         <div className="servicios">
             <div className="servicios__page-header">
                 <div className="servicios__page-title">
-                    <h1>Servicios</h1>
                     <p>
                         Encuentra los servicios universitarios disponibles y
                         accede a cada módulo.

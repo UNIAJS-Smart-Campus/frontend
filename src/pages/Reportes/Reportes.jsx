@@ -97,8 +97,6 @@ function Reportes() {
             {/* ── ENCABEZADO ── */}
             <div className="page__header reportes__header">
                 <div className="page__title reportes__intro">
-                    <span className="reportes__eyebrow">UAJS Smart Campus</span>
-                    <h1>{alcance === "personal" ? "Mi reporte" : "Reporte institucional"}</h1>
                     <p>
                         {alcance === "personal"
                             ? "Indicadores de tu actividad en el campus generados el"
