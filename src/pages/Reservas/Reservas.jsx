@@ -266,6 +266,17 @@ function Reservas() {
         hasta: hastaReservas
     } = usePagination(misReservasOrdenadas, 10);
 
+    // Catálogo de espacios/equipos: 6 tarjetas por página. Es una lista
+    // independiente de "Mis reservas", así que lleva su propio paginador.
+    const {
+        pagina: paginaRecursos,
+        setPagina: setPaginaRecursos,
+        totalPaginas: totalPaginasRecursos,
+        itemsPagina: itemsPaginaRecursos,
+        desde: desdeRecursos,
+        hasta: hastaRecursos
+    } = usePagination(disponibles, 6);
+
     return (
         <div className="page">
             <div className="page__header">
@@ -364,7 +375,7 @@ function Reservas() {
 
             <div className="reservas__resources">
                 {disponibles.length > 0 ? (
-                    disponibles.map((recurso) => {
+                    itemsPaginaRecursos.map((recurso) => {
                         const variante = TIPO_VARIANT[recurso.tipo] || TIPO_VARIANT.Salas;
                         return (
                             <div className="reservas__resource-card" key={recurso.id}>
@@ -407,6 +418,15 @@ function Reservas() {
                     </div>
                 )}
             </div>
+
+            <Pagination
+                pagina={paginaRecursos}
+                totalPaginas={totalPaginasRecursos}
+                onChange={setPaginaRecursos}
+                desde={desdeRecursos}
+                hasta={hastaRecursos}
+                total={disponibles.length}
+            />
 
             <div className="card">
                 <div className="card__header">
