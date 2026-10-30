@@ -2,6 +2,8 @@
 
 React + Vite para la plataforma Smart Campus UAJS.
 
+Requiere **Node.js 22 LTS** (ver `.nvmrc`).
+
 ## Desarrollo local
 
 ```bash
