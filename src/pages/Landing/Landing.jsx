@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Icon from "../../components/Icon/Icon";
 import ServiceCard from "../../components/ServiceCard/ServiceCard";
 import BrandLogo from "../../components/BrandLogo/BrandLogo";
-import FontSizeToggle from "../../components/FontSizeToggle/FontSizeToggle";
 import useAuth from "../../context/useAuth";
 import services from "../../utils/services";
 import "./Landing.css";
@@ -93,10 +92,6 @@ function Landing() {
                         <span className="landing__eyebrow">Proyecto Integrador</span>
                         <strong>UAJS Smart Campus</strong>
                     </div>
-                </div>
-
-                <div className="landing__header-tools">
-                    <FontSizeToggle />
                 </div>
             </header>
 

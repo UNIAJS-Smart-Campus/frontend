@@ -4,7 +4,7 @@
         radial-gradient(820px 420px at 50% -8%, rgba(132, 196, 255, 0.18), transparent 60%),
         radial-gradient(560px 260px at 80% 18%, rgba(17, 104, 176, 0.24), transparent 60%),
         linear-gradient(160deg, #071d2f 0%, #123a5e 40%, #0d4d7d 100%);
-    color: var(--color-text-inverse);
+    color: #fff;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -41,7 +41,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    color: var(--color-text-inverse);
+    color: #fff;
 }
 
 .landing__brand {
@@ -113,7 +113,7 @@
     font-weight: 800;
     line-height: 1.12;
     letter-spacing: -0.02em;
-    color: var(--color-text-inverse);
+    color: #fff;
 }
 
 .landing__subtitle {
@@ -156,7 +156,7 @@
     border-radius: var(--radius-full, 50px);
     border: 1px solid rgba(255, 255, 255, 0.35);
     background: transparent;
-    color: var(--color-text-inverse);
+    color: #fff;
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
@@ -199,7 +199,7 @@
     display: inline-block;
     left: 50%;
     transform: translateX(-50%);
-    color: var(--color-text-inverse);
+    color: #fff;
 }
 
 .landing__section-title::after {
@@ -248,7 +248,7 @@
     font-family: var(--font-heading);
     font-size: 18px;
     font-weight: 700;
-    color: var(--color-text-inverse);
+    color: #fff;
 }
 
 .landing__card-text {
@@ -264,7 +264,7 @@
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow: none;
-    color: var(--color-text-inverse);
+    color: #fff;
 }
 
 .landing .service-card::before {
@@ -278,16 +278,16 @@
 
 .landing .service-card__icon {
     background: rgba(255, 255, 255, 0.12);
-    color: var(--color-text-inverse);
+    color: #fff;
 }
 
 .landing .service-card__category {
-    color: var(--color-text-inverse);
+    color: #fff;
     background: rgba(255, 255, 255, 0.15);
 }
 
 .landing .service-card__title {
-    color: var(--color-text-inverse);
+    color: #fff;
 }
 
 .landing .service-card__description {
@@ -344,7 +344,7 @@
 .landing__about-header h4 {
     margin: 0;
     font-size: 18px;
-    color: var(--color-text-inverse);
+    color: #fff;
 }
 
 .landing__about-card p {
@@ -376,7 +376,7 @@
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: var(--radius-lg);
     text-decoration: none;
-    color: var(--color-text-inverse);
+    color: #fff;
     transition: background 0.2s, transform 0.2s;
 }
 
@@ -416,7 +416,7 @@
 
 .landing__contact-card span:not(.landing__contact-icon):not(.landing__contact-icon *) {
     font-size: 14px;
-    color: var(--color-text-inverse);
+    color: #fff;
     margin-top: 2px;
 }
 
@@ -448,7 +448,7 @@
 .landing__footer-name {
     font-size: 16px;
     font-weight: 700;
-    color: var(--color-text-inverse);
+    color: #fff;
     margin: 0 0 var(--space-2);
 }
 
@@ -480,7 +480,7 @@
 }
 
 .landing__footer-list strong {
-    color: var(--color-text-inverse);
+    color: #fff;
     font-weight: 500;
     margin-right: 4px;
 }
