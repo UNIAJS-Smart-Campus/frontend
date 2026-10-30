@@ -19,7 +19,14 @@ function getSession() {
         if (!guardada) return null;
         
         const parsed = JSON.parse(guardada);
-        return parsed && parsed.usuario ? parsed : null;
+        if (!parsed) return null;
+        // Formato actual: el usuario plano, donde `usuario` es el nombre de
+        // inicio de sesión. Formato antiguo: { usuario: {...}, expiresAt }.
+        // Se distingue por el tipo para no devolver el string "admin".
+        if (parsed.usuario && typeof parsed.usuario === "object") {
+            return parsed.usuario;
+        }
+        return parsed;
     } catch (error) {
         console.error("Error al leer sesión:", error);
         // Si hay datos corruptos, limpiarlos
