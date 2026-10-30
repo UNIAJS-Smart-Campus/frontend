@@ -7,6 +7,7 @@ import {
 
 import DashboardLayout from "../layouts/DashboardLayout";
 import ProtectedRoute from "../components/ProtectedRoute/ProtectedRoute";
+import PageLoading from "../components/PageLoading/PageLoading";
 
 const Landing = lazy(() => import("../pages/Landing/Landing"));
 const Login = lazy(() => import("../pages/Login/Login"));
@@ -31,12 +32,19 @@ const Servicios = lazy(() => import("../pages/Servicios/Servicios"));
 
 function AppRoutes() {
   return (
-    <BrowserRouter>
-      <Suspense fallback={
-        <div role="status" aria-live="polite">
-          Cargando UAJS Smart Campus...
-        </div>
-      }>
+    // useTransitions={false}: al navegar a un módulo cuyo chunk aún no está
+    // descargado, React muestra el fallback de <Suspense> en vez de mantener la
+    // pantalla anterior en silencio. Es lo que alimenta la pantalla de carga.
+    <BrowserRouter useTransitions={false}>
+      <Suspense
+        fallback={
+          <PageLoading
+            variant="screen"
+            label="Cargando UAJS Smart Campus..."
+            hint="Preparando la plataforma"
+          />
+        }
+      >
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Navbar from "../components/Navbar/Navbar";
@@ -80,8 +80,17 @@ function DashboardLayout() {
 
                 <main className="app__content">
                     <div className="app__content-inner" key={location.pathname}>
-                        <PageLoading />
-                        <Outlet />
+                        <Suspense
+                            fallback={
+                                <PageLoading
+                                    variant="content"
+                                    label="Cargando módulo..."
+                                    hint="Un momento, estamos preparando la información"
+                                />
+                            }
+                        >
+                            <Outlet />
+                        </Suspense>
                     </div>
                 </main>
             </div>

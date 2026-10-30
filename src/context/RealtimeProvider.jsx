@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { io } from "socket.io-client";
 import useAuth from "./useAuth";
 import { getToken } from "../utils/authToken";
 
@@ -25,57 +24,80 @@ function RealtimeProvider({ children }) {
         const token = getToken();
         if (!token) return undefined;
 
-        const socket = io(resolverUrlWebSocket(), {
-            path: "/socket.io",
-            transports: ["websocket", "polling"],
-            auth: { token },
-            reconnection: true,
-            reconnectionAttempts: Infinity,
-            reconnectionDelay: 1000,
-            reconnectionDelayMax: 10000
-        });
+        let cancelado = false;
+        let socket;
 
-        socket.on("connect_error", (error) => {
-            if (/token/i.test(error?.message || "")) {
-                emitirEvento("uajs:session-expired", {});
-            }
-        });
+        // socket.io-client se descarga en un chunk aparte, solo cuando hay
+        // sesión iniciada: la landing y el login no cargan la librería.
+        import("socket.io-client")
+            .then(({ io }) => {
+                if (cancelado) return;
 
-        // Llega una notificación nueva para el usuario.
-        socket.on("notification:new", (payload = {}) => {
-            emitirEvento("smart-campus:notification", payload);
-            emitirEvento("notificaciones-actualizadas", payload);
-            if (typeof payload.unreadCount === "number") {
-                emitirEvento("notificaciones-contador", { unreadCount: payload.unreadCount });
-            }
-        });
+                socket = io(resolverUrlWebSocket(), {
+                    path: "/socket.io",
+                    transports: ["websocket", "polling"],
+                    auth: { token },
+                    reconnection: true,
+                    reconnectionAttempts: Infinity,
+                    reconnectionDelay: 1000,
+                    reconnectionDelayMax: 10000
+                });
 
-        // Cambió el estado de una notificación (por ejemplo, fue leída).
-        socket.on("notification:updated", (payload = {}) => {
-            if (typeof payload.unreadCount === "number") {
-                emitirEvento("notificaciones-contador", { unreadCount: payload.unreadCount });
-            }
-        });
+                socket.on("connect_error", (error) => {
+                    if (/token/i.test(error?.message || "")) {
+                        emitirEvento("uajs:session-expired", {});
+                    }
+                });
 
-        socket.on("notifications:count", (payload = {}) => {
-            if (typeof payload.unreadCount === "number") {
-                emitirEvento("notificaciones-contador", { unreadCount: payload.unreadCount });
-            }
-        });
+                // Llega una notificación nueva para el usuario.
+                socket.on("notification:new", (payload = {}) => {
+                    emitirEvento("smart-campus:notification", payload);
+                    emitirEvento("notificaciones-actualizadas", payload);
+                    if (typeof payload.unreadCount === "number") {
+                        emitirEvento("notificaciones-contador", {
+                            unreadCount: payload.unreadCount
+                        });
+                    }
+                });
 
-        socket.on("notifications:all-read", () => {
-            emitirEvento("notificaciones-actualizadas", { unreadCount: 0, leida: true });
-            emitirEvento("notificaciones-contador", { unreadCount: 0 });
-        });
+                // Cambió el estado de una notificación (por ejemplo, fue leída).
+                socket.on("notification:updated", (payload = {}) => {
+                    if (typeof payload.unreadCount === "number") {
+                        emitirEvento("notificaciones-contador", {
+                            unreadCount: payload.unreadCount
+                        });
+                    }
+                });
 
-        // Cambios en cualquier recurso (solicitudes, reservas, eventos, PQRS...).
-        socket.on("data:changed", (payload = {}) => {
-            emitirEvento("smart-campus:data-changed", payload);
-        });
+                socket.on("notifications:count", (payload = {}) => {
+                    if (typeof payload.unreadCount === "number") {
+                        emitirEvento("notificaciones-contador", {
+                            unreadCount: payload.unreadCount
+                        });
+                    }
+                });
+
+                socket.on("notifications:all-read", () => {
+                    emitirEvento("notificaciones-actualizadas", { unreadCount: 0, leida: true });
+                    emitirEvento("notificaciones-contador", { unreadCount: 0 });
+                });
+
+                // Cambios en cualquier recurso (solicitudes, reservas, eventos, PQRS...).
+                socket.on("data:changed", (payload = {}) => {
+                    emitirEvento("smart-campus:data-changed", payload);
+                });
+            })
+            .catch(() => {
+                // Sin tiempo real la app sigue funcionando; solo se pierden las
+                // notificaciones en vivo.
+            });
 
         return () => {
-            socket.removeAllListeners();
-            socket.disconnect();
+            cancelado = true;
+            if (socket) {
+                socket.removeAllListeners();
+                socket.disconnect();
+            }
         };
     }, [user?.id, user?.rol]);
 

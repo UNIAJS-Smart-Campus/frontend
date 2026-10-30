@@ -1,40 +1,111 @@
-.page-loading__overlay {
-    position: fixed;
-    inset: 0;
+.page-loading {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2000;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(2px);
+    font-family: var(--font-body, "Inter", "Segoe UI", Arial, sans-serif);
 }
 
-.page-loading__card {
+/* Pantalla completa: carga inicial de una ruta o de la app. */
+.page-loading--screen {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: var(--color-bg, #f2f2f2);
+}
+
+/* Dentro del dashboard: solo el área de contenido, sin tapar el menú. */
+.page-loading--content {
+    min-height: min(60vh, 420px);
+    width: 100%;
+    padding: 24px;
+    background: transparent;
+}
+
+.page-loading__panel {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
-    padding: 24px 32px;
+    gap: 14px;
+    padding: 28px 36px;
     border-radius: 16px;
     background: var(--color-surface, #ffffff);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    border: 1px solid var(--color-border, #dde1e6);
+    box-shadow: 0 10px 30px rgba(2, 48, 89, 0.08);
+}
+
+.page-loading--content .page-loading__panel {
+    box-shadow: 0 6px 18px rgba(2, 48, 89, 0.06);
 }
 
 .page-loading__spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid var(--color-border, #e2e8f0);
-    border-top-color: var(--color-primary, #3b82f6);
+    width: 42px;
+    height: 42px;
+    border: 4px solid var(--color-border, #dde1e6);
+    border-top-color: var(--color-primary, #025e73);
+    border-right-color: var(--color-primary-400, #38b396);
     border-radius: 50%;
     animation: page-loading-spin 0.8s linear infinite;
 }
 
 .page-loading__text {
-    font-size: 14px;
-    color: var(--color-text-secondary, #64748b);
-    font-weight: 500;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text, #273e4e);
+}
+
+.page-loading__hint {
+    margin: -6px 0 0;
+    font-size: 13px;
+    color: var(--color-text-secondary, #7a848a);
+}
+
+.page-loading__bar {
+    position: relative;
+    display: block;
+    width: 180px;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--color-surface-alt, #f0f2f5);
+}
+
+.page-loading__bar-fill {
+    position: absolute;
+    inset: 0;
+    width: 40%;
+    border-radius: inherit;
+    background: linear-gradient(
+        90deg,
+        var(--color-primary, #025e73),
+        var(--color-primary-400, #38b396)
+    );
+    animation: page-loading-bar 1.2s ease-in-out infinite;
 }
 
 @keyframes page-loading-spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes page-loading-bar {
+    0% {
+        transform: translateX(-110%);
+    }
+    100% {
+        transform: translateX(360%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .page-loading__spinner {
+        animation-duration: 2.4s;
+    }
+
+    .page-loading__bar-fill {
+        animation: none;
+        width: 100%;
+        opacity: 0.5;
+    }
 }
