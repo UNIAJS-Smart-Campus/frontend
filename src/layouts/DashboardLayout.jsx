@@ -4,6 +4,8 @@ import Sidebar from "../components/Sidebar/Sidebar";
 import Navbar from "../components/Navbar/Navbar";
 import PageLoading from "../components/PageLoading/PageLoading";
 import useKeyboardShortcuts from "../hooks/useKeyboardShortcuts";
+import useAuth from "../context/useAuth";
+import { SessionGuard } from "../context/AuthContext";
 import "./DashboardLayout.css";
 
 const MQ_MOBILE = "(max-width: 768px)";
@@ -15,6 +17,7 @@ function DashboardLayout() {
     );
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
+    const { logout } = useAuth();
 
     // Sincronizar el estado con el tamaño del viewport (mobile = drawer off-canvas)
     useEffect(() => {
@@ -61,6 +64,8 @@ function DashboardLayout() {
 
     return (
         <div className={classes}>
+            <SessionGuard onLogout={logout} />
+
             <Sidebar
                 collapsed={collapsed}
                 open={sidebarOpen}

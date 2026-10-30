@@ -237,12 +237,11 @@ function AuthProvider({ children }) {
             esEstudiante
         }}>
             {children}
-            {user && <SessionGuard onLogout={logout} />}
         </AuthContext.Provider>
     );
 }
 
-function SessionGuard({ onLogout }) {
+export function SessionGuard({ onLogout }) {
     const [warningOpen, setWarningOpen] = useState(false);
     const [remaining, setRemaining] = useState(WARNING_COUNTDOWN_MS);
     const idleTimerRef = useRef(null);

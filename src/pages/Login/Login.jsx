@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../context/useAuth";
 import BrandLogo from "../../components/BrandLogo/BrandLogo";
 import "./Login.css";
@@ -26,10 +26,14 @@ function Login() {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
-    const { login } = useAuth();
+    const { login, user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const desde = location.state?.from?.pathname || "/dashboard";
+
+    // Si ya hay sesión, el login no debe mostrarse (ni montar el aviso de
+    // inactividad encima de la pantalla de acceso).
+    if (user) return <Navigate to={desde} replace />;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
