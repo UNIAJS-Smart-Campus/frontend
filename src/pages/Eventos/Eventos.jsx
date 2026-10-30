@@ -6,6 +6,8 @@ import useAuth from "../../context/useAuth";
 import { useToast } from "../../context/ToastContext";
 import useColeccion from "../../hooks/useColeccion";
 import useSugerencias from "../../hooks/useSugerencias";
+import usePagination from "../../hooks/usePagination";
+import Pagination from "../../components/Pagination/Pagination";
 import {
     CLAVE_EVENTOS,
     CATEGORIAS_EVENTO,
@@ -131,6 +133,9 @@ function Eventos() {
         }
         return (a.nombre || "").localeCompare(b.nombre || "");
     });
+
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
+        usePagination(encontrados, 6);
 
 
     // Respaldo local: se usa si Elasticsearch no responde.
@@ -430,7 +435,7 @@ function Eventos() {
                 </div>
             ) : (
                 <div className="eventos__grid">
-                    {encontrados.map((ev) => (
+                    {itemsPagina.map((ev) => (
                         <article className="eventos__item" key={ev.id}>
                             <div className="eventos__item-media">
                                 <ImagenCategoria grupo="evento" tipo={ev.tipo} semilla={ev.id} />
@@ -523,6 +528,15 @@ function Eventos() {
                     ))}
                 </div>
             )}
+
+            <Pagination
+                pagina={pagina}
+                totalPaginas={totalPaginas}
+                onChange={setPagina}
+                desde={desde}
+                hasta={hasta}
+                total={encontrados.length}
+            />
 
             {modalAbierto && (
                 <div className="eventos__overlay" onClick={cerrarModal}>

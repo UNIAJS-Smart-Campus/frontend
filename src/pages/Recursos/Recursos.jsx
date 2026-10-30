@@ -7,6 +7,8 @@ import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
 import useColeccion from "../../hooks/useColeccion";
 import useSugerencias from "../../hooks/useSugerencias";
+import usePagination from "../../hooks/usePagination";
+import Pagination from "../../components/Pagination/Pagination";
 import {
     CLAVE_RECURSO,
     TIPOS_RECURSO,
@@ -145,6 +147,9 @@ function Recursos() {
             return true;
         });
     }, [busqueda, categoria, categoriaRecurso, edificio, estado, items]);
+
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
+        usePagination(filtrados, 9);
 
     // Respaldo local: se usa si Elasticsearch no responde.
     const sugerenciasLocales = useMemo(
@@ -448,7 +453,7 @@ function Recursos() {
 
             <div className="recursos__resources">
                 {filtrados.length > 0 ? (
-                    filtrados.map((recurso) => {
+                    itemsPagina.map((recurso) => {
                         const categoriaVar =
                             CATEGORIA_VARIANT[recurso.tipo] || CATEGORIA_VARIANT.Salas;
                         const estadoVar = estadoVisual(recurso);
@@ -529,6 +534,15 @@ function Recursos() {
                     </div>
                 )}
             </div>
+
+            <Pagination
+                pagina={pagina}
+                totalPaginas={totalPaginas}
+                onChange={setPagina}
+                desde={desde}
+                hasta={hasta}
+                total={filtrados.length}
+            />
 
             <Modal
                 isOpen={detalleRecurso !== null}

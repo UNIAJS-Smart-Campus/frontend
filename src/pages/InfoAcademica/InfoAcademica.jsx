@@ -6,6 +6,8 @@ import SearchBar from "../../components/SearchBar/SearchBar";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import useColeccion from "../../hooks/useColeccion";
 import useSugerencias from "../../hooks/useSugerencias";
+import usePagination from "../../hooks/usePagination";
+import Pagination from "../../components/Pagination/Pagination";
 import {
     CATEGORIAS,
     CATEGORIA_ICONO,
@@ -91,6 +93,9 @@ function InfoAcademica() {
     )
         .slice()
         .sort((a, b) => Number(b.destacado) - Number(a.destacado));
+
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
+        usePagination(encontradas, 8);
 
     const contarCategoria = (cat) =>
         cat === ""
@@ -317,7 +322,7 @@ function InfoAcademica() {
                 </div>
             ) : (
                 <div className="info-ac__list">
-                    {encontradas.map((item) => {
+                    {itemsPagina.map((item) => {
                         const esVencida = item.estado === "Vencida";
                         return (
                             <article
@@ -409,6 +414,15 @@ function InfoAcademica() {
                     })}
                 </div>
             )}
+
+            <Pagination
+                pagina={pagina}
+                totalPaginas={totalPaginas}
+                onChange={setPagina}
+                desde={desde}
+                hasta={hasta}
+                total={encontradas.length}
+            />
 
             {/* ── MODAL CREAR ── */}
             {crearAbierto && (

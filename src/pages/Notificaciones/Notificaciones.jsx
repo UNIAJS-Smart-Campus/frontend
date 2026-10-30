@@ -1,6 +1,8 @@
 import { useState } from "react";
 import Icon from "../../components/Icon/Icon";
 import useColeccion from "../../hooks/useColeccion";
+import usePagination from "../../hooks/usePagination";
+import Pagination from "../../components/Pagination/Pagination";
 import {
     CLAVE_COLECCION,
     obtenerNotificaciones,
@@ -28,6 +30,9 @@ function Notificaciones() {
         filtro === "Todas"
             ? items
             : items.filter((item) => item.tipo === filtro);
+
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
+        usePagination(filtradas, 8);
 
     const conteoTipo = (tipo) =>
         tipo === "Todas" ? items.length : items.filter((i) => i.tipo === tipo).length;
@@ -122,7 +127,7 @@ function Notificaciones() {
                 </div>
             ) : (
                 <div className="notifs__list">
-                    {filtradas.map((item) => (
+                    {itemsPagina.map((item) => (
                         <article
                             key={item.id}
                             className={
@@ -172,6 +177,15 @@ function Notificaciones() {
                     ))}
                 </div>
             )}
+
+            <Pagination
+                pagina={pagina}
+                totalPaginas={totalPaginas}
+                onChange={setPagina}
+                desde={desde}
+                hasta={hasta}
+                total={filtradas.length}
+            />
         </div>
     );
 }

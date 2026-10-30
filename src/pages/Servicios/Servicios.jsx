@@ -2,6 +2,8 @@ import { useState } from "react";
 import ServiceCard from "../../components/ServiceCard/ServiceCard";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
+import usePagination from "../../hooks/usePagination";
+import Pagination from "../../components/Pagination/Pagination";
 import services from "../../utils/services";
 import "./Servicios.css";
 
@@ -40,6 +42,9 @@ function Servicios() {
                   .includes(normalizar(busqueda))
           )
         : porCategoria;
+
+    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
+        usePagination(encontrados, 9);
 
     const categorias = [...new Set(visibles.map((s) => s.category))];
 
@@ -113,11 +118,20 @@ function Servicios() {
                 </p>
             ) : (
                 <div className="servicios__grid">
-                    {encontrados.map((service) => (
+                    {itemsPagina.map((service) => (
                         <ServiceCard service={service} key={service.name} />
                     ))}
                 </div>
             )}
+
+            <Pagination
+                pagina={pagina}
+                totalPaginas={totalPaginas}
+                onChange={setPagina}
+                desde={desde}
+                hasta={hasta}
+                total={encontrados.length}
+            />
         </div>
     );
 }
