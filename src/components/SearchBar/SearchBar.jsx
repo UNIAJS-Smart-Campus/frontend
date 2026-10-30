@@ -9,7 +9,7 @@ function SearchBar({
     placeholder = "Buscar…",
     id,
     suggestions = [],
-    description = "Escribe para filtrar",
+    description = "",
     maxSuggestions = 8,
     // Cuando las sugerencias vienen ya filtradas del search-service
     // (Elasticsearch con fuzziness), no deben re-filtrarse por coincidencia
