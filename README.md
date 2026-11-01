@@ -40,3 +40,9 @@ npm run preview
 > microservicios, MySQL y Elasticsearch) no puede ejecutarse en Vercel; debe
 > estar en un VPS/Docker, Render, Railway u otro servicio con persistencia y
 > WebSocket.
+
+## Autores y colaboradores
+
+- [ValeriaOsp](https://github.com/ValeriaOsp)
+- [Greys1512](https://github.com/Greys1512)
+- [felipeguevaram3-collab](https://github.com/felipeguevaram3-collab)
