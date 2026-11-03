@@ -361,7 +361,13 @@ const CLAVE_COLECCION = "usuarios";
 /** Envía el password solo si el modelo lo trae con valor. */
 function payloadDeUsuario(modelo) {
     const payload = mapearUsuarioAPayload(modelo);
-    if (!modelo.password) {
+    // mapearUsuarioAPayload no incluye password (la tabla guarda el hash):
+    // hay que añadirlo aquí o el backend rechaza la creación con
+    // "Faltan campos requeridos". Al editar con el campo vacío se omite
+    // para que el backend conserve la contraseña actual.
+    if (modelo.password) {
+        payload.password = modelo.password;
+    } else {
         delete payload.password;
     }
     return payload;
