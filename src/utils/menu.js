@@ -119,6 +119,14 @@ export function getModuleName(pathname) {
         return "Reservar espacio";
     }
 
+    if (pathname === "/recursos/nuevo") {
+        return "Nuevo recurso";
+    }
+
+    if (pathname.startsWith("/recursos/") && pathname.endsWith("/editar")) {
+        return "Editar recurso";
+    }
+
     if (pathname.startsWith("/solicitudes/")) {
         return "Detalle de solicitud";
     }

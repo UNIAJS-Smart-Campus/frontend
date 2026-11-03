@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import Icon from "../../components/Icon/Icon";
 import ImagenCategoria from "../../components/ImagenCategoria/ImagenCategoria";
 import Modal from "../../components/Modal/Modal";
-import Input from "../../components/Input/Input";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import useAuth from "../../context/useAuth";
 import useColeccion from "../../hooks/useColeccion";
@@ -11,13 +11,8 @@ import usePagination from "../../hooks/usePagination";
 import Pagination from "../../components/Pagination/Pagination";
 import {
     CLAVE_RECURSO,
-    TIPOS_RECURSO,
     CATEGORIA_POR_TIPO,
     CATEGORIAS_RECURSO,
-    ESTADOS_RECURSO,
-    DISPONIBILIDADES_RECURSO,
-    crearRecurso,
-    actualizarRecurso,
     eliminarRecurso as eliminarRecursoEnApi
 } from "../../utils/recursos";
 import "./Recursos.css";
@@ -74,19 +69,6 @@ function Recursos() {
     const [estado, setEstado] = useState("Todos");
     const [detalleRecurso, setDetalleRecurso] = useState(null);
 
-    const [crudAbierto, setCrudAbierto] = useState(false);
-    const [editandoId, setEditandoId] = useState(null);
-    const [formRecurso, setFormRecurso] = useState({
-        nombre: "",
-        codigo: "",
-        tipo: "Salas",
-        capacidad: "",
-        ubicacion: "",
-        descripcion: "",
-        estado: "Disponible",
-        disponibilidad: "Disponible"
-    });
-    const [errorRecurso, setErrorRecurso] = useState("");
     const [aviso, setAviso] = useState("");
 
     const mostrarAviso = (mensaje) => {
@@ -164,113 +146,6 @@ function Recursos() {
     );
     const sugerencias = useSugerencias(query, "RECURSOS", sugerenciasLocales);
 
-    const abrirNuevoRecurso = () => {
-        setEditandoId(null);
-        setFormRecurso({
-            nombre: "",
-            codigo: "",
-            tipo: "Salas",
-            categoria: "Escenario",
-            capacidad: "",
-            ubicacion: "",
-            descripcion: "",
-            estado: "Disponible",
-            disponibilidad: "Disponible"
-        });
-        setErrorRecurso("");
-        setCrudAbierto(true);
-    };
-
-    const abrirEditarRecurso = (recurso) => {
-        setEditandoId(recurso.id);
-        setFormRecurso({
-            nombre: recurso.nombre,
-            codigo: recurso.codigo,
-            tipo: recurso.tipo,
-            categoria: recurso.categoria ?? CATEGORIA_POR_TIPO[recurso.tipo] ?? "Escenario",
-            capacidad: String(recurso.capacidad ?? ""),
-            ubicacion: recurso.ubicacion,
-            descripcion: recurso.descripcion || "",
-            estado: recurso.estado,
-            disponibilidad: recurso.disponibilidad
-        });
-        setErrorRecurso("");
-        setCrudAbierto(true);
-    };
-
-    const cerrarCrud = () => {
-        setCrudAbierto(false);
-        setErrorRecurso("");
-    };
-
-    const handleRecursoChange = (e) => {
-        const { name, value } = e.target;
-        if (name === "tipo") {
-            setFormRecurso((prev) => ({
-                ...prev,
-                tipo: value,
-                categoria: CATEGORIA_POR_TIPO[value] ?? prev.categoria
-            }));
-        } else {
-            setFormRecurso((prev) => ({ ...prev, [name]: value }));
-        }
-    };
-
-    const handleRecursoSubmit = async (e) => {
-        e.preventDefault();
-
-        if (!formRecurso.nombre.trim() || !formRecurso.codigo.trim()) {
-            setErrorRecurso("El nombre y el código son obligatorios.");
-            return;
-        }
-        if (!formRecurso.ubicacion.trim()) {
-            setErrorRecurso("La ubicación es obligatoria.");
-            return;
-        }
-
-        const duplicado = items.some(
-            (item) =>
-                (item.codigo || "").toLowerCase() === formRecurso.codigo.trim().toLowerCase() &&
-                item.id !== editandoId
-        );
-        if (duplicado) {
-            setErrorRecurso("Ya existe un recurso con ese código.");
-            return;
-        }
-
-        const datos = {
-            nombre: formRecurso.nombre.trim(),
-            codigo: formRecurso.codigo.trim(),
-            tipo: formRecurso.tipo,
-            categoria: formRecurso.categoria || CATEGORIA_POR_TIPO[formRecurso.tipo] || "Escenario",
-            descripcion: (formRecurso.descripcion || "").trim(),
-            capacidad: Number(formRecurso.capacidad) || 1,
-            ubicacion: formRecurso.ubicacion.trim() || "Bloque A",
-            estado: formRecurso.estado,
-            disponibilidad: formRecurso.disponibilidad
-        };
-
-        try {
-            if (editandoId === null) {
-                await crearRecurso(datos);
-                mostrarAviso("Recurso creado correctamente.");
-            } else {
-                const actual = items.find((item) => item.id === editandoId);
-                if (!actual) {
-                    setErrorRecurso("El recurso ya no existe en la lista. Recarga la página.");
-                    return;
-                }
-                await actualizarRecurso(actual, datos);
-                mostrarAviso("Recurso actualizado correctamente.");
-            }
-            setCrudAbierto(false);
-        } catch (fallo) {
-            const mensaje =
-                fallo?.message || "No se pudo guardar el recurso en el servidor.";
-            setErrorRecurso(mensaje);
-        }
-    };
-
     const eliminarRecurso = async (recurso) => {
         const confirma = window.confirm(
             `¿Eliminar el recurso "${recurso.nombre}"?`
@@ -281,7 +156,6 @@ function Recursos() {
             setDetalleRecurso(null);
             mostrarAviso(`Recurso "${recurso.nombre}" eliminado.`);
         } catch (fallo) {
-            setErrorRecurso(fallo?.message || "No se pudo eliminar el recurso.");
             mostrarAviso(fallo?.message || "No se pudo eliminar el recurso.");
         }
     };
@@ -294,10 +168,10 @@ function Recursos() {
                 </div>
 
                 {puedeAdmin && (
-                    <button className="button button--accent button--md" onClick={abrirNuevoRecurso}>
+                    <Link to="/recursos/nuevo" className="button button--accent button--md">
                         <Icon name="recursos" size={15} />
                         Nuevo recurso
-                    </button>
+                    </Link>
                 )}
             </div>
 
@@ -507,13 +381,13 @@ function Recursos() {
                                         </button>
                                         {puedeAdmin && (
                                             <>
-                                                <button
+                                                <Link
                                                     className="recursos__edit-button"
-                                                    onClick={() => abrirEditarRecurso(recurso)}
+                                                    to={`/recursos/${recurso.id}/editar`}
                                                 >
                                                     <Icon name="usuarios" size={12} />
                                                     Editar
-                                                </button>
+                                                </Link>
                                                 <button
                                                     className="recursos__delete-button"
                                                     onClick={() => eliminarRecurso(recurso)}
@@ -587,150 +461,6 @@ function Recursos() {
                         </div>
                     </div>
                 )}
-            </Modal>
-
-            <Modal
-                isOpen={crudAbierto}
-                title={editandoId === null ? "Nuevo recurso" : "Editar recurso"}
-                onClose={cerrarCrud}
-            >
-                <form className="recursos__form" onSubmit={handleRecursoSubmit}>
-                    {errorRecurso && <p className="recursos__error">{errorRecurso}</p>}
-
-                    <Input
-                        label="Nombre del recurso"
-                        type="text"
-                        name="nombre"
-                        value={formRecurso.nombre}
-                        onChange={handleRecursoChange}
-                        id="recurso-crud-nombre"
-                        placeholder="Ej. Salón 102"
-                    />
-
-                    <Input
-                        label="Código"
-                        type="text"
-                        name="codigo"
-                        value={formRecurso.codigo}
-                        onChange={handleRecursoChange}
-                        id="recurso-crud-codigo"
-                        placeholder="Ej. REC-102"
-                    />
-
-                    <div className="recursos__form-row">
-                        <div>
-                            <label className="recursos__field-label">Tipo</label>
-                            <select
-                                className="recursos__filter-select"
-                                name="tipo"
-                                value={formRecurso.tipo}
-                                onChange={handleRecursoChange}
-                            >
-                                {TIPOS_RECURSO.map((tipo) => (
-                                    <option key={tipo} value={tipo}>
-                                        {tipo}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="recursos__field-label">Categoría</label>
-                            <select
-                                className="recursos__filter-select"
-                                name="categoria"
-                                value={formRecurso.categoria}
-                                onChange={handleRecursoChange}
-                            >
-                                {CATEGORIAS_RECURSO.map((c) => (
-                                    <option key={c} value={c}>{c}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="recursos__form-row">
-                        <div>
-                            <label className="recursos__field-label">Capacidad</label>
-                            <input
-                                className="recursos__filter-input"
-                                type="number"
-                                min="1"
-                                name="capacidad"
-                                value={formRecurso.capacidad}
-                                onChange={handleRecursoChange}
-                                placeholder="Ej. 40"
-                            />
-                        </div>
-                    </div>
-
-                    <Input
-                        label="Ubicación"
-                        type="text"
-                        name="ubicacion"
-                        value={formRecurso.ubicacion}
-                        onChange={handleRecursoChange}
-                        id="recurso-crud-ubicacion"
-                        placeholder="Ej. Bloque A · Piso 1"
-                    />
-
-                    <Input
-                        label="Descripción"
-                        type="text"
-                        name="descripcion"
-                        value={formRecurso.descripcion}
-                        onChange={handleRecursoChange}
-                        id="recurso-crud-descripcion"
-                        placeholder="Ej. Sala para reuniones y talleres"
-                    />
-
-                            <div className="recursos__form-row">
-                                <div>
-                                    <label className="recursos__field-label">Estado</label>
-                                    <select
-                                        className="recursos__filter-select"
-                                        name="estado"
-                                        value={formRecurso.estado}
-                                        onChange={handleRecursoChange}
-                                    >
-                                        {ESTADOS_RECURSO.map((est) => (
-                                            <option key={est} value={est}>{est}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="recursos__field-label">Disponibilidad</label>
-                                    <select
-                                        className="recursos__filter-select"
-                                        name="disponibilidad"
-                                        value={formRecurso.disponibilidad}
-                                        onChange={handleRecursoChange}
-                                    >
-                                        {DISPONIBILIDADES_RECURSO.map((disp) => (
-                                            <option key={disp} value={disp}>{disp}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                    <div className="recursos__modal-footer">
-                        <button
-                            className="recursos__cancel-button"
-                            type="button"
-                            onClick={cerrarCrud}
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            className="recursos__confirm-button recursos__confirm-button--primary"
-                            type="submit"
-                            disabled={!formRecurso.nombre.trim() || !formRecurso.codigo.trim()}
-                        >
-                            {editandoId === null
-                                ? "Crear recurso"
-                                : "Guardar cambios"}
-                        </button>
-                    </div>
-                </form>
             </Modal>
         </div>
     );

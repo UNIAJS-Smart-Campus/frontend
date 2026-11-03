@@ -1,0 +1,99 @@
+/* ============================================================
+   Módulo: Nuevo / editar recurso
+   Rutas: /recursos/nuevo y /recursos/:id/editar
+   Sustituye al modal que vivía dentro de /recursos.
+   Los campos reutilizan .recursos__form-row, .recursos__field-label
+   y .recursos__filter-* de Recursos.css.
+   ============================================================ */
+
+.nuevo-recurso {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    max-width: 760px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.nuevo-recurso__back {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-primary-600);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color var(--transition-fast);
+    width: fit-content;
+}
+
+.nuevo-recurso__back:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+.nuevo-recurso__header h1 {
+    margin: 0 0 7px;
+    font-family: var(--font-heading);
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.nuevo-recurso__header p {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.nuevo-recurso__aviso {
+    color: var(--color-text-muted);
+    font-size: 14px;
+}
+
+.nuevo-recurso__form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+}
+
+.nuevo-recurso__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    border-top: 1px solid var(--color-border);
+    margin-top: var(--space-1);
+    padding-top: var(--space-5);
+}
+
+.nuevo-recurso__actions .button {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+
+@media (max-width: 640px) {
+    .recursos__form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .nuevo-recurso__form {
+        padding: var(--space-4);
+    }
+
+    .nuevo-recurso__actions {
+        flex-direction: column-reverse;
+    }
+
+    .nuevo-recurso__actions > * {
+        width: 100%;
+    }
+}

@@ -21,6 +21,7 @@ const SolicitudDetalle = lazy(() => import("../pages/Solicitudes/SolicitudDetall
 const Reservas = lazy(() => import("../pages/Reservas/Reservas"));
 const NuevaReserva = lazy(() => import("../pages/Reservas/NuevaReserva"));
 const Recursos = lazy(() => import("../pages/Recursos/Recursos"));
+const FormularioRecurso = lazy(() => import("../pages/Recursos/FormularioRecurso"));
 const Eventos = lazy(() => import("../pages/Eventos/Eventos"));
 const Notificaciones = lazy(() => import("../pages/Notificaciones/Notificaciones"));
 const Perfil = lazy(() => import("../pages/Perfil/Perfil"));
@@ -114,6 +115,22 @@ function AppRoutes() {
             element={
               <ProtectedRoute permiso="reservas">
                 <Reservas />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/recursos/nuevo"
+            element={
+              <ProtectedRoute permiso="recursos">
+                <FormularioRecurso />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/recursos/:id/editar"
+            element={
+              <ProtectedRoute permiso="recursos">
+                <FormularioRecurso />
               </ProtectedRoute>
             }
           />

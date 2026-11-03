@@ -14,6 +14,8 @@
     font-weight: 700;
     letter-spacing: 0.01em;
     cursor: pointer;
+    /* Varias acciones son <Link className="button">: sin subrayado. */
+    text-decoration: none;
     transition: background-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
     box-sizing: border-box;
     white-space: nowrap;
