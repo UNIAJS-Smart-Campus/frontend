@@ -8,8 +8,21 @@ const API = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 
 export const API_HABILITADA = Boolean(API);
 
-const TIMEOUT_MS = 15000;
+const TIMEOUT_MS = 60000;
 const CLAVE_SESION = "uajs_session";
+
+// El backend corre en el plan free de Render, que suspende el servicio por
+// inactividad y tarda ~50 s en despertar con la primera petición. Se lanza un
+// ping en segundo plano al cargar el bundle para que el servidor vaya
+// arrancando mientras el usuario navega o escribe sus credenciales.
+if (API.startsWith("http")) {
+    try {
+        const origen = new URL(API).origin;
+        fetch(`${origen}/`, { cache: "no-store" }).catch(() => {});
+    } catch {
+        // URL inválida: la app seguirá mostrando el error al llamar a la API.
+    }
+}
 
 export function getToken() {
     try {
@@ -71,7 +84,11 @@ export async function apiFetch(
         });
     } catch (error) {
         if (error.name === "AbortError") {
-            throw new ApiError("El servidor tardó demasiado en responder.", 0);
+            throw new ApiError(
+                "El servidor tardó demasiado en responder. Si estaba suspendido, " +
+                    "la primera petición puede tardar hasta un minuto: reintenta.",
+                0
+            );
         }
         throw new ApiError(
             "No hay conexión con el servidor. Verifica que el gateway esté levantado.",
