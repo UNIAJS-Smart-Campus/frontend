@@ -135,6 +135,14 @@ export function getModuleName(pathname) {
         return "Editar evento";
     }
 
+    if (pathname === "/usuarios/nuevo") {
+        return "Nuevo usuario";
+    }
+
+    if (pathname.startsWith("/usuarios/") && pathname.endsWith("/editar")) {
+        return "Editar usuario";
+    }
+
     if (pathname.startsWith("/solicitudes/")) {
         return "Detalle de solicitud";
     }

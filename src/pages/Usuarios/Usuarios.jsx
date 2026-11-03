@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import Icon from "../../components/Icon/Icon";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import DataTable from "../../components/DataTable/DataTable";
 import Pagination from "../../components/Pagination/Pagination";
-import Modal from "../../components/Modal/Modal";
 import useAuth from "../../context/useAuth";
-import { ROLES, crearUsuario, actualizarUsuario, alternarEstadoUsuario } from "../../utils/users";
+import { ROLES, alternarEstadoUsuario } from "../../utils/users";
 import { getUserInitials } from "../../utils/avatar";
 import useSearch from "../../hooks/useSearch";
 import usePagination from "../../hooks/usePagination";
@@ -28,20 +28,6 @@ const ROL_CLASE = {
 };
 
 const ESTADOS = ["Activo", "Inactivo"];
-
-// TAREA 3: form unificado con "nombre" como campo completo, sin "apellido"
-const vacio = {
-    cedula: "",
-    usuario: "",
-    password: "",
-    nombre: "",
-    correo: "",
-    codigo: "",
-    telefono: "",
-    rol: "Estudiante",
-    programa: "",
-    estado: "Activo"
-};
 
 // TAREA 1: genera iniciales basadas en el nombre de la fila, sin tocar la sesión
 function inicialesPorNombre(nombre) {
@@ -77,17 +63,11 @@ function Usuarios() {
 function UsuariosAdmin() {
     const { items, recargar, cargando, error: errorColeccion, enLinea } = useColeccion("usuarios");
 
-    const [modalAbierto, setModalAbierto] = useState(false);
-    const [editandoId, setEditandoId] = useState(null);
-    const [form, setForm] = useState(vacio);
-    const [pwdError, setPwdError] = useState("");
-    const [error, setError] = useState("");
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");
     const [filtroRol, setFiltroRol] = useState("");
     const [filtroEstado, setFiltroEstado] = useState("");
     const [aviso, setAviso] = useState("");
-    const [mostrarPass, setMostrarPass] = useState(false);
 
     // Pipeline de filtros: búsqueda → rol → estado
     const buscados = useSearch(items, busqueda, [
@@ -106,11 +86,6 @@ function UsuariosAdmin() {
     const activos   = items.filter((i) => i.estado === "Activo").length;
     const inactivos = items.filter((i) => i.estado === "Inactivo").length;
     const contarRol = (rol) => items.filter((i) => i.rol === rol).length;
-
-    const CAMPOS_OBLIGATORIOS = ["cedula", "usuario", "nombre", "correo", "programa"];
-    const faltantes = CAMPOS_OBLIGATORIOS.filter(
-        (campo) => !String(form[campo] ?? "").trim()
-    );
 
     // Respaldo local: se usa si Elasticsearch no responde.
     const sugerenciasLocales = useMemo(() => [
@@ -140,127 +115,6 @@ function UsuariosAdmin() {
         setBusqueda("");
     };
 
-    const abrirNuevo = () => {
-        setEditandoId(null);
-        setForm(vacio);
-        setError("");
-        setPwdError("");
-        setModalAbierto(true);
-    };
-
-    // TAREA 3: abrirEditar ya no separa nombre/apellido
-    const abrirEditar = useCallback((item) => {
-        setEditandoId(item.id);
-        setForm({
-            cedula:    item.cedula   || "",
-            usuario:   item.usuario,
-            password:  "",              // TAREA 2: campo vacío al editar — se preserva si no cambia
-            nombre:    item.nombre,
-            correo:    item.correo,
-            codigo:    item.codigo   || "",
-            telefono:  item.telefono || "",
-            rol:       item.rol,
-            programa:  item.programa,
-            estado:    item.estado   || "Activo"
-        });
-        setError("");
-        setPwdError("");
-        setModalAbierto(true);
-    }, []);
-
-    const cerrar = () => {
-        setModalAbierto(false);
-        setError("");
-        setPwdError("");
-    };
-
-    const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-        if (e.target.name === "password") setPwdError("");
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        // TAREA 9: validar contraseña en creación
-        if (editandoId === null && !form.password.trim()) {
-            setPwdError("La contraseña es obligatoria para crear un usuario.");
-            return;
-        }
-        if (editandoId === null && form.password.trim().length < 6) {
-            setPwdError("La contraseña debe tener al menos 6 caracteres.");
-            return;
-        }
-
-        const usuarioExiste = items.some(
-            (item) =>
-                item.usuario.toLowerCase() === form.usuario.trim().toLowerCase() &&
-                item.id !== editandoId
-        );
-        if (usuarioExiste) {
-            setError("El nombre de usuario ya está en uso.");
-            return;
-        }
-
-        const cedulaExiste = items.some(
-            (item) =>
-                String(item.cedula || "") === String(form.cedula || "").trim() &&
-                (String(form.cedula || "").trim() !== "") &&
-                item.id !== editandoId
-        );
-        if (cedulaExiste) {
-            setError("Esa cédula ya está registrada.");
-            return;
-        }
-
-        try {
-            if (editandoId === null) {
-                // Crear nuevo usuario
-                const nuevo = {
-                    cedula:   form.cedula.trim(),
-                    usuario:  form.usuario.trim(),
-                    password: form.password.trim(),
-                    nombre:   form.nombre.trim(),       // TAREA 3: nombre completo directo
-                    correo:   form.correo.trim(),
-                    codigo:   form.codigo.trim(),
-                    telefono: form.telefono.trim(),
-                    rol:      form.rol,
-                    programa: form.programa.trim(),
-                    estado:   form.estado
-                };
-                await crearUsuario(nuevo);
-                mostrarAviso("Usuario creado correctamente.");
-            } else {
-                // Editar usuario existente
-                const item = items.find((u) => u.id === editandoId);
-                if (!item) {
-                    setError("Usuario no encontrado.");
-                    return;
-                }
-                const cambios = {
-                    cedula:    form.cedula.trim(),
-                    usuario:  form.usuario.trim(),
-                    // TAREA 2: preservar contraseña anterior si el campo queda vacío
-                    password: form.password.trim(),
-                    nombre:   form.nombre.trim(),   // TAREA 3: nombre completo directo
-                    correo:   form.correo.trim(),
-                    codigo:   form.codigo.trim(),
-                    telefono: form.telefono.trim(),
-                    rol:      form.rol,
-                    programa: form.programa.trim(),
-                    estado:   form.estado
-                };
-                await actualizarUsuario(item, cambios);
-                mostrarAviso("Usuario actualizado correctamente.");
-            }
-            setModalAbierto(false);
-            // Forzar refresco para traer IDs reales del backend
-            await recargar();
-        } catch (err) {
-            setError(err.message || "Error al guardar el usuario.");
-        }
-    };
-
     const alternarEstado = useCallback(async (item) => {
         try {
             await alternarEstadoUsuario(item);
@@ -272,7 +126,7 @@ function UsuariosAdmin() {
             );
             await recargar();
         } catch (err) {
-            setError(err.message || "Error al cambiar el estado del usuario.");
+            mostrarAviso(err.message || "Error al cambiar el estado del usuario.");
         }
     }, [mostrarAviso, recargar]);
 
@@ -337,12 +191,12 @@ function UsuariosAdmin() {
             label: "Acciones",
             render: (row) => (
                 <div className="dtable__actions">
-                    <button
+                    <Link
                         className="users__edit-button"
-                        onClick={() => abrirEditar(row)}
+                        to={`/usuarios/${row.id}/editar`}
                     >
                         <Icon name="perfil" size={12} /> Editar
-                    </button>
+                    </Link>
                     <button
                         className={
                             row.estado === "Activo"
@@ -356,7 +210,7 @@ function UsuariosAdmin() {
                 </div>
             )
         }
-    ], [abrirEditar, alternarEstado]);
+    ], [alternarEstado]);
 
     return (
         <div className="page">
@@ -364,10 +218,10 @@ function UsuariosAdmin() {
                 <div className="page__title">
                     <p>Administra usuarios, roles y estados de acceso.</p>
                 </div>
-                <button className="button button--accent button--md" onClick={abrirNuevo}>
+                <Link to="/usuarios/nuevo" className="button button--accent button--md">
                     <Icon name="usuarios" size={15} />
                     Nuevo usuario
-                </button>
+                </Link>
             </div>
 
             {/* Indicador de estado de conexión */}
@@ -549,220 +403,6 @@ function UsuariosAdmin() {
                     />
                 </>
             )}
-
-            {/* Modal crear/editar */}
-            <Modal
-                isOpen={modalAbierto}
-                title={editandoId === null ? "Nuevo usuario" : "Editar usuario"}
-                subtitle="Completa los datos del usuario."
-                onClose={cerrar}
-            >
-                <form onSubmit={handleSubmit} className="users__form">
-                    {error && <p className="users__error">{error}</p>}
-
-                    <p className="users__form-note">
-                        Los campos marcados con <span>*</span> son obligatorios.
-                    </p>
-
-                    <div className="users__form-group">
-                        <label htmlFor="u-usuario">
-                            Usuario <span className="users__req">*</span>
-                        </label>
-                        <input
-                            id="u-usuario"
-                            type="text"
-                            name="usuario"
-                            value={form.usuario}
-                            onChange={handleChange}
-                            placeholder="ej. jperez"
-                        />
-                    </div>
-
-                    <div className="users__form-group">
-                        <label htmlFor="u-cedula">
-                            Cédula <span className="users__req">*</span>
-                        </label>
-                        <input
-                            id="u-cedula"
-                            type="text"
-                            name="cedula"
-                            value={form.cedula}
-                            onChange={handleChange}
-                            placeholder="ej. 1023456789"
-                        />
-                    </div>
-
-                    {/* TAREA 3: campo único "Nombre completo" */}
-                    <div className="users__form-group">
-                        <label htmlFor="u-nombre">
-                            Nombre completo <span className="users__req">*</span>
-                        </label>
-                        <input
-                            id="u-nombre"
-                            type="text"
-                            name="nombre"
-                            value={form.nombre}
-                            onChange={handleChange}
-                            placeholder="ej. Juan Pérez García"
-                        />
-                    </div>
-
-                    <div className="form-grid">
-                        <div className="users__form-group">
-                            <label htmlFor="u-correo">
-                                Correo <span className="users__req">*</span>
-                            </label>
-                            <input
-                                id="u-correo"
-                                type="email"
-                                name="correo"
-                                value={form.correo}
-                                onChange={handleChange}
-                                placeholder="usuario@uajs.edu.co"
-                            />
-                        </div>
-
-                        <div className="users__form-group">
-                            <label htmlFor="u-codigo">Código / Identificación</label>
-                            <input
-                                id="u-codigo"
-                                type="text"
-                                name="codigo"
-                                value={form.codigo}
-                                onChange={handleChange}
-                                placeholder="ej. 2024100123"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="form-grid">
-                        <div className="users__form-group">
-                            <label htmlFor="u-telefono">Teléfono</label>
-                            <input
-                                id="u-telefono"
-                                type="tel"
-                                name="telefono"
-                                value={form.telefono}
-                                onChange={handleChange}
-                                placeholder="ej. 3001234567"
-                            />
-                        </div>
-
-                        <div className="users__form-group">
-                            <label htmlFor="u-programa">
-                                Programa / Dependencia{" "}
-                                <span className="users__req">*</span>
-                            </label>
-                            <input
-                                id="u-programa"
-                                type="text"
-                                name="programa"
-                                value={form.programa}
-                                onChange={handleChange}
-                                placeholder="ej. Ingeniería de Sistemas"
-                            />
-                        </div>
-                    </div>
-
-                    {/* TAREA 2 & 9: campo contraseña con validación y hint */}
-                    <div className="users__form-group">
-                        <label htmlFor="u-password">
-                            {editandoId === null ? (
-                                <>
-                                    Contraseña{" "}
-                                    <span className="users__req">*</span>
-                                </>
-                            ) : (
-                                "Contraseña (dejar vacío para conservar la actual)"
-                            )}
-                        </label>
-                        <div className="users__password-wrap">
-                            <input
-                                id="u-password"
-                                type={mostrarPass ? "text" : "password"}
-                                name="password"
-                                value={form.password}
-                                onChange={handleChange}
-                                placeholder={editandoId === null ? "mín. 6 caracteres" : "••••••••"}
-                            />
-                            <button
-                                type="button"
-                                className="users__password-toggle"
-                                onClick={() => setMostrarPass((v) => !v)}
-                            >
-                                {mostrarPass ? "Ocultar" : "Mostrar"}
-                            </button>
-                        </div>
-                        {pwdError && (
-                            <p className="users__pwd-error">{pwdError}</p>
-                        )}
-                        {editandoId !== null && (
-                            <p className="users__password-hint">
-                                Si dejas este campo vacío, la contraseña actual se conservará sin cambios.
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="form-grid">
-                        <div className="users__form-group">
-                            <label htmlFor="u-rol">Rol</label>
-                            <select
-                                id="u-rol"
-                                name="rol"
-                                value={form.rol}
-                                onChange={handleChange}
-                            >
-                                {ROLES.map((rol) => (
-                                    <option key={rol.nombre} value={rol.nombre}>
-                                        {rol.nombre}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="users__form-group">
-                            <label htmlFor="u-estado">Estado</label>
-                            <select
-                                id="u-estado"
-                                name="estado"
-                                value={form.estado}
-                                onChange={handleChange}
-                            >
-                                {ESTADOS.map((est) => (
-                                    <option key={est} value={est}>{est}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    {faltantes.length > 0 && (
-                        <p className="users__form-pending">
-                            Faltan {faltantes.length}{" "}
-                            {faltantes.length === 1
-                                ? "campo obligatorio por completar"
-                                : "campos obligatorios por completar"}
-                            .
-                        </p>
-                    )}
-
-                    <div className="modal__footer">
-                        <button
-                            type="button"
-                            className="button button--ghost button--md"
-                            onClick={cerrar}
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="submit"
-                            className="button button--accent button--md"
-                            disabled={faltantes.length > 0 || cargando}
-                        >
-                            {editandoId === null ? "Crear usuario" : "Guardar cambios"}
-                        </button>
-                    </div>
-                </form>
-            </Modal>
         </div>
     );
 }

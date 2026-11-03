@@ -181,6 +181,9 @@
     background-color: var(--color-surface);
     color: var(--color-text-muted);
     transition: border-color var(--transition-fast), color var(--transition-fast);
+    /* Es un <Link> al módulo /usuarios/:id/editar. */
+    text-decoration: none;
+    box-sizing: border-box;
 }
 
 .users__edit-button .icon {
