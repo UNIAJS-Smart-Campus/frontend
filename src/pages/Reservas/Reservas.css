@@ -338,6 +338,12 @@
     font-weight: 800;
     letter-spacing: 0.03em;
     transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+    /* Ahora es un enlace al módulo /reservas/nueva. */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-sizing: border-box;
 }
 
 .reservas__reserve-button:hover {

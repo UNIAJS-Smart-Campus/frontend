@@ -19,6 +19,7 @@ const Solicitudes = lazy(() => import("../pages/Solicitudes/Solicitudes"));
 const NuevaSolicitud = lazy(() => import("../pages/Solicitudes/NuevaSolicitud"));
 const SolicitudDetalle = lazy(() => import("../pages/Solicitudes/SolicitudDetalle"));
 const Reservas = lazy(() => import("../pages/Reservas/Reservas"));
+const NuevaReserva = lazy(() => import("../pages/Reservas/NuevaReserva"));
 const Recursos = lazy(() => import("../pages/Recursos/Recursos"));
 const Eventos = lazy(() => import("../pages/Eventos/Eventos"));
 const Notificaciones = lazy(() => import("../pages/Notificaciones/Notificaciones"));
@@ -97,6 +98,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute permiso="solicitudes">
                 <SolicitudDetalle />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reservas/nueva"
+            element={
+              <ProtectedRoute permiso="reservas">
+                <NuevaReserva />
               </ProtectedRoute>
             }
           />

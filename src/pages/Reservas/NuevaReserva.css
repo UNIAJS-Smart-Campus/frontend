@@ -1,0 +1,129 @@
+/* ============================================================
+   Módulo: Reservar espacio (/reservas/nueva)
+   Sustituye al modal que vivía dentro de /reservas.
+   Los campos reutilizan .reservas__modal-group / .reservas__form-row
+   de Reservas.css para no duplicar estilos.
+   ============================================================ */
+
+.nueva-reserva {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    max-width: 760px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.nueva-reserva__back {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-primary-600);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color var(--transition-fast);
+    width: fit-content;
+}
+
+.nueva-reserva__back:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+.nueva-reserva__header h1 {
+    margin: 0 0 7px;
+    font-family: var(--font-heading);
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.nueva-reserva__header p {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.nueva-reserva__header strong {
+    color: var(--color-text);
+}
+
+.nueva-reserva__form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+}
+
+.nueva-reserva__hint {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+}
+
+/* Horarios ya ocupados del recurso en la fecha elegida. */
+.nueva-reserva__ocupados {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-input-bg);
+}
+
+.nueva-reserva__ocupados-titulo {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
+
+.nueva-reserva__chip {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background-color: rgba(2, 94, 115, 0.1);
+    color: var(--color-primary-600);
+}
+
+.nueva-reserva__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    border-top: 1px solid var(--color-border);
+    margin-top: var(--space-1);
+    padding-top: var(--space-5);
+}
+
+.nueva-reserva__actions .button {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+
+@media (max-width: 640px) {
+    .reservas__form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .nueva-reserva__form {
+        padding: var(--space-4);
+    }
+
+    .nueva-reserva__actions {
+        flex-direction: column-reverse;
+    }
+
+    .nueva-reserva__actions > * {
+        width: 100%;
+    }
+}

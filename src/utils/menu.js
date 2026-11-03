@@ -115,6 +115,10 @@ export function getModuleName(pathname) {
         return "Registrar solicitud";
     }
 
+    if (pathname === "/reservas/nueva") {
+        return "Reservar espacio";
+    }
+
     if (pathname.startsWith("/solicitudes/")) {
         return "Detalle de solicitud";
     }
