@@ -6,8 +6,6 @@
 // archivo es el unico lugar que conoce los nombres de la BD.
 // ============================================================
 
-import { ROLES } from "./users";
-
 // id_rol numerico <-> nombre de rol que usa la UI
 export const ID_ROL = {
     1: "Administrador",
@@ -16,15 +14,20 @@ export const ID_ROL = {
     4: "Administrativo"
 };
 
+// Nombre -> id explicito. Antes se usaba findIndex(ROLES) + 1, pero el
+// orden de ROLES (Administrador, Administrativo, Docente, Estudiante) no
+// coincide con los ids de la tabla roles, asi que "Estudiante" se
+// guardaba como id_rol 4 (Administrativo).
+const ID_POR_NOMBRE = Object.fromEntries(
+    Object.entries(ID_ROL).map(([id, nombre]) => [nombre.toLowerCase(), Number(id)])
+);
+
 export function nombreDeRol(idRol, tipoUsuario) {
     return ID_ROL[Number(idRol)] || tipoUsuario || "Estudiante";
 }
 
 export function idDeRol(nombreRol) {
-    const encontrado = ROLES.findIndex(
-        (r) => r.nombre.toLowerCase() === String(nombreRol || "").toLowerCase()
-    );
-    return encontrado >= 0 ? encontrado + 1 : 2;
+    return ID_POR_NOMBRE[String(nombreRol || "").toLowerCase()] ?? 2;
 }
 
 const texto = (valor, porDefecto = "") =>
