@@ -751,6 +751,12 @@
     font-size: 10px;
     font-weight: 700;
     cursor: pointer;
+    /* "Editar" es un <Link> al módulo /eventos/:id/editar. */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-sizing: border-box;
 }
 
 .eventos__admin-btn:hover {

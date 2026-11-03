@@ -1,0 +1,99 @@
+/* ============================================================
+   Módulo: Nuevo / editar evento
+   Rutas: /eventos/nuevo y /eventos/:id/editar
+   Sustituye al modal que vivía dentro de /eventos.
+   Los campos reutilizan .eventos__form-group / .eventos__form-grid
+   de Eventos.css.
+   ============================================================ */
+
+.nuevo-evento {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    max-width: 760px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.nuevo-evento__back {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-primary-600);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color var(--transition-fast);
+    width: fit-content;
+}
+
+.nuevo-evento__back:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+.nuevo-evento__header h1 {
+    margin: 0 0 7px;
+    font-family: var(--font-heading);
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.nuevo-evento__header p {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.nuevo-evento__aviso {
+    color: var(--color-text-muted);
+    font-size: 14px;
+}
+
+.nuevo-evento__form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+}
+
+.nuevo-evento__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    border-top: 1px solid var(--color-border);
+    margin-top: var(--space-1);
+    padding-top: var(--space-5);
+}
+
+.nuevo-evento__actions .button {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+
+@media (max-width: 640px) {
+    .eventos__form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .nuevo-evento__form {
+        padding: var(--space-4);
+    }
+
+    .nuevo-evento__actions {
+        flex-direction: column-reverse;
+    }
+
+    .nuevo-evento__actions > * {
+        width: 100%;
+    }
+}

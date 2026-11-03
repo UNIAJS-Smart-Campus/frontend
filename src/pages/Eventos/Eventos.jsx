@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import Icon from "../../components/Icon/Icon";
 import ImagenCategoria from "../../components/ImagenCategoria/ImagenCategoria";
 import SearchBar from "../../components/SearchBar/SearchBar";
@@ -12,8 +13,6 @@ import {
     CLAVE_EVENTOS,
     CATEGORIAS_EVENTO,
     ESTADOS_EVENTO,
-    crearEvento,
-    actualizarEvento,
     eliminarEvento as eliminarEventoEnApi,
     estaInscrito,
     esEventoInscripcionAbierta,
@@ -38,18 +37,6 @@ const ESTADO_CLASE = {
     "En curso": "active",
     Finalizado: "done",
     Cancelado: "canceled"
-};
-
-const formVacio = {
-    nombre: "",
-    fecha: "",
-    hora_inicio: "",
-    hora_fin: "",
-    ubicacion: "",
-    tipo: "Académico",
-    descripcion: "",
-    cupo: 0,
-    estado: "Programado"
 };
 
 function formatearFecha(iso) {
@@ -85,12 +72,6 @@ function Eventos() {
     const [categoria, setCategoria] = useState("");
     const [estado, setEstado] = useState("");
     const [orden, setOrden] = useState("fecha");
-
-    const [modalAbierto, setModalAbierto] = useState(false);
-    const [editandoId, setEditandoId] = useState(null);
-    const [form, setForm] = useState(formVacio);
-    const [error, setError] = useState("");
-    const [guardando, setGuardando] = useState(false);
 
     const [detalleAbierto, setDetalleAbierto] = useState(null);
     const [inscritosDe, setInscritosDe] = useState(null);
@@ -154,93 +135,6 @@ function Eventos() {
     const mostrarAviso = (mensaje) => {
         setAviso(mensaje);
         setTimeout(() => setAviso(""), 2600);
-    };
-
-    const abrirNuevo = () => {
-        setEditandoId(null);
-        setForm(formVacio);
-        setError("");
-        setModalAbierto(true);
-    };
-
-    const abrirEditar = (ev) => {
-        setEditandoId(ev.id);
-        setForm({
-            nombre: ev.nombre,
-            fecha: ev.fecha,
-            hora_inicio: ev.hora_inicio,
-            hora_fin: ev.hora_fin,
-            ubicacion: ev.ubicacion,
-            tipo: ev.tipo,
-            descripcion: ev.descripcion,
-            cupo: ev.cupo,
-            estado: ev.estado
-        });
-        setError("");
-        setModalAbierto(true);
-    };
-
-    const cerrarModal = () => {
-        setModalAbierto(false);
-        setError("");
-    };
-
-    const handleChange = (e) => {
-        const value = e.target.name === "cupo" ? Number(e.target.value) : e.target.value;
-        setForm({ ...form, [e.target.name]: value });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setGuardando(true);
-
-        const nombreExiste = items.some(
-            (item) =>
-                item.nombre.toLowerCase() === form.nombre.trim().toLowerCase() &&
-                item.id !== editandoId
-        );
-
-        if (nombreExiste) {
-            setError("Ya existe un evento con ese nombre.");
-            setGuardando(false);
-            return;
-        }
-
-        const existente = editandoId !== null
-            ? items.find((item) => item.id === editandoId)
-            : null;
-
-        if (editandoId !== null && !existente) {
-            setError("El evento ya no existe en la lista. Recarga la página.");
-            setGuardando(false);
-            return;
-        }
-
-        try {
-            if (editandoId === null) {
-                await crearEvento({
-                    ...form,
-                    nombre: form.nombre.trim(),
-                    id_usuario: user?.id ?? null,
-                    inscritos: 0
-                });
-                mostrarAviso("Evento creado correctamente.");
-            } else {
-                await actualizarEvento(existente, {
-                    ...form,
-                    nombre: form.nombre.trim()
-                });
-                mostrarAviso("Evento actualizado correctamente.");
-            }
-            setModalAbierto(false);
-        } catch (fallo) {
-            const mensaje =
-                fallo?.message || "No se pudo guardar el evento en el servidor.";
-            setError(mensaje);
-            toast.error(mensaje);
-        } finally {
-            setGuardando(false);
-        }
     };
 
     const eliminarEvento = async (ev) => {
@@ -309,10 +203,10 @@ function Eventos() {
                 </div>
 
                 {esAdmin && (
-                    <button className="button button--accent button--md" onClick={abrirNuevo}>
+                    <Link to="/eventos/nuevo" className="button button--accent button--md">
                         <Icon name="eventos" size={15} />
                         Nuevo evento
-                    </button>
+                    </Link>
                 )}
             </div>
 
@@ -538,184 +432,6 @@ function Eventos() {
                 total={encontrados.length}
             />
 
-            {modalAbierto && (
-                <div className="eventos__overlay" onClick={cerrarModal}>
-                    <div
-                        className="eventos__modal"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="eventos__modal-header">
-                            <div>
-                                <h2>
-                                    {editandoId === null
-                                        ? "Nuevo evento"
-                                        : "Editar evento"}
-                                </h2>
-                                <p>Completa los datos del evento.</p>
-                            </div>
-                            <button
-                                className="eventos__modal-close"
-                                onClick={cerrarModal}
-                            >
-                                ×
-                            </button>
-                        </div>
-
-                        <form className="eventos__form" onSubmit={handleSubmit}>
-                            {error && <p className="eventos__error">{error}</p>}
-
-                            <div className="eventos__form-group">
-                                <label htmlFor="ev-nombre">Nombre del evento</label>
-                                <input
-                                    id="ev-nombre"
-                                    type="text"
-                                    name="nombre"
-                                    value={form.nombre}
-                                    onChange={handleChange}
-                                    placeholder="ej. Conferencia de inteligencia artificial"
-                                />
-                            </div>
-
-                            <div className="eventos__form-group">
-                                <label htmlFor="ev-fecha">Fecha</label>
-                                <input
-                                    id="ev-fecha"
-                                    type="date"
-                                    name="fecha"
-                                    value={form.fecha}
-                                    onChange={handleChange}
-                                />
-                            </div>
-
-                            <div className="eventos__form-grid">
-                                <div className="eventos__form-group">
-                                    <label htmlFor="ev-hora">Hora de inicio</label>
-                                    <input
-                                        id="ev-hora"
-                                        type="time"
-                                        name="hora_inicio"
-                                        value={form.hora_inicio}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-
-                                <div className="eventos__form-group">
-                                    <label htmlFor="ev-hora-fin">Hora de fin</label>
-                                    <input
-                                        id="ev-hora-fin"
-                                        type="time"
-                                        name="hora_fin"
-                                        value={form.hora_fin}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="eventos__form-group">
-                                <label htmlFor="ev-lugar">Lugar</label>
-                                <input
-                                    id="ev-lugar"
-                                    type="text"
-                                    name="ubicacion"
-                                    value={form.ubicacion}
-                                    onChange={handleChange}
-                                    placeholder="ej. Auditorio principal"
-                                />
-                            </div>
-
-                            <div className="eventos__form-grid">
-                                <div className="eventos__form-group">
-                                    <label htmlFor="ev-categoria">Categoría</label>
-                                    <select
-                                        id="ev-categoria"
-                                        name="tipo"
-                                        value={form.tipo}
-                                        onChange={handleChange}
-                                    >
-                                        {CATEGORIAS_EVENTO.map((cat) => (
-                                            <option key={cat} value={cat}>
-                                                {cat}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="eventos__form-group">
-                                    <label htmlFor="ev-estado">Estado</label>
-                                    <select
-                                        id="ev-estado"
-                                        name="estado"
-                                        value={form.estado}
-                                        onChange={handleChange}
-                                    >
-                                        {ESTADOS_EVENTO.map((est) => (
-                                            <option key={est} value={est}>
-                                                {est}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="eventos__form-grid">
-                                <div className="eventos__form-group">
-                                    <label htmlFor="ev-cupo">Cupo máximo</label>
-                                    <input
-                                        id="ev-cupo"
-                                        type="number"
-                                        min="1"
-                                        name="cupo"
-                                        value={form.cupo}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="eventos__form-group">
-                                <label htmlFor="ev-desc">Descripción</label>
-                                <textarea
-                                    id="ev-desc"
-                                    name="descripcion"
-                                    value={form.descripcion}
-                                    onChange={handleChange}
-                                    placeholder="Describe la actividad"
-                                    rows="3"
-                                />
-                            </div>
-
-                            <div className="eventos__modal-actions">
-                                <button
-                                    type="button"
-                                    className="eventos__cancel-button"
-                                    onClick={cerrarModal}
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="eventos__confirm-button"
-                                    disabled={
-                                        guardando ||
-                                        !form.nombre ||
-                                        !form.fecha ||
-                                        !form.hora_inicio ||
-                                        !form.hora_fin ||
-                                        !form.ubicacion ||
-                                        !form.cupo
-                                    }
-                                >
-                                    {guardando
-                                        ? "Guardando…"
-                                        : editandoId === null
-                                            ? "Crear evento"
-                                            : "Guardar cambios"}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
             {detalle && (
                 <div
                     className="eventos__overlay"
@@ -794,15 +510,13 @@ function Eventos() {
                                 >
                                     Ver inscritos ({contarInscritos(detalle)})
                                 </button>
-                                <button
+                                <Link
                                     className="eventos__admin-btn"
-                                    onClick={() => {
-                                        setDetalleAbierto(null);
-                                        abrirEditar(detalle);
-                                    }}
+                                    to={`/eventos/${detalle.id}/editar`}
+                                    onClick={() => setDetalleAbierto(null)}
                                 >
                                     Editar
-                                </button>
+                                </Link>
                                 <button
                                     className="eventos__admin-btn eventos__admin-btn--danger"
                                     onClick={() => eliminarEvento(detalle)}
