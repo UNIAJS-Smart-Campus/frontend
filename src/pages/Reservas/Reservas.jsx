@@ -63,7 +63,6 @@ function Reservas() {
         motivo: ""
     });
     const [errores, setErrores] = useState({});
-    const [confirmacion, setConfirmacion] = useState("");
     const [busquedaAlerta, setBusquedaAlerta] = useState(false);
 
     const hoy = new Date();
@@ -157,7 +156,6 @@ function Reservas() {
 
     const abrirModal = (recurso) => {
         if (recurso) setRecursoSeleccionado(recurso);
-        setConfirmacion("");
         setErrores({});
         setForm({ fecha: "", hora_inicio: "", hora_fin: "", motivo: "" });
         setModalAbierto(true);
@@ -198,10 +196,12 @@ function Reservas() {
 
         try {
             await crearReserva(nueva);
-            setConfirmacion(
+            // Al confirmar, el diálogo se cierra y el aviso sale como toast:
+            // antes quedaba abierto esperando un clic en "Cerrar".
+            toast.success(
                 `Reserva de "${recursoSeleccionado.nombre}" registrada correctamente.`
             );
-            setErrores({});
+            cerrarModal();
         } catch (fallo) {
             toast.error(fallo?.message || "No se pudo registrar la reserva.");
         }
@@ -564,116 +564,107 @@ function Reservas() {
                 title={recursoSeleccionado ? `Reservar ${recursoSeleccionado.nombre}` : "Nueva reserva"}
                 onClose={cerrarModal}
             >
-                {confirmacion ? (
-                    <div className="reservas__confirm">
-                        <p>{confirmacion}</p>
-                        <button className="reservas__confirm-button" onClick={cerrarModal}>
-                            Cerrar
+                <form className="reservas__form" onSubmit={handleSubmit}>
+                    <div className="reservas__modal-group">
+                        <label>Espacio o recurso</label>
+                        <select
+                            className="reservas__filter-select"
+                            value={recursoSeleccionado?.nombre ?? ""}
+                            onChange={(e) => {
+                                const recurso = disponibles.find(
+                                    (r) => r.nombre === e.target.value
+                                );
+                                if (recurso) {
+                                    setRecursoSeleccionado(recurso);
+                                    setErrores((prev) => ({ ...prev, conflicto: "" }));
+                                }
+                            }}
+                        >
+                            {disponibles.map((recurso) => (
+                                <option key={recurso.id} value={recurso.nombre}>
+                                    {recurso.nombre}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <Input
+                        label="Fecha"
+                        type="date"
+                        name="fecha"
+                        value={form.fecha}
+                        onChange={handleChange}
+                        id="reserva-fecha"
+                        min={hoyStr}
+                    />
+                    {errores.fecha && (
+                        <span className="reservas__error">{errores.fecha}</span>
+                    )}
+
+                    <div className="reservas__form-row">
+                        <div>
+                            <Input
+                                label="Hora inicio"
+                                type="time"
+                                name="hora_inicio"
+                                value={form.hora_inicio}
+                                onChange={handleChange}
+                                id="reserva-inicio"
+                            />
+                            {errores.hora_inicio && (
+                                <span className="reservas__error">{errores.hora_inicio}</span>
+                            )}
+                        </div>
+
+                        <div>
+                            <Input
+                                label="Hora fin"
+                                type="time"
+                                name="hora_fin"
+                                value={form.hora_fin}
+                                onChange={handleChange}
+                                id="reserva-fin"
+                            />
+                            {errores.hora_fin && (
+                                <span className="reservas__error">{errores.hora_fin}</span>
+                            )}
+                        </div>
+                    </div>
+
+                    <Input
+                        label="Propósito"
+                        type="text"
+                        name="motivo"
+                        placeholder="Describe el propósito de la reserva"
+                        value={form.motivo}
+                        onChange={handleChange}
+                        id="reserva-proposito"
+                    />
+
+                    {errores.conflicto && (
+                        <div className="reservas__alert reservas__alert--danger">
+                            <span className="reservas__alert-icon">⚠️</span>
+                            <span>{errores.conflicto}</span>
+                        </div>
+                    )}
+
+                    <div className="reservas__modal-footer">
+                        <button
+                            className="reservas__cancel-button"
+                            type="button"
+                            onClick={cerrarModal}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            className="reservas__confirm-button reservas__confirm-button--primary"
+                            type="submit"
+                            disabled={!form.fecha || !form.hora_inicio || !form.hora_fin}
+                        >
+                            Confirmar reserva
                         </button>
                     </div>
-                ) : (
-                    <form className="reservas__form" onSubmit={handleSubmit}>
-                        <div className="reservas__modal-group">
-                            <label>Espacio o recurso</label>
-                            <select
-                                className="reservas__filter-select"
-                                value={recursoSeleccionado?.nombre ?? ""}
-                                onChange={(e) => {
-                                    const recurso = disponibles.find(
-                                        (r) => r.nombre === e.target.value
-                                    );
-                                    if (recurso) {
-                                        setRecursoSeleccionado(recurso);
-                                        setErrores((prev) => ({ ...prev, conflicto: "" }));
-                                    }
-                                }}
-                            >
-                                {disponibles.map((recurso) => (
-                                    <option key={recurso.id} value={recurso.nombre}>
-                                        {recurso.nombre}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <Input
-                            label="Fecha"
-                            type="date"
-                            name="fecha"
-                            value={form.fecha}
-                            onChange={handleChange}
-                            id="reserva-fecha"
-                            min={hoyStr}
-                        />
-                        {errores.fecha && (
-                            <span className="reservas__error">{errores.fecha}</span>
-                        )}
-
-                        <div className="reservas__form-row">
-                            <div>
-                                <Input
-                                    label="Hora inicio"
-                                    type="time"
-                                    name="hora_inicio"
-                                    value={form.hora_inicio}
-                                    onChange={handleChange}
-                                    id="reserva-inicio"
-                                />
-                                {errores.hora_inicio && (
-                                    <span className="reservas__error">{errores.hora_inicio}</span>
-                                )}
-                            </div>
-
-                            <div>
-                                <Input
-                                    label="Hora fin"
-                                    type="time"
-                                    name="hora_fin"
-                                    value={form.hora_fin}
-                                    onChange={handleChange}
-                                    id="reserva-fin"
-                                />
-                                {errores.hora_fin && (
-                                    <span className="reservas__error">{errores.hora_fin}</span>
-                                )}
-                            </div>
-                        </div>
-
-                        <Input
-                            label="Propósito"
-                            type="text"
-                            name="motivo"
-                            placeholder="Describe el propósito de la reserva"
-                            value={form.motivo}
-                            onChange={handleChange}
-                            id="reserva-proposito"
-                        />
-
-                        {errores.conflicto && (
-                            <div className="reservas__alert reservas__alert--danger">
-                                <span className="reservas__alert-icon">⚠️</span>
-                                <span>{errores.conflicto}</span>
-                            </div>
-                        )}
-
-                        <div className="reservas__modal-footer">
-                            <button
-                                className="reservas__cancel-button"
-                                type="button"
-                                onClick={cerrarModal}
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                className="reservas__confirm-button reservas__confirm-button--primary"
-                                type="submit"
-                                disabled={!form.fecha || !form.hora_inicio || !form.hora_fin}
-                            >
-                                Confirmar reserva
-                            </button>
-                        </div>
-                    </form>
-                )}
+                </form>
             </Modal>
         </div>
     );
