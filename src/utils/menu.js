@@ -143,6 +143,10 @@ export function getModuleName(pathname) {
         return "Editar usuario";
     }
 
+    if (pathname === "/info-academica/nueva") {
+        return "Nueva publicación";
+    }
+
     if (pathname.startsWith("/solicitudes/")) {
         return "Detalle de solicitud";
     }

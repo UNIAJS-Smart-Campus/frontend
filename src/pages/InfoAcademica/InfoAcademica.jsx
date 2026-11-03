@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import useAuth from "../../context/useAuth";
 import Icon from "../../components/Icon/Icon";
 import ImagenCategoria from "../../components/ImagenCategoria/ImagenCategoria";
@@ -13,31 +14,23 @@ import {
     CATEGORIA_ICONO,
     CATEGORIA_CLASE,
     ESTADO_CLASE,
-    PROGRAMAS,
-    formVacio,
     CLAVE_COLECCION,
     obtenerPublicaciones,
-    crearPublicacion,
     actualizarPublicacion,
     eliminarPublicacion,
     aplicarVencimiento
 } from "../../utils/infoAcademica";
 import "./InfoAcademica.css";
 
-const HOY = new Date().toISOString().slice(0, 10);
-
 function InfoAcademica() {
-    const { user, puede } = useAuth();
+    const { puede } = useAuth();
     const puedePublicar = puede("publicar_info_academica");
     const { items: remotas, enLinea } = useColeccion(CLAVE_COLECCION);
 
     const [query,        setQuery]        = useState("");
     const [busqueda,     setBusqueda]     = useState("");
     const [categoria,    setCategoria]    = useState("");
-    const [crearAbierto, setCrearAbierto] = useState(false);
     const [confirm,       setConfirm]      = useState(null);
-    const [form,          setForm]         = useState(formVacio);
-    const [errores,      setErrores]      = useState({});
     const [aviso,        setAviso]        = useState("");
     const [errorAviso,   setErrorAviso]   = useState("");
 
@@ -114,48 +107,6 @@ function InfoAcademica() {
     );
     const sugerencias = useSugerencias(query, "INFO_ACADEMICA", sugerenciasLocales);
 
-    // ── Formulario ────────────────────────────────────────────
-    const handleChange = (e) => {
-        const { name, type, checked, value } = e.target;
-        setForm({ ...form, [name]: type === "checkbox" ? checked : value });
-        setErrores((prev) => ({ ...prev, [name]: "" }));
-    };
-
-    const validar = () => {
-        const err = {};
-        if (!form.titulo.trim())    err.titulo   = "El título es obligatorio.";
-        if (!form.contenido.trim()) err.contenido = "El contenido es obligatorio.";
-        if (form.tipoVigencia === "Hasta") {
-            if (!form.vigencia)        err.vigencia = "Debes indicar la fecha límite.";
-            else if (form.vigencia < HOY) err.vigencia = "La fecha límite no puede ser anterior a hoy.";
-        }
-        setErrores(err);
-        return Object.keys(err).length === 0;
-    };
-
-    const handleCrear = async (e) => {
-        e.preventDefault();
-        if (!validar()) return;
-
-        const nueva = {
-            fecha: HOY,
-            autor: user?.nombre ?? "Usuario",
-            estado: "Pendiente",
-            ...form,
-            vigencia: form.tipoVigencia === "Hasta" ? form.vigencia : ""
-        };
-
-        try {
-            await crearPublicacion(nueva);
-            setCrearAbierto(false);
-            setForm(formVacio);
-            setErrores({});
-            mostrarAviso("Publicación creada correctamente.");
-        } catch (error) {
-            mostrarError(error.message || "No se pudo crear la publicación.");
-        }
-    };
-
     const cambiarEstado = async (item, nuevoEstado) => {
         try {
             await actualizarPublicacion(item, { estado: nuevoEstado });
@@ -190,12 +141,6 @@ function InfoAcademica() {
         else await cambiarEstado(item, tipo === "aprobar" ? "Aprobada" : "Rechazada");
     };
 
-    const cerrar = () => {
-        setCrearAbierto(false);
-        setForm(formVacio);
-        setErrores({});
-    };
-
     // ── Render ────────────────────────────────────────────────
     return (
         <div className="page">
@@ -207,13 +152,13 @@ function InfoAcademica() {
                 </div>
 
                 {puedePublicar && (
-                    <button
+                    <Link
+                        to="/info-academica/nueva"
                         className="button button--accent button--md"
-                        onClick={() => setCrearAbierto(true)}
                     >
                         <Icon name="estudiante" size={15} />
                         Nueva publicación
-                    </button>
+                    </Link>
                 )}
             </div>
 
@@ -422,136 +367,6 @@ function InfoAcademica() {
                 hasta={hasta}
                 total={encontradas.length}
             />
-
-            {/* ── MODAL CREAR ── */}
-            {crearAbierto && (
-                <div className="info-ac__overlay" onClick={cerrar}>
-                    <div className="info-ac__modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="info-ac__modal-header">
-                            <div>
-                                <h2>Nueva publicación académica</h2>
-                                <p>Completa los datos de la publicación.</p>
-                            </div>
-                            <button className="info-ac__modal-close" onClick={cerrar}>×</button>
-                        </div>
-
-                        <form className="info-ac__form" onSubmit={handleCrear} noValidate>
-
-                            <div className="info-ac__form-group">
-                                <label htmlFor="if-titulo">Título *</label>
-                                <input
-                                    id="if-titulo"
-                                    type="text"
-                                    name="titulo"
-                                    value={form.titulo}
-                                    onChange={handleChange}
-                                    placeholder="ej. Convocatoria periodo académico 2026-2"
-                                    className={errores.titulo ? "info-ac__input--error" : ""}
-                                />
-                                {errores.titulo && (
-                                    <span className="info-ac__field-error">{errores.titulo}</span>
-                                )}
-                            </div>
-
-                            <div className="info-ac__form-group">
-                                <label htmlFor="if-categoria">Categoría</label>
-                                <select
-                                    id="if-categoria"
-                                    name="categoria"
-                                    value={form.categoria}
-                                    onChange={handleChange}
-                                >
-                                    {CATEGORIAS.map((cat) => (
-                                        <option key={cat} value={cat}>{cat}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="form-grid">
-                                <div className="info-ac__form-group">
-                                    <label htmlFor="if-programa">Dirigido a</label>
-                                    <select
-                                        id="if-programa"
-                                        name="programa"
-                                        value={form.programa}
-                                        onChange={handleChange}
-                                    >
-                                        {PROGRAMAS.map((prog) => (
-                                            <option key={prog} value={prog}>{prog}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="info-ac__form-group">
-                                    <label htmlFor="if-tipo-vigencia">Vigencia</label>
-                                    <select
-                                        id="if-tipo-vigencia"
-                                        name="tipoVigencia"
-                                        value={form.tipoVigencia}
-                                        onChange={handleChange}
-                                    >
-                                        <option value="Permanente">Permanente</option>
-                                        <option value="Hasta">Hasta una fecha</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {form.tipoVigencia === "Hasta" && (
-                                <div className="info-ac__form-group">
-                                    <label htmlFor="if-vigencia">Fecha límite *</label>
-                                    <input
-                                        id="if-vigencia"
-                                        type="date"
-                                        name="vigencia"
-                                        value={form.vigencia}
-                                        min={HOY}
-                                        onChange={handleChange}
-                                        className={errores.vigencia ? "info-ac__input--error" : ""}
-                                    />
-                                    {errores.vigencia && (
-                                        <span className="info-ac__field-error">{errores.vigencia}</span>
-                                    )}
-                                </div>
-                            )}
-
-                            <div className="info-ac__form-group">
-                                <label htmlFor="if-contenido">Contenido *</label>
-                                <textarea
-                                    id="if-contenido"
-                                    name="contenido"
-                                    rows="4"
-                                    value={form.contenido}
-                                    onChange={handleChange}
-                                    placeholder="Describe la información académica"
-                                    className={errores.contenido ? "info-ac__input--error" : ""}
-                                />
-                                {errores.contenido && (
-                                    <span className="info-ac__field-error">{errores.contenido}</span>
-                                )}
-                            </div>
-
-                            <label className="info-ac__check">
-                                <input
-                                    type="checkbox"
-                                    name="destacado"
-                                    checked={form.destacado}
-                                    onChange={handleChange}
-                                />
-                                <span>Destacar publicación (fijar al inicio del tablero)</span>
-                            </label>
-
-                            <div className="info-ac__modal-actions">
-                                <button type="button" className="info-ac__cancel-button" onClick={cerrar}>
-                                    Cancelar
-                                </button>
-                                <button type="submit" className="info-ac__confirm-button">
-                                    Publicar
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
 
             {/* ── CONFIRMACIÓN DE ACCIONES ── */}
             <ConfirmModal
