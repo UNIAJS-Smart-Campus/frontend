@@ -1,0 +1,104 @@
+/* ============================================================
+   Módulo: Registrar solicitud (/solicitudes/nueva)
+   Sustituye al modal que vivía dentro de /solicitudes.
+   Los campos reutilizan las clases .sols__form-group de
+   Solicitudes.css para no duplicar estilos de formulario.
+   ============================================================ */
+
+.nueva-solicitud {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    max-width: 760px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.nueva-solicitud__back {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-primary-600);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color var(--transition-fast);
+    width: fit-content;
+}
+
+.nueva-solicitud__back:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+.nueva-solicitud__header h1 {
+    margin: 0 0 7px;
+    font-family: var(--font-heading);
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.nueva-solicitud__header p {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.nueva-solicitud__header strong {
+    color: var(--color-text);
+}
+
+.nueva-solicitud__form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Servicio + prioridad en dos columnas. */
+.nueva-solicitud__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.nueva-solicitud__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    border-top: 1px solid var(--color-border);
+    margin-top: var(--space-1);
+    padding-top: var(--space-5);
+}
+
+.nueva-solicitud__actions .button {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+
+@media (max-width: 640px) {
+    .nueva-solicitud__row {
+        grid-template-columns: 1fr;
+    }
+
+    .nueva-solicitud__form {
+        padding: var(--space-4);
+    }
+
+    .nueva-solicitud__actions {
+        flex-direction: column-reverse;
+    }
+
+    .nueva-solicitud__actions > * {
+        width: 100%;
+    }
+}

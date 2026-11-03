@@ -12,7 +12,6 @@ import {
     ESTADO_COLOR,
     ESTADOS_FINALES,
     ACCIONES_POR_ESTADO,
-    crearSolicitud,
     ejecutarAccion,
     progresoDe
 } from "../../utils/solicitudes";
@@ -51,26 +50,12 @@ const PRIORIDAD_SUMMARY_CLASE = {
 
 const PRIORIDADES = ["Alta", "Media", "Baja"];
 
-const MAX_PALABRAS_TIPO = 10;
-const MAX_PALABRAS_DESCRIPCION = 100;
-
-const contarPalabras = (texto = "") =>
-    texto.trim() ? texto.trim().split(/\s+/).length : 0;
-
-const formVacio = {
-    tipo: "",
-    servicio: "",
-    descripcion: "",
-    prioridad: "Media"
-};
-
 function Solicitudes() {
     const { items, error, enLinea, recargar } = useColeccion("solicitudes");
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");
     const [estado, setEstado] = useState("");
     const [prioridad, setPrioridad] = useState("");
-    const [crearAbierto, setCrearAbierto] = useState(false);
     const [rechazarAbierto, setRechazarAbierto] = useState(false);
     const [notaAbierto, setNotaAbierto] = useState(false);
     const [asignarAbierto, setAsignarAbierto] = useState(false);
@@ -81,8 +66,6 @@ function Solicitudes() {
     const [accionPendiente, setAccionPendiente] = useState(null); // { item, accion }
     const [seleccionada, setSeleccionada] = useState(null);
     const [seleccionadoId, setSeleccionadoId] = useState(null);
-    const [form, setForm] = useState(formVacio);
-    const [formErrores, setFormErrores] = useState({});
     const [nota, setNota] = useState("");
     const [motivoPausa, setMotivoPausa] = useState("");
     const [motivoReabrir, setMotivoReabrir] = useState("");
@@ -282,63 +265,6 @@ function Solicitudes() {
         setResponsableSeleccionado(null);
     };
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm({ ...form, [name]: value });
-
-        // Limpiar error del campo al escribir
-        if (formErrores[name]) {
-            setFormErrores((prev) => ({ ...prev, [name]: "" }));
-        }
-    };
-
-    const validarForm = () => {
-        const errores = {};
-        const palabrasTipo = contarPalabras(form.tipo);
-        if (!form.tipo.trim()) {
-            errores.tipo = "El tipo es obligatorio.";
-        } else if (palabrasTipo > MAX_PALABRAS_TIPO) {
-            errores.tipo = `Máximo ${MAX_PALABRAS_TIPO} palabras (excede en ${palabrasTipo - MAX_PALABRAS_TIPO}).`;
-        }
-        if (!form.servicio) {
-            errores.servicio = "Selecciona un servicio.";
-        }
-        const palabrasDescripcion = contarPalabras(form.descripcion);
-        if (!form.descripcion.trim()) {
-            errores.descripcion = "La descripción es obligatoria.";
-        } else if (palabrasDescripcion > MAX_PALABRAS_DESCRIPCION) {
-            errores.descripcion = `Máximo ${MAX_PALABRAS_DESCRIPCION} palabras (excede en ${palabrasDescripcion - MAX_PALABRAS_DESCRIPCION}).`;
-        }
-        return errores;
-    };
-
-    const handleCrear = async (e) => {
-        e.preventDefault();
-        const errores = validarForm();
-        if (Object.keys(errores).length > 0) {
-            setFormErrores(errores);
-            return;
-        }
-        try {
-            await crearSolicitud(form, user ?? "Usuario");
-            setCrearAbierto(false);
-            setForm(formVacio);
-            setFormErrores({});
-            mostrarAviso("Solicitud registrada correctamente.");
-        } catch (err) {
-            mostrarAviso(
-                err?.message || "No se pudo registrar la solicitud.",
-                "error"
-            );
-        }
-    };
-
-    const cerrar = () => {
-        setCrearAbierto(false);
-        setForm(formVacio);
-        setFormErrores({});
-    };
-
     const ACTION_LABELS = {
         revisar: "Revisar",
         asignar: "Asignar",
@@ -411,13 +337,13 @@ function Solicitudes() {
                 </div>
 
                 {puedeRegistrar && (
-                    <button
+                    <Link
+                        to="/solicitudes/nueva"
                         className="button button--accent button--md"
-                        onClick={() => setCrearAbierto(true)}
                     >
                         <Icon name="solicitudes" size={15} />
                         Registrar solicitud
-                    </button>
+                    </Link>
                 )}
             </div>
 
@@ -726,121 +652,6 @@ function Solicitudes() {
                     />
                 </>
             )}
-
-            {/* ── Modal: crear solicitud ── */}
-            <Modal
-                isOpen={crearAbierto}
-                title="Registrar solicitud"
-                subtitle="Completa los datos de la nueva solicitud."
-                onClose={cerrar}
-            >
-                <form
-                    className="sols__modal-form"
-                    onSubmit={handleCrear}
-                >
-                    <div className="form-grid sols__form-grid">
-                        <div className="sols__form-group">
-                            <label htmlFor="sol-tipo">
-                                Tipo de solicitud *
-                            </label>
-                            <input
-                                id="sol-tipo"
-                                type="text"
-                                name="tipo"
-                                value={form.tipo}
-                                onChange={handleChange}
-                                placeholder="ej. Constancia académica"
-                                className={formErrores.tipo ? "sols__input--error" : ""}
-                            />
-                            {formErrores.tipo ? (
-                                <span className="sols__field-error">{formErrores.tipo}</span>
-                            ) : (
-<span className="sols__field-hint">
-                                    {contarPalabras(form.tipo)}/
-                                    {MAX_PALABRAS_TIPO} palabras como máximo
-                                </span>
-                            )}
-                        </div>
-
-                        <div className="sols__form-group">
-                            <label htmlFor="sol-servicio">Servicio *</label>
-                            <select
-                                id="sol-servicio"
-                                name="servicio"
-                                value={form.servicio}
-                                onChange={handleChange}
-                                className={formErrores.servicio ? "sols__input--error" : ""}
-                            >
-                                <option value="">Selecciona…</option>
-                                <option value="Solicitudes">
-                                    Solicitudes
-                                </option>
-                                <option value="Reservas">Reservas</option>
-                                <option value="Eventos">Eventos</option>
-                                <option value="Recursos">Recursos</option>
-                                <option value="PQRS">PQRS</option>
-                            </select>
-                            {formErrores.servicio && (
-                                <span className="sols__field-error">{formErrores.servicio}</span>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="form-grid">
-                        <div className="sols__form-group">
-                            <label htmlFor="sol-prioridad">Prioridad</label>
-                            <select
-                                id="sol-prioridad"
-                                name="prioridad"
-                                value={form.prioridad}
-                                onChange={handleChange}
-                            >
-                                <option value="Baja">Baja</option>
-                                <option value="Media">Media</option>
-                                <option value="Alta">Alta</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="sols__form-group">
-                        <label htmlFor="sol-descripcion">Descripción *</label>
-                        <textarea
-                            id="sol-descripcion"
-                            name="descripcion"
-                            rows="4"
-                            value={form.descripcion}
-                            onChange={handleChange}
-                            placeholder="Describe el motivo de la solicitud"
-                            className={formErrores.descripcion ? "sols__input--error" : ""}
-                        />
-                        {formErrores.descripcion ? (
-                            <span className="sols__field-error">{formErrores.descripcion}</span>
-                        ) : (
-                            <span className="sols__field-hint">
-                                {contarPalabras(form.descripcion)}/
-                                {MAX_PALABRAS_DESCRIPCION} palabras como
-                                máximo
-                            </span>
-                        )}
-                    </div>
-
-                    <div className="modal__footer">
-                        <button
-                            type="button"
-                            className="button button--ghost button--md"
-                            onClick={cerrar}
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="submit"
-                            className="button button--accent button--md"
-                        >
-                            Crear solicitud
-                        </button>
-                    </div>
-                </form>
-            </Modal>
 
             {/* ── Modal: asignar responsable ── */}
             <Modal
