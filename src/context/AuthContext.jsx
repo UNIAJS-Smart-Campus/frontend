@@ -189,8 +189,11 @@ function AuthProvider({ children }) {
             })
             .catch((error) => {
                 if (!vigente) return;
-                // Solo un 401/403 confirma que el token ya no sirve.
-                if (error?.status === 401 || error?.status === 403) {
+                // Solo un 401/403 confirma que el token ya no sirve. Un 404
+                // también: /auth/me lo devolvía cuando el usuario del token ya
+                // no existe (cuenta eliminada o base reconstruida) y la app se
+                // quedaba con una sesión fantasma que hacía fallar cada escritura.
+                if (error?.status === 401 || error?.status === 403 || error?.status === 404) {
                     logout();
                 }
                 // Cualquier otro fallo (red, 5xx, timeout) se ignora: la
