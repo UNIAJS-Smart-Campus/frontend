@@ -111,6 +111,10 @@ export function getModuleName(pathname) {
         return "Información Académica";
     }
 
+    if (pathname === "/solicitudes/nueva") {
+        return "Registrar solicitud";
+    }
+
     if (pathname.startsWith("/solicitudes/")) {
         return "Detalle de solicitud";
     }
