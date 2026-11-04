@@ -32,6 +32,7 @@ const NuevaPQRS = lazy(() => import("../pages/PQRS/NuevaPQRS/NuevaPQRS"));
 const Usuarios = lazy(() => import("../pages/Usuarios/Usuarios"));
 const FormularioUsuario = lazy(() => import("../pages/Usuarios/FormularioUsuario"));
 const Reportes = lazy(() => import("../pages/Reportes/Reportes"));
+const Auditoria = lazy(() => import("../pages/Auditoria/Auditoria"));
 const InfoAcademica = lazy(() => import("../pages/InfoAcademica/InfoAcademica"));
 const NuevaPublicacion = lazy(() => import("../pages/InfoAcademica/NuevaPublicacion"));
 const Servicios = lazy(() => import("../pages/Servicios/Servicios"));
@@ -238,6 +239,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute permiso="reportes">
                 <Reportes />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/auditoria"
+            element={
+              <ProtectedRoute permiso="auditoria">
+                <Auditoria />
               </ProtectedRoute>
             }
           />

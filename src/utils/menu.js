@@ -59,6 +59,12 @@ const menuSections = [
                 path: "/reportes",
                 icon: "reportes",
                 permiso: "reportes"
+            },
+            {
+                name: "Actividad",
+                path: "/auditoria",
+                icon: "admin",
+                permiso: "auditoria"
             }
         ]
     },
@@ -99,6 +105,10 @@ const menuSections = [
 ];
 
 export function getModuleName(pathname) {
+    if (pathname === "/auditoria") {
+        return "Actividad reciente";
+    }
+
     if (pathname === "/pqrs/nueva") {
         return "Nueva PQRS";
     }

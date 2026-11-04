@@ -26,7 +26,8 @@ export const ROLES = [
             "perfil",
             "configuracion",
             "info_academica",
-            "gestion_pqrs"
+            "gestion_pqrs",
+            "auditoria"
         ],
         acciones: [
             "registrar_solicitudes",

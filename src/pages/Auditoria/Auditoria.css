@@ -1,0 +1,73 @@
+/* ============================================================
+   Auditoría / Actividad reciente — panel del administrador
+   ============================================================ */
+
+.actividad__sub {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    margin-top: 2px;
+}
+
+.actividad__ruta {
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text);
+    word-break: break-all;
+}
+
+/* --- Badges de acción (tabla) --- */
+.actividad__badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.actividad__badge--crear {
+    background-color: var(--color-success-50);
+    color: var(--color-success);
+}
+
+.actividad__badge--actualizar {
+    background-color: var(--color-info-50);
+    color: var(--color-info);
+}
+
+.actividad__badge--eliminar {
+    background-color: var(--color-danger-50);
+    color: var(--color-danger);
+}
+
+.actividad__badge--login {
+    background-color: var(--color-primary-50);
+    color: var(--color-primary-600);
+}
+
+/* --- Íconos de las tarjetas de resumen --- */
+.actividad__icon--todos {
+    background-color: var(--color-primary-50);
+    color: var(--color-primary-600);
+}
+
+.actividad__icon--crear {
+    background-color: var(--color-success-50);
+    color: var(--color-success);
+}
+
+.actividad__icon--actualizar {
+    background-color: var(--color-info-50);
+    color: var(--color-info);
+}
+
+.actividad__icon--eliminar {
+    background-color: var(--color-danger-50);
+    color: var(--color-danger);
+}
+
+.actividad__icon--login {
+    background-color: var(--color-primary-50);
+    color: var(--color-primary-600);
+}

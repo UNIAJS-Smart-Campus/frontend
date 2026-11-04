@@ -306,3 +306,12 @@ export const searchApi = {
     suggest: (q, size = 5) => apiFetch("/search/suggest", { params: { q, size } }),
     indices: () => apiFetch("/search/indices")
 };
+
+// ==========================================
+// AUDIT (ACTIVIDAD RECIENTE — solo administrador)
+// GET /api/audit: últimas acciones registradas en la tabla `auditoria`.
+// El backend responde 403 a cualquier rol que no sea Administrador.
+// ==========================================
+export const auditApi = {
+    listar: (limite = 100) => apiFetch("/audit", { params: { limite } })
+};
