@@ -52,7 +52,9 @@ function RealtimeProvider({ children }) {
                     path: "/socket.io",
                     transports: ["websocket", "polling"],
                     reconnection: true,
-                    reconnectionAttempts: Infinity,
+                    // Render Free puede suspender el backend; no mantener un
+                    // bucle infinito de reconexiones mientras la API despierta.
+                    reconnectionAttempts: 5,
                     reconnectionDelay: 1000,
                     reconnectionDelayMax: 10000
                 });
