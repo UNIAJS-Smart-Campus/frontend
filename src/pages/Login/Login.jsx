@@ -140,11 +140,11 @@ function Login() {
 
                     <form onSubmit={handleSubmit} className="login__form" autoComplete="off">
                         <div className="login__field">
-                            <label htmlFor="login-cedula">Cédula</label>
+                            <label htmlFor="login-cedula">Cédula o usuario</label>
                             <input
                                 type="text"
                                 id="login-cedula"
-                                placeholder="Ingresa tu número de cédula"
+                                placeholder="Ingresa tu cédula o usuario"
                                 value={cedula}
                                 onChange={(e) => setCedula(e.target.value)}
                                 inputMode="numeric"
