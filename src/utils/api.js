@@ -9,6 +9,7 @@ const API = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 export const API_HABILITADA = Boolean(API);
 
 const TIMEOUT_MS = 60000;
+let refreshPromise = null;
 
 // El backend corre en el plan free de Render, que suspende el servicio por
 // inactividad y tarda ~50 s en despertar con la primera petición. Se lanza un
@@ -109,7 +110,6 @@ export async function apiFetch(
         // petición original una sola vez. Un refreshPromise compartido evita
         // lanzar varios refresh simultáneos cuando varias peticiones caducan
         // al mismo tiempo.
-        let refreshPromise = null;
         if (
             res.status === 401 &&
             !silencioso &&
