@@ -1,38 +1,40 @@
+// ---------------------------------------------------------------------------
+// Token de sesión.
+// Tras el fix de token, el access JWT viaja en una cookie HttpOnly
+// (`access_token`) que el navegador envía automáticamente en cada petición.
+// JavaScript NO puede leerla, así que no hay token en localStorage expuesto
+// a XSS. Estas utilidades se mantienen como no-op para no romper consumidores
+// existentes (RealtimeProvider, código legado).
+// ---------------------------------------------------------------------------
+
 const TOKEN_KEY = "uajs_token";
-const SESSION_KEY = "uajs_session";
 
 /**
- * Token de la sesión.
- *
- * El login guarda la sesión completa en `uajs_session`; durante un tiempo
- * `uajs_token` quedó sin escribir, así que Socket.IO nunca recibía token.
- * Se mantiene `uajs_token` como fuente principal y se cae a la sesión para
- * sesiones creadas antes de este cambio.
+ * Siempre devuelve null: el token no es accesible desde JavaScript (vive en
+ * una cookie HttpOnly). Se conserva la firma por compatibilidad.
  */
 export function getToken() {
-    try {
-        const token = localStorage.getItem(TOKEN_KEY);
-        if (token) return token;
-
-        const sesion = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
-        return sesion?.token || null;
-    } catch {
-        return null;
-    }
+    return null;
 }
 
-export function setToken(token) {
+/**
+ * No-op: no hay nada que guardar en localStorage. El navegador gestiona la
+ * cookie automáticamente.
+ */
+export function setToken() {
+    // sin operación
+}
+
+/**
+ * No-op: no hay nada que borrar en localStorage. El logout del servidor
+ * borra la cookie (POST /auth/logout).
+ */
+export function clearToken() {
     try {
-        if (token) {
-            localStorage.setItem(TOKEN_KEY, token);
-        } else {
-            localStorage.removeItem(TOKEN_KEY);
-        }
+        localStorage.removeItem(TOKEN_KEY);
     } catch {
         // localStorage no disponible
     }
 }
 
-export function clearToken() {
-    setToken(null);
-}
+export { TOKEN_KEY };

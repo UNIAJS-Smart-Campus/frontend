@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import useAuth from "./useAuth";
-import { getToken } from "../utils/authToken";
 import { refrescar } from "../utils/store";
 
 // Al llegar un evento, se refresca la colección para que el badge y la lista
@@ -34,9 +33,6 @@ function RealtimeProvider({ children }) {
     useEffect(() => {
         if (!user?.id) return undefined;
 
-        const token = getToken();
-        if (!token) return undefined;
-
         const wsUrl = resolverUrlWebSocket();
         if (!wsUrl) return undefined;
 
@@ -45,6 +41,9 @@ function RealtimeProvider({ children }) {
 
         // socket.io-client se descarga en un chunk aparte, solo cuando hay
         // sesión iniciada: la landing y el login no cargan la librería.
+        // El token viaja en la cookie HttpOnly (`access_token`) que el
+        // navegador envía automáticamente en el handshake HTTP; el servidor
+        // la lee de socket.handshake.headers.cookie (ver realtime.js).
         import("socket.io-client")
             .then(({ io }) => {
                 if (cancelado) return;
@@ -52,7 +51,6 @@ function RealtimeProvider({ children }) {
                 socket = io(wsUrl, {
                     path: "/socket.io",
                     transports: ["websocket", "polling"],
-                    auth: { token },
                     reconnection: true,
                     reconnectionAttempts: Infinity,
                     reconnectionDelay: 1000,

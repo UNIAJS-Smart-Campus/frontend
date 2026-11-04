@@ -9,7 +9,6 @@ const API = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 export const API_HABILITADA = Boolean(API);
 
 const TIMEOUT_MS = 60000;
-const CLAVE_SESION = "uajs_session";
 
 // El backend corre en el plan free de Render, que suspende el servicio por
 // inactividad y tarda ~50 s en despertar con la primera petición. Se lanza un
@@ -25,12 +24,9 @@ if (API.startsWith("http")) {
 }
 
 export function getToken() {
-    try {
-        const sesion = JSON.parse(localStorage.getItem(CLAVE_SESION) || "null");
-        return sesion?.token || null;
-    } catch {
-        return null;
-    }
+    // El access JWT viaja en una cookie HttpOnly (`access_token`); no es
+    // accesible desde JavaScript, así que no hay token en localStorage.
+    return null;
 }
 
 /** Error de API con el status HTTP para que la UI pueda reacting (401 → logout). */
@@ -80,6 +76,9 @@ export async function apiFetch(
             method,
             headers,
             signal: controller.signal,
+            // Enviar cookies HttpOnly (access_token / refresh_token) también
+            // en peticiones cross-origin (front en Vercel, API en Render).
+            credentials: "include",
             body: body ? JSON.stringify(body) : undefined
         });
     } catch (error) {
@@ -105,10 +104,47 @@ export async function apiFetch(
     const json = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-        // El gateway devuelve 401 cuando el token falta o expiró: se avisa a
-        // AuthContext para que cierre la sesión en lugar de dejar la UI con
-        // datos viejos y errores por todos lados.
-        if (res.status === 401 && !silencioso && typeof window !== "undefined") {
+        // Auto-refresh: si el access token expiró, intentamos renovarlo
+        // silenciosamente con la cookie de refresh token y reintentamos la
+        // petición original una sola vez. Un refreshPromise compartido evita
+        // lanzar varios refresh simultáneos cuando varias peticiones caducan
+        // al mismo tiempo.
+        let refreshPromise = null;
+        if (
+            res.status === 401 &&
+            !silencioso &&
+            typeof window !== "undefined" &&
+            path !== "/auth/refresh"
+        ) {
+            if (!refreshPromise) {
+                refreshPromise = (async () => {
+                    try {
+                        const rr = await fetch(`${API}/auth/refresh`, {
+                            method: "POST",
+                            credentials: "include"
+                        });
+                        return rr.ok;
+                    } catch {
+                        return false;
+                    }
+                })().finally(() => {
+                    refreshPromise = null;
+                });
+            }
+            const renovado = await refreshPromise;
+            if (renovado) {
+                return apiFetch(path, {
+                    method,
+                    body,
+                    params,
+                    silencioso: true
+                });
+            }
+            // Renovación falló: la sesión expiró de verdad.
+            window.dispatchEvent(
+                new CustomEvent("uajs:sesion-expirada", { detail: { url: path } })
+            );
+        } else if (res.status === 401 && !silencioso && typeof window !== "undefined") {
             window.dispatchEvent(
                 new CustomEvent("uajs:sesion-expirada", { detail: { url: path } })
             );
@@ -156,7 +192,11 @@ export const authApi = {
         apiFetch("/auth/restablecer", { method: "POST", body: { token, password }, silencioso: true }),
     me: () => apiFetch("/auth/me", { silencioso: true }),
     // Historial real de inicios de sesión (Configuración → Seguridad).
-    accesos: () => apiFetch("/auth/accesos", { silencioso: true })
+    accesos: () => apiFetch("/auth/accesos", { silencioso: true }),
+    // Renueva el access token usando la cookie de refresh token (rota el par).
+    refresh: () => apiFetch("/auth/refresh", { method: "POST" }),
+    // Cierra la sesión: revoca en el servidor y borra las cookies.
+    logout: () => apiFetch("/auth/logout", { method: "POST" })
 };
 
 // ==========================================

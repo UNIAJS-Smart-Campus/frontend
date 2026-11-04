@@ -4,7 +4,7 @@ import { permisosDeRol, accionesDeRol } from "../utils/users";
 import { authApi } from "../utils/api";
 import { mapearUsuarioSesion } from "../utils/mapeo";
 import { syncPhotoFromBackend } from "../utils/avatar";
-import { setToken, clearToken } from "../utils/authToken";
+import { clearToken } from "../utils/authToken";
 import { establecer, limpiarCache } from "../utils/store";
 import Modal from "../components/Modal/Modal";
 import "../components/Modal/Modal.css";
@@ -71,10 +71,6 @@ function AuthProvider({ children }) {
         try {
             const data = await authApi.login(cedula, password);
 
-            if (!data?.token) {
-                throw new Error("El servidor no devolvió un token de sesión.");
-            }
-
             const sesion = mapearUsuarioSesion(data);
 
             limpiarDatosDeUsuario();
@@ -86,14 +82,15 @@ function AuthProvider({ children }) {
                 syncPhotoFromBackend(sesion.id, sesion.foto);
             }
 
+            // Guardar la sesión sin el token: el access JWT vive en una
+            // cookie HttpOnly, no en localStorage (evita exposición a XSS).
+            const sesionParaGuardar = { ...sesion };
+            delete sesionParaGuardar.token;
             try {
-                localStorage.setItem(SESSION_KEY, JSON.stringify(sesion));
+                localStorage.setItem(SESSION_KEY, JSON.stringify(sesionParaGuardar));
             } catch (storageError) {
                 console.warn("No se pudo guardar en localStorage:", storageError);
             }
-
-            // Socket.IO y cualquier otro consumidor leen el token desde aquí.
-            setToken(sesion.token);
 
             return { ok: true, user: sesion };
         } catch (err) {
@@ -105,7 +102,15 @@ function AuthProvider({ children }) {
         }
     };
 
-    const logout = () => {
+    const logout = async () => {
+        // Revocar en el servidor: invalida el refresh token de inmediato,
+        // no solo lo borra del navegador.
+        try {
+            await authApi.logout().catch(() => {});
+        } catch {
+            // Si el servidor no responde, igual limpiamos la sesión local.
+        }
+
         setUser(null);
         try {
             localStorage.removeItem(SESSION_KEY);
@@ -213,6 +218,7 @@ function AuthProvider({ children }) {
         setUser((prev) => {
             if (!prev) return prev;
             const siguiente = { ...prev, ...campos };
+            delete siguiente.token; // el token vive en cookie HttpOnly
             try {
                 localStorage.setItem(SESSION_KEY, JSON.stringify(siguiente));
             } catch {
