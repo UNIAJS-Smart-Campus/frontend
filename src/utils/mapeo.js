@@ -111,12 +111,17 @@ export function mapearUsuarioSesion(data) {
         id_usuario: data.id_usuario,
         usuario: texto(data.usuario, data.identificacion),
         identificacion: texto(data.identificacion),
+        cedula: texto(data.cedula),
         nombre: `${texto(data.nombre)} ${texto(data.apellido)}`.trim() || "Usuario",
         correo: texto(data.correo),
+        telefono: texto(data.telefono),
         rol: nombreDeRol(data.rol ?? data.id_rol, data.tipo_usuario),
         id_rol: Number(data.rol ?? data.id_rol) || 2,
+        tipo_usuario: texto(data.tipo_usuario),
         programa: texto(data.programa, "No especificado"),
         cargo: texto(data.cargo),
+        campus: texto(data.campus),
+        estado: texto(data.estado),
         foto: texto(data.foto_perfil || data.foto, ""),
         token: data.token
     };

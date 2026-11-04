@@ -154,7 +154,9 @@ export const authApi = {
         apiFetch("/auth/recuperar", { method: "POST", body: payload, silencioso: true }),
     reset: (token, password) =>
         apiFetch("/auth/restablecer", { method: "POST", body: { token, password }, silencioso: true }),
-    me: () => apiFetch("/auth/me", { silencioso: true })
+    me: () => apiFetch("/auth/me", { silencioso: true }),
+    // Historial real de inicios de sesión (Configuración → Seguridad).
+    accesos: () => apiFetch("/auth/accesos", { silencioso: true })
 };
 
 // ==========================================

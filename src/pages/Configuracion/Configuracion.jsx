@@ -4,7 +4,7 @@ import { useTheme } from "../../context/ThemeContext";
 import useFontSize from "../../hooks/useFontSize";
 import useColeccion from "../../hooks/useColeccion";
 import Icon from "../../components/Icon/Icon";
-import { usersApi } from "../../utils/api";
+import { usersApi, authApi } from "../../utils/api";
 import {
     CLAVE_CONFIGURACION,
     configuracionDeUsuario,
@@ -84,11 +84,43 @@ const configBase = {
     }
 };
 
-const ACCESOS_MOCK = [
-    { dispositivo: "Chrome · Windows", ubicacion: "Sincelejo, Colombia", ip: "190.25.XX.XX", fecha: "Hoy, 10:23 a. m.", actual: true },
-    { dispositivo: "App Móvil · Android", ubicacion: "Sincelejo, Colombia", ip: "186.100.XX.XX", fecha: "Ayer, 8:40 p. m.", actual: false },
-    { dispositivo: "Safari · iPhone", ubicacion: "Montería, Colombia", ip: "170.145.XX.XX", fecha: "12 ago, 2:15 p. m.", actual: false }
-];
+// Reduce y comprime una imagen a JPEG antes de guardarla como dataURL.
+function comprimirImagen(archivo, maxLado = 512, calidad = 0.82) {
+    return new Promise((resolve, reject) => {
+        const lector = new FileReader();
+        lector.onerror = () => reject(new Error("No se pudo leer la imagen."));
+        lector.onload = () => {
+            const img = new Image();
+            img.onerror = () => reject(new Error("El archivo no es una imagen válida."));
+            img.onload = () => {
+                const escala = Math.min(1, maxLado / Math.max(img.width, img.height));
+                const ancho = Math.max(1, Math.round(img.width * escala));
+                const alto = Math.max(1, Math.round(img.height * escala));
+                const canvas = document.createElement("canvas");
+                canvas.width = ancho;
+                canvas.height = alto;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, ancho, alto);
+                resolve(canvas.toDataURL("image/jpeg", calidad));
+            };
+            img.src = String(lector.result || "");
+        };
+        lector.readAsDataURL(archivo);
+    });
+}
+
+function formatearAcceso(fecha) {
+    if (!fecha) return "";
+    const valor = new Date(fecha);
+    if (Number.isNaN(valor.getTime())) return String(fecha);
+    return valor.toLocaleString("es-CO", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+}
 
 function Toggle({ activo, onClick, label }) {
     return (
@@ -174,6 +206,29 @@ function Configuracion() {
     );
 
     const [errorConfig, setErrorConfig] = useState("");
+
+    // Historial real de inicios de sesión (tabla `auditoria` vía auth-service).
+    const [accesos, setAccesos] = useState([]);
+    const [cargandoAccesos, setCargandoAccesos] = useState(Boolean(user?.id));
+
+    useEffect(() => {
+        if (!user?.id) return undefined;
+        let vigente = true;
+        authApi
+            .accesos()
+            .then((lista) => {
+                if (vigente) setAccesos(Array.isArray(lista) ? lista : []);
+            })
+            .catch(() => {
+                if (vigente) setAccesos([]);
+            })
+            .finally(() => {
+                if (vigente) setCargandoAccesos(false);
+            });
+        return () => {
+            vigente = false;
+        };
+    }, [user?.id]);
 
     const [config, setConfig] = useState(() => {
         try {
@@ -422,30 +477,38 @@ function Configuracion() {
 
     const manejarFoto = async (event) => {
         const archivo = event.target.files?.[0];
+        if (event.target) event.target.value = "";
         if (!archivo || !archivo.type.startsWith("image/")) return;
 
-        const lector = new FileReader();
-        lector.onload = async (e) => {
-            const dataUrl = e.target?.result;
-            if (!dataUrl) return;
+        if (archivo.size > 8 * 1024 * 1024) {
+            setErrorConfig("La imagen no puede superar 8 MB.");
+            return;
+        }
+
+        try {
+            // Se reduce y comprime antes de guardarla: la foto viaja como
+            // dataURL a `usuarios.foto_perfil` (MEDIUMTEXT), así que conviene
+            // que pese decenas de KB y no varios MB.
+            const dataUrl = await comprimirImagen(archivo);
+
             setConfig((prev) => ({
                 ...prev,
                 cuenta: { ...prev.cuenta, foto: dataUrl }
             }));
             savePhotoByUserId(user?.id, dataUrl);
             updateUser({ foto: dataUrl });
-            // Sincronizar foto_perfil en la BD (usuarios table)
+            setErrorConfig("");
+
             try {
                 await usersApi.update(user?.id, { foto_perfil: dataUrl });
             } catch (err) {
-                console.warn("No se pudo sincronizar la foto a la BD:", err);
+                setErrorConfig(
+                    err?.message || "No se pudo guardar la foto en el servidor."
+                );
             }
             marcarGuardado();
-        };
-        lector.readAsDataURL(archivo);
-
-        if (event.target) {
-            event.target.value = "";
+        } catch (err) {
+            setErrorConfig(err?.message || "No se pudo procesar la imagen.");
         }
     };
 
@@ -549,12 +612,6 @@ function Configuracion() {
     };
 
     const cancelarConfirmacion = () => setConfirmando(null);
-
-    // Cerrar sesión individual en un dispositivo
-    const cerrarSesionDispositivo = () => {
-        // Simulación: en producción llamaría a /api/auth/sessions DELETE
-        marcarGuardado();
-    };
 
     return (
         <div className="page">
@@ -670,6 +727,48 @@ function Configuracion() {
                                             onChange={(e) => setTelefonoEditable(e.target.value)}
                                             placeholder="ej. 3001234567"
                                         />
+                                    </div>
+                                </div>
+
+                                <div className="config__readonly">
+                                    <h3>Datos del usuario</h3>
+                                    <div className="config__form-grid">
+                                        <div className="config__form-group">
+                                            <label>Usuario</label>
+                                            <input value={user?.usuario || "—"} readOnly />
+                                        </div>
+                                        <div className="config__form-group">
+                                            <label>Cédula</label>
+                                            <input value={user?.cedula || "—"} readOnly />
+                                        </div>
+                                        <div className="config__form-group">
+                                            <label>Identificación</label>
+                                            <input value={user?.identificacion || "—"} readOnly />
+                                        </div>
+                                        <div className="config__form-group">
+                                            <label>Rol</label>
+                                            <input value={user?.rol || "—"} readOnly />
+                                        </div>
+                                        <div className="config__form-group">
+                                            <label>Tipo de usuario</label>
+                                            <input value={user?.tipo_usuario || "—"} readOnly />
+                                        </div>
+                                        <div className="config__form-group">
+                                            <label>Cargo</label>
+                                            <input value={user?.cargo || "—"} readOnly />
+                                        </div>
+                                        <div className="config__form-group">
+                                            <label>Programa / Dependencia</label>
+                                            <input value={user?.programa || "—"} readOnly />
+                                        </div>
+                                        <div className="config__form-group">
+                                            <label>Campus</label>
+                                            <input value={user?.campus || "—"} readOnly />
+                                        </div>
+                                        <div className="config__form-group">
+                                            <label>Estado</label>
+                                            <input value={user?.estado || "—"} readOnly />
+                                        </div>
                                     </div>
                                 </div>
 
@@ -789,32 +888,34 @@ function Configuracion() {
                                 </div>
 
                                 <div className="config__list">
-                                    {ACCESOS_MOCK.map((acceso, idx) => (
-                                        <div className="config__row" key={idx}>
-                                            <div className="config__row-icon">
-                                                <Icon name="configuracion" size={16} />
-                                            </div>
-                                            <div className="config__row-info">
-                                                <div className="config__row-title">
-                                                    {acceso.dispositivo}
-                                                    {acceso.actual && (
-                                                        <span className="config__tag">Actual</span>
-                                                    )}
-                                                </div>
-                                                <div className="config__row-desc">
-                                                    {acceso.ubicacion} · {acceso.ip} · {acceso.fecha}
-                                                </div>
-                                            </div>
-                                            {!acceso.actual && (
-                                                <button
-                                                    className="config__outline-button"
-                                                    onClick={() => cerrarSesionDispositivo(acceso.dispositivo)}
-                                                >
-                                                    Cerrar
-                                                </button>
-                                            )}
+                                    {cargandoAccesos && (
+                                        <div className="empty">Cargando accesos…</div>
+                                    )}
+                                    {!cargandoAccesos && accesos.length === 0 && (
+                                        <div className="empty">
+                                            Aún no hay accesos registrados para tu cuenta.
                                         </div>
-                                    ))}
+                                    )}
+                                    {!cargandoAccesos &&
+                                        accesos.map((acceso, idx) => (
+                                            <div className="config__row" key={acceso.id}>
+                                                <div className="config__row-icon">
+                                                    <Icon name="configuracion" size={16} />
+                                                </div>
+                                                <div className="config__row-info">
+                                                    <div className="config__row-title">
+                                                        {acceso.dispositivo}
+                                                        {idx === 0 && (
+                                                            <span className="config__tag">Actual</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="config__row-desc">
+                                                        {acceso.ip ? `${acceso.ip} · ` : ""}
+                                                        {formatearAcceso(acceso.fecha)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
                                 </div>
                             </section>
 
