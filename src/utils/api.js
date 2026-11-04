@@ -10,6 +10,13 @@ export const API_HABILITADA = Boolean(API);
 
 const TIMEOUT_MS = 60000;
 let refreshPromise = null;
+const RUTAS_SIN_REFRESH = new Set([
+    "/auth/login",
+    "/auth/register",
+    "/auth/recuperar",
+    "/auth/restablecer",
+    "/auth/refresh"
+]);
 
 // El backend corre en el plan free de Render, que suspende el servicio por
 // inactividad y tarda ~50 s en despertar con la primera petición. Se lanza un
@@ -114,7 +121,7 @@ export async function apiFetch(
             res.status === 401 &&
             !silencioso &&
             typeof window !== "undefined" &&
-            path !== "/auth/refresh"
+            !RUTAS_SIN_REFRESH.has(path)
         ) {
             if (!refreshPromise) {
                 refreshPromise = (async () => {
@@ -144,7 +151,12 @@ export async function apiFetch(
             window.dispatchEvent(
                 new CustomEvent("uajs:sesion-expirada", { detail: { url: path } })
             );
-        } else if (res.status === 401 && !silencioso && typeof window !== "undefined") {
+        } else if (
+            res.status === 401 &&
+            !silencioso &&
+            typeof window !== "undefined" &&
+            !RUTAS_SIN_REFRESH.has(path)
+        ) {
             window.dispatchEvent(
                 new CustomEvent("uajs:sesion-expirada", { detail: { url: path } })
             );
