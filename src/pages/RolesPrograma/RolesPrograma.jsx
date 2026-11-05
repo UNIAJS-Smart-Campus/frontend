@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useAuth from "../../context/useAuth";
 import useColeccion from "../../hooks/useColeccion";
 import Icon from "../../components/Icon/Icon";
@@ -18,6 +18,7 @@ function RolesPrograma() {
     const [guardando, setGuardando] = useState(false);
     const [error, setError] = useState("");
     const [guardado, setGuardado] = useState(false);
+    const permisosRolesRef = useRef(null);
 
     useEffect(() => {
         if (!user || !esAdmin()) {
@@ -28,6 +29,7 @@ function RolesPrograma() {
         configurationApi.rolePermissions()
             .then((data) => {
                 if (!vigente || !data) return;
+                permisosRolesRef.current = data;
                 setAsignaciones(Object.fromEntries(
                     ROLES.map((rol) => [
                         rol.nombre,
@@ -56,17 +58,45 @@ function RolesPrograma() {
         && String(item.programa || "").trim().toLowerCase() === programa.toLowerCase()
     ).length;
 
-    const agregar = (event) => {
+    const guardar = async (asignacionesParaGuardar = asignaciones) => {
+        setGuardando(true);
+        setError("");
+        try {
+            const actual = permisosRolesRef.current || {};
+            const roles = Object.fromEntries(ROLES.map((rol) => [
+                rol.nombre,
+                {
+                    permisos: actual?.[rol.nombre]?.permisos || rol.permisos,
+                    acciones: actual?.[rol.nombre]?.acciones || rol.acciones,
+                    programas: asignacionesParaGuardar[rol.nombre] || []
+                }
+            ]));
+            await configurationApi.updateRolePermissions(roles);
+            permisosRolesRef.current = roles;
+            setGuardado(true);
+        } catch (err) {
+            setError(err.message || "No se pudieron guardar las asignaciones.");
+        } finally {
+            setGuardando(false);
+        }
+    };
+
+    const agregar = async (event) => {
         event.preventDefault();
         const programa = nuevoPrograma.trim();
-        if (!programa) return;
-        setAsignaciones((actuales) => {
-            const lista = actuales[rolSeleccionado] || [];
-            if (lista.some((item) => item.toLowerCase() === programa.toLowerCase())) return actuales;
-            return { ...actuales, [rolSeleccionado]: [...lista, programa] };
-        });
+        if (!programa || guardando) return;
+
+        const lista = asignaciones[rolSeleccionado] || [];
+        if (lista.some((item) => item.toLowerCase() === programa.toLowerCase())) return;
+
+        const nuevasAsignaciones = {
+            ...asignaciones,
+            [rolSeleccionado]: [...lista, programa]
+        };
+        setAsignaciones(nuevasAsignaciones);
         setNuevoPrograma("");
         setGuardado(false);
+        await guardar(nuevasAsignaciones);
     };
 
     const eliminar = (programa) => {
@@ -75,28 +105,6 @@ function RolesPrograma() {
             [rolSeleccionado]: actuales[rolSeleccionado].filter((item) => item !== programa)
         }));
         setGuardado(false);
-    };
-
-    const guardar = async () => {
-        setGuardando(true);
-        setError("");
-        try {
-            const actual = await configurationApi.rolePermissions();
-            const roles = Object.fromEntries(ROLES.map((rol) => [
-                rol.nombre,
-                {
-                    permisos: actual?.[rol.nombre]?.permisos || rol.permisos,
-                    acciones: actual?.[rol.nombre]?.acciones || rol.acciones,
-                    programas: asignaciones[rol.nombre] || []
-                }
-            ]));
-            await configurationApi.updateRolePermissions(roles);
-            setGuardado(true);
-        } catch (err) {
-            setError(err.message || "No se pudieron guardar las asignaciones.");
-        } finally {
-            setGuardando(false);
-        }
     };
 
     if (!esAdmin()) {

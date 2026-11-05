@@ -767,6 +767,19 @@ function Configuracion() {
                                 {item.titulo}
                             </button>
                         ))}
+                        {esAdmin() && (
+                            <button
+                                className={
+                                    seccion === "permisos-roles"
+                                        ? "config__menu-item config__menu-item--active"
+                                        : "config__menu-item"
+                                }
+                                onClick={() => setSeccion("permisos-roles")}
+                            >
+                                <Icon name="usuarios" size={17} />
+                                Permisos por rol
+                            </button>
+                        )}
                     </nav>
                 </aside>
 
@@ -1075,7 +1088,7 @@ function Configuracion() {
                                     </div>
                                     <div>
                                         <h2>Sesiones y dispositivos</h2>
-                                        <p>Sesión actual y accesos recientes a tu cuenta.</p>
+                                        <p>Sesión activa en este dispositivo.</p>
                                     </div>
                                 </div>
 
@@ -1085,11 +1098,11 @@ function Configuracion() {
                                     )}
                                     {!cargandoAccesos && accesos.length === 0 && (
                                         <div className="empty">
-                                            Aún no hay accesos registrados para tu cuenta.
+                                            No hay sesiones activas para tu cuenta.
                                         </div>
                                     )}
                                     {!cargandoAccesos &&
-                                        accesos.map((acceso, idx) => (
+                                        accesos.map((acceso) => (
                                             <div className="config__row" key={acceso.id}>
                                                 <div className="config__row-icon">
                                                     <Icon name="configuracion" size={16} />
@@ -1097,7 +1110,7 @@ function Configuracion() {
                                                 <div className="config__row-info">
                                                     <div className="config__row-title">
                                                         {acceso.dispositivo}
-                                                        {idx === 0 && (
+                                                        {acceso.actual && (
                                                             <span className="config__tag">Actual</span>
                                                         )}
                                                     </div>
