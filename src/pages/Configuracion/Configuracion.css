@@ -145,6 +145,65 @@
     margin: 0;
 }
 
+.config__section-help {
+    color: var(--color-text-muted);
+    font-size: 12px;
+    margin: -4px 0 0;
+}
+
+.config__program-form {
+    display: flex;
+    gap: 10px;
+}
+
+.config__program-form input {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text);
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+}
+
+.config__program-table-wrap {
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    overflow-x: auto;
+}
+
+.config__program-table {
+    border-collapse: collapse;
+    min-width: 520px;
+    width: 100%;
+}
+
+.config__program-table th,
+.config__program-table td {
+    border-bottom: 1px solid var(--color-border);
+    font-size: 12px;
+    padding: 12px;
+    text-align: left;
+}
+
+.config__program-table th {
+    background: var(--color-primary-50);
+    color: var(--color-text-muted);
+    font-weight: 700;
+}
+
+.config__program-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.config__table-delete {
+    background: transparent;
+    border: 0;
+    color: var(--color-danger);
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+}
+
 .config__permissions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));

@@ -94,6 +94,39 @@ const configBase = {
     }
 };
 
+const agregarProgramaRol = (e) => {
+    e.preventDefault();
+    const programa = nuevoPrograma.trim();
+    if (!programa) return;
+    setPermisosRoles((actuales) => {
+        const rol = actuales[rolPermisos];
+        if (rol.programas.some((item) => item.toLowerCase() === programa.toLowerCase())) {
+            return actuales;
+        }
+        return {
+            ...actuales,
+            [rolPermisos]: { ...rol, programas: [...rol.programas, programa] }
+        };
+    });
+    setNuevoPrograma("");
+};
+
+const eliminarProgramaRol = (programa) => {
+    setPermisosRoles((actuales) => ({
+        ...actuales,
+        [rolPermisos]: {
+            ...actuales[rolPermisos],
+            programas: actuales[rolPermisos].programas.filter((item) => item !== programa)
+        }
+    }));
+};
+
+const contarUsuariosPorPrograma = (programa) => usuarios.filter((item) =>
+    item.rol === rolPermisos
+    && String(item.programa || "").trim().toLowerCase() === programa.toLowerCase()
+    && String(item.estado || "").toLowerCase() === "activo"
+).length;
+
 // Reduce y comprime una imagen a JPEG antes de guardarla como dataURL.
 function comprimirImagen(archivo, maxLado = 512, calidad = 0.82) {
     return new Promise((resolve, reject) => {
@@ -206,6 +239,7 @@ function Configuracion() {
     const { tema, setTema } = useTheme();
     const { levels, level, setLevel } = useFontSize();
     const { items: todasLasFilas, recargar: recargarConfig } = useColeccion(CLAVE_CONFIGURACION);
+    const { items: usuarios } = useColeccion("usuarios");
     // La colección pide al servicio solo las filas del usuario en sesión
     // (list(id_usuario)); el filtro por id se mantiene como red de seguridad.
     const remotas = useMemo(
@@ -284,11 +318,12 @@ function Configuracion() {
     const [permisosRoles, setPermisosRoles] = useState(() =>
         Object.fromEntries(ROLES.map((rol) => [
             rol.nombre,
-            { permisos: [...rol.permisos], acciones: [...rol.acciones] }
+            { permisos: [...rol.permisos], acciones: [...rol.acciones], programas: [] }
         ]))
     );
     const [cargandoPermisos, setCargandoPermisos] = useState(false);
     const [guardandoPermisos, setGuardandoPermisos] = useState(false);
+    const [nuevoPrograma, setNuevoPrograma] = useState("");
 
     // Estado local del formulario de cuenta (se sincroniza con config.cuenta al guardar)
     const [correoEditable, setCorreoEditable] = useState(
@@ -320,7 +355,8 @@ function Configuracion() {
                         rol.nombre,
                         {
                             permisos: [...(guardados[rol.nombre]?.permisos || actuales[rol.nombre].permisos)],
-                            acciones: [...(guardados[rol.nombre]?.acciones || actuales[rol.nombre].acciones)]
+                            acciones: [...(guardados[rol.nombre]?.acciones || actuales[rol.nombre].acciones)],
+                            programas: [...(guardados[rol.nombre]?.programas || actuales[rol.nombre].programas)]
                         }
                     ])
                 ));
@@ -776,6 +812,60 @@ function Configuracion() {
                                                 {rol.nombre}
                                             </button>
                                         ))}
+                                    </div>
+
+                                    <div className="config__permissions-section">
+                                        <h3>Programa / Dependencia</h3>
+                                        <p className="config__section-help">
+                                            Asigna programas o dependencias al rol y consulta cuántos usuarios activos pertenecen a cada una.
+                                        </p>
+                                        <form className="config__program-form" onSubmit={agregarProgramaRol}>
+                                            <input
+                                                value={nuevoPrograma}
+                                                onChange={(e) => setNuevoPrograma(e.target.value)}
+                                                placeholder="Ej. Matemáticas"
+                                                aria-label="Programa o dependencia"
+                                            />
+                                            <button className="config__outline-button" type="submit">
+                                                Agregar
+                                            </button>
+                                        </form>
+                                        <div className="config__program-table-wrap">
+                                            <table className="config__program-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Programa / Dependencia</th>
+                                                        <th>Usuarios activos</th>
+                                                        <th aria-label="Acciones" />
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {permisosRoles[rolPermisos].programas.length ? (
+                                                        permisosRoles[rolPermisos].programas.map((programa) => (
+                                                            <tr key={programa}>
+                                                                <td>{programa}</td>
+                                                                <td>
+                                                                    <strong>{contarUsuariosPorPrograma(programa)}</strong>
+                                                                </td>
+                                                                <td>
+                                                                    <button
+                                                                        className="config__table-delete"
+                                                                        onClick={() => eliminarProgramaRol(programa)}
+                                                                        type="button"
+                                                                    >
+                                                                        Eliminar
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    ) : (
+                                                        <tr>
+                                                            <td colSpan="3">Aún no hay programas o dependencias asignados.</td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
 
                                     <div className="config__permissions-section">
