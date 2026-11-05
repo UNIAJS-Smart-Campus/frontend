@@ -48,6 +48,12 @@ const menuSections = [
                 path: "/usuarios",
                 icon: "usuarios",
                 permiso: "usuarios"
+            },
+            {
+                name: "Roles por programa",
+                path: "/roles-programa",
+                icon: "usuarios",
+                permiso: "usuarios"
             }
         ]
     },
@@ -115,6 +121,10 @@ export function getModuleName(pathname) {
 
     if (pathname === "/usuarios") {
         return "Gestión de usuarios";
+    }
+
+    if (pathname === "/roles-programa") {
+        return "Roles por programa";
     }
 
     if (pathname === "/info-academica") {

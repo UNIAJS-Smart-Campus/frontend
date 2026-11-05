@@ -767,32 +767,6 @@ function Configuracion() {
                                 {item.titulo}
                             </button>
                         ))}
-                        {esAdmin() && (
-                            <>
-                                <button
-                                    className={
-                                        seccion === "permisos-roles"
-                                            ? "config__menu-item config__menu-item--active"
-                                            : "config__menu-item"
-                                    }
-                                    onClick={() => setSeccion("permisos-roles")}
-                                >
-                                    <Icon name="configuracion" size={17} />
-                                    Permisos por rol
-                                </button>
-                                <button
-                                    className={
-                                        seccion === "roles-programa"
-                                            ? "config__menu-item config__menu-item--active"
-                                            : "config__menu-item"
-                                    }
-                                    onClick={() => setSeccion("roles-programa")}
-                                >
-                                    <Icon name="usuarios" size={17} />
-                                    Roles por programa
-                                </button>
-                            </>
-                        )}
                     </nav>
                 </aside>
 
