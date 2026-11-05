@@ -73,12 +73,13 @@ function AuthProvider({ children }) {
             setPermisosRoles(null);
             return undefined;
         }
+        setPermisosRoles(null);
         let vigente = true;
         configurationApi
             .rolePermissions()
             .then((data) => {
-                if (vigente && data && typeof data === "object") {
-                    setPermisosRoles(data);
+                if (vigente) {
+                    setPermisosRoles(data && typeof data === "object" ? data : null);
                 }
             })
             .catch((error) => {
