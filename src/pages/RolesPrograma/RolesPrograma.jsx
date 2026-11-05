@@ -20,6 +20,22 @@ function RolesPrograma() {
     const [guardado, setGuardado] = useState(false);
     const permisosRolesRef = useRef(null);
 
+    // Programas descubiertos automáticamente a partir de los usuarios existentes.
+    const programasDescubiertos = useMemo(() => {
+        const grupos = Object.fromEntries(ROLES.map((rol) => [rol.nombre, new Set()]));
+        for (const u of usuarios || []) {
+            if (String(u?.estado || "").toLowerCase() !== "activo") continue;
+            const rol = (u?.rol || "").trim();
+            const prog = (u?.programa || "").trim();
+            if (!rol || !prog) continue;
+            if (!grupos[rol]) grupos[rol] = new Set();
+            grupos[rol].add(prog);
+        }
+        return Object.fromEntries(
+            Object.entries(grupos).map(([rol, set]) => [rol, [...set]])
+        );
+    }, [usuarios]);
+
     useEffect(() => {
         if (!user || !esAdmin()) {
             setCargando(false);
@@ -31,10 +47,20 @@ function RolesPrograma() {
                 if (!vigente || !data) return;
                 permisosRolesRef.current = data;
                 setAsignaciones(Object.fromEntries(
-                    ROLES.map((rol) => [
-                        rol.nombre,
-                        [...(data[rol.nombre]?.programas || rol.programas || [])]
-                    ])
+                    ROLES.map((rol) => {
+                        const guardados = data[rol.nombre]?.programas || rol.programas || [];
+                        const descubiertos = programasDescubiertos[rol.nombre] || [];
+                        // Unir ambos, eliminando duplicados (sin distinguir mayúsculas).
+                        const vistos = new Set();
+                        const union = [];
+                        for (const p of [...guardados, ...descubiertos]) {
+                            const key = String(p).trim().toLowerCase();
+                            if (!key || vistos.has(key)) continue;
+                            vistos.add(key);
+                            union.push(String(p).trim());
+                        }
+                        return [rol.nombre, union];
+                    })
                 ));
             })
             .catch((err) => {
@@ -46,7 +72,7 @@ function RolesPrograma() {
         return () => {
             vigente = false;
         };
-    }, [user?.id, user?.rol, esAdmin]);
+    }, [user?.id, user?.rol, esAdmin, programasDescubiertos]);
 
     const usuariosActivos = useMemo(
         () => usuarios.filter((item) => String(item.estado || "").toLowerCase() === "activo"),
