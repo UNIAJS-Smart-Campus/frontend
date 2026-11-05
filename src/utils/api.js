@@ -228,7 +228,7 @@ export const usersApi = {
 // REQUESTS (SOLICITUDES)
 // ==========================================
 export const requestsApi = {
-    list: () => apiFetch("/requests"),
+    list: (params) => apiFetch("/requests", { params }),
     get: (id) => apiFetch(`/requests/${id}`),
     create: (data) => apiFetch("/requests", { method: "POST", body: data }),
     update: (id, data) => apiFetch(`/requests/${id}`, { method: "PUT", body: data }),
@@ -243,7 +243,7 @@ export const requestsApi = {
 // EVENTS (EVENTOS)
 // ==========================================
 export const eventsApi = {
-    list: () => apiFetch("/events"),
+    list: (params) => apiFetch("/events", { params }),
     get: (id) => apiFetch(`/events/${id}`),
     create: (data) => apiFetch("/events", { method: "POST", body: data }),
     update: (id, data) => apiFetch(`/events/${id}`, { method: "PUT", body: data }),
@@ -315,7 +315,7 @@ export const resourcesApi = {
 // RESERVATIONS (RESERVAS)
 // ==========================================
 export const reservationsApi = {
-    list: () => apiFetch("/reservations"),
+    list: (params) => apiFetch("/reservations", { params }),
     get: (id) => apiFetch(`/reservations/${id}`),
     create: (data) => apiFetch("/reservations", { method: "POST", body: data }),
     update: (id, data) => apiFetch(`/reservations/${id}`, { method: "PUT", body: data }),
