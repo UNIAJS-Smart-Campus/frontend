@@ -4,6 +4,119 @@
    están en styles/blocks/_page.css y styles/blocks/_card.css
    ============================================================ */
 
+.dashboard__eyebrow {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--color-primary-600);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.dashboard__learning {
+    display: grid;
+    grid-template-columns: minmax(230px, 0.85fr) 1.8fr;
+    gap: 18px;
+    align-items: stretch;
+    padding: 22px;
+    border: 1px solid var(--color-primary-200);
+    border-radius: var(--radius);
+    background:
+        radial-gradient(circle at 90% 0%, var(--color-primary-100), transparent 38%),
+        var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.dashboard__learning-intro {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.dashboard__learning-mark {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    place-items: center;
+    border-radius: 14px;
+    color: var(--color-text-inverse);
+    background: var(--color-primary-600);
+}
+
+.dashboard__learning-intro h2 {
+    margin: 0;
+    color: var(--color-text);
+    font-size: 17px;
+}
+
+.dashboard__learning-intro p {
+    margin: 6px 0 0;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.dashboard__learning-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.dashboard__learning-step {
+    display: grid;
+    grid-template-columns: auto 20px 1fr auto;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    padding: 13px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
+    background: var(--color-surface);
+    text-decoration: none;
+    transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.dashboard__learning-step:hover {
+    border-color: var(--color-primary-600);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+}
+
+.dashboard__learning-step > .icon {
+    color: var(--color-primary-600);
+}
+
+.dashboard__learning-number {
+    align-self: start;
+    color: var(--color-text-faint);
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.dashboard__learning-step strong,
+.dashboard__learning-step small {
+    display: block;
+}
+
+.dashboard__learning-step strong {
+    font-size: 12px;
+}
+
+.dashboard__learning-step small {
+    margin-top: 3px;
+    color: var(--color-text-muted);
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.dashboard__learning-arrow {
+    color: var(--color-primary-600);
+    font-size: 16px;
+}
+
 /* ── DATE CARD ── */
 .dashboard__date-card {
     display: flex;
@@ -637,6 +750,10 @@
     .dashboard__bottom-grid {
         grid-template-columns: 1fr;
     }
+
+    .dashboard__learning {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 768px) {
@@ -646,6 +763,10 @@
 
     .dashboard__search-container {
         max-width: 100%;
+    }
+
+    .dashboard__learning-steps {
+        grid-template-columns: 1fr;
     }
 }
 
