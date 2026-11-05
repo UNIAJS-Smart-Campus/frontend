@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import useAuth from "../../context/useAuth";
 import Icon from "../../components/Icon/Icon";
@@ -6,6 +6,8 @@ import SearchBar from "../../components/SearchBar/SearchBar";
 import Pagination from "../../components/Pagination/Pagination";
 import Modal from "../../components/Modal/Modal";
 import useSugerencias from "../../hooks/useSugerencias";
+import { requestsApi } from "../../utils/api";
+import { establecer } from "../../utils/store";
 import {
     ESTADOS_SOLICITUD,
     ETIQUETA_ESTADO,
@@ -13,11 +15,11 @@ import {
     ESTADOS_FINALES,
     ACCIONES_POR_ESTADO,
     ejecutarAccion,
-    progresoDe
+    progresoDe,
+    adaptarSolicitudRemota
 } from "../../utils/solicitudes";
 import { obtenerUsuarios } from "../../utils/users";
 import useColeccion from "../../hooks/useColeccion";
-import usePagination from "../../hooks/usePagination";
 import "./Solicitudes.css";
 
 const SERVICIO_ICONO = {
@@ -51,7 +53,7 @@ const PRIORIDAD_SUMMARY_CLASE = {
 const PRIORIDADES = ["Alta", "Media", "Baja"];
 
 function Solicitudes() {
-    const { items, error, enLinea, recargar } = useColeccion("solicitudes");
+    const { items } = useColeccion("solicitudes", { autoRefresh: false });
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");
     const [estado, setEstado] = useState("");
@@ -71,6 +73,36 @@ function Solicitudes() {
     const [motivoReabrir, setMotivoReabrir] = useState("");
     const [responsableSeleccionado, setResponsableSeleccionado] = useState(null);
     const [aviso, setAviso] = useState(null);
+    const [pagina, setPagina] = useState(1);
+    const [totalPaginas, setTotalPaginas] = useState(1);
+    const [totalSolicitudes, setTotalSolicitudes] = useState(0);
+    const [cargando, setCargando] = useState(true);
+    const [errorCarga, setErrorCarga] = useState(null);
+    const [intento, setIntento] = useState(0);
+
+    useEffect(() => {
+        let cancelado = false;
+        setCargando(true);
+        requestsApi.list({ page: pagina, limit: 6 })
+            .then((respuesta) => {
+                if (cancelado) return;
+                const paginaRemota = respuesta?.items ? respuesta : { items: respuesta };
+                const solicitudes = (paginaRemota.items || [])
+                    .map(adaptarSolicitudRemota)
+                    .filter(Boolean);
+                establecer("solicitudes", solicitudes);
+                setTotalSolicitudes(Number(paginaRemota.pagination?.total) || solicitudes.length);
+                setTotalPaginas(Math.max(1, Number(paginaRemota.pagination?.totalPages) || 1));
+                setErrorCarga(null);
+            })
+            .catch((error) => {
+                if (!cancelado) setErrorCarga(error);
+            })
+            .finally(() => {
+                if (!cancelado) setCargando(false);
+            });
+        return () => { cancelado = true; };
+    }, [pagina, intento]);
 
     const { user, puede } = useAuth();
     const puedeGestionar = puede("actualizar_estados") || puede("gestionar_solicitudes");
@@ -108,9 +140,6 @@ function Solicitudes() {
         }
         return result;
     }, [items, estado, prioridad, busqueda]);
-
-    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
-        usePagination(encontradas, 6);
 
     // Respaldo local: se usa si Elasticsearch no responde.
     const sugerenciasLocales = useMemo(() => {
@@ -354,24 +383,24 @@ function Solicitudes() {
                 </div>
             )}
 
-            {error && (
+            {errorCarga && (
                 <div className="toast toast--warning">
                     <Icon name="info" size={14} />
-                    No se pudo sincronizar con el servidor: {error}
-                </div>
-            )}
-
-            {aviso === null && !error && !enLinea && (
-                <div className="toast toast--warning">
-                    <Icon name="info" size={14} />
-                    Mostrando datos locales.{" "}
+                    No se pudo sincronizar con el servidor: {errorCarga.message}
                     <button
                         type="button"
                         className="button button--ghost button--sm"
-                        onClick={recargar}
+                        onClick={() => setIntento((actual) => actual + 1)}
                     >
                         Reintentar
                     </button>
+                </div>
+            )}
+
+            {cargando && (
+                <div className="toast toast--warning">
+                    <Icon name="info" size={14} />
+                    Cargando solicitudes…
                 </div>
             )}
 
@@ -515,19 +544,19 @@ function Solicitudes() {
                 <div className="list-header">
                     <h2>Mis solicitudes</h2>
                     <span className="list-header__meta">
-                        {desde}–{hasta} de {encontradas.length} registros
+                        Página {pagina} de {totalPaginas} · {totalSolicitudes} registros
                     </span>
                 </div>
             )}
 
-            {itemsPagina.length === 0 ? (
+            {encontradas.length === 0 ? (
                 <div className="empty">
                     No se encontraron solicitudes con los filtros aplicados.
                 </div>
             ) : (
                 <>
                     <div className="sols__list">
-                        {itemsPagina.map((item) => (
+                        {encontradas.map((item) => (
                             <article className="sols__item" key={item.id}>
                                 <div
                                     className={`sols__item-icon sols__item-icon--${SERVICIO_CLASE[item.servicio] || "blue"}`}
@@ -646,9 +675,6 @@ function Solicitudes() {
                         pagina={pagina}
                         totalPaginas={totalPaginas}
                         onChange={setPagina}
-                        desde={desde}
-                        hasta={hasta}
-                        total={encontradas.length}
                     />
                 </>
             )}

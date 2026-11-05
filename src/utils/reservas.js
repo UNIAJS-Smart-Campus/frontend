@@ -218,6 +218,7 @@ crearColeccion({
     // se traduce al modelo de la UI y después se normaliza.
     mapear: (raw) => normalizarReserva(mapearReserva(raw)),
     semilla: RESERVAS_BASE,
+    autoRefresh: false,
     crear: async (modelo) => {
         const creada = await reservationsApi.create(payloadDe(modelo));
         return normalizarReserva(mapearReserva(creada));
@@ -230,6 +231,10 @@ crearColeccion({
         await reservationsApi.remove(modelo.id);
     }
 });
+
+export function adaptarReservaRemota(raw) {
+    return normalizarReserva(mapearReserva(raw));
+}
 
 // ============================================================
 // API PÚBLICA DEL MÓDULO

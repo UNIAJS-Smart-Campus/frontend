@@ -197,8 +197,13 @@ const coleccion = crearColeccion({
     leer: leerRemoto,
     mapear: mapearSolicitud,
     semilla: SOLICITUDES_BASE,
+    autoRefresh: false,
     crear: crearRemoto
 });
+
+export function adaptarSolicitudRemota(raw) {
+    return mapearSolicitud(raw);
+}
 
 function ahora() {
     return new Date().toISOString().slice(0, 16).replace("T", " ");

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../../components/Icon/Icon";
 import ImagenCategoria from "../../components/ImagenCategoria/ImagenCategoria";
@@ -8,11 +8,14 @@ import useAuth from "../../context/useAuth";
 import usePagination from "../../hooks/usePagination";
 import useColeccion from "../../hooks/useColeccion";
 import useSugerencias from "../../hooks/useSugerencias";
+import { reservationsApi } from "../../utils/api";
+import { establecer } from "../../utils/store";
 import { CLAVE_RECURSO, TIPOS_RECURSO, esEscenario, esReservable } from "../../utils/recursos";
 import {
     CLAVE_RESERVAS,
     cancelarReserva as cancelarReservaEnApi,
-    mismoRecurso
+    mismoRecurso,
+    adaptarReservaRemota
 } from "../../utils/reservas";
 import { useToast } from "../../context/ToastContext";
 import "./Reservas.css";
@@ -45,7 +48,7 @@ function Reservas() {
     const toast = useToast();
     const { items: recursos, enLinea: enLineaRecursos, recargar: recargarRecursos } =
         useColeccion(CLAVE_RECURSO);
-    const { items: misReservas, enLinea, recargar } = useColeccion(CLAVE_RESERVAS);
+    const { items: misReservas } = useColeccion(CLAVE_RESERVAS, { autoRefresh: false });
 
     const [query, setQuery] = useState("");
     const [busqueda, setBusqueda] = useState("");
@@ -53,6 +56,36 @@ function Reservas() {
     const [fecha, setFecha] = useState("");
     const [hora, setHora] = useState("Cualquier hora");
     const [busquedaAlerta, setBusquedaAlerta] = useState(false);
+    const [paginaReservas, setPaginaReservas] = useState(1);
+    const [totalPaginasReservas, setTotalPaginasReservas] = useState(1);
+    const [cargandoReservas, setCargandoReservas] = useState(true);
+    const [errorReservas, setErrorReservas] = useState(null);
+    const [intentoReservas, setIntentoReservas] = useState(0);
+
+    useEffect(() => {
+        let cancelado = false;
+        setCargandoReservas(true);
+        reservationsApi.list({ page: paginaReservas, limit: 10 })
+            .then((respuesta) => {
+                if (cancelado) return;
+                const paginaRemota = respuesta?.items ? respuesta : { items: respuesta };
+                establecer(
+                    CLAVE_RESERVAS,
+                    (paginaRemota.items || []).map(adaptarReservaRemota).filter(Boolean)
+                );
+                setTotalPaginasReservas(
+                    Math.max(1, Number(paginaRemota.pagination?.totalPages) || 1)
+                );
+                setErrorReservas(null);
+            })
+            .catch((error) => {
+                if (!cancelado) setErrorReservas(error);
+            })
+            .finally(() => {
+                if (!cancelado) setCargandoReservas(false);
+            });
+        return () => { cancelado = true; };
+    }, [paginaReservas, intentoReservas]);
 
     const hoy = new Date();
     const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
@@ -143,14 +176,7 @@ function Reservas() {
         [misReservasFiltradas]
     );
 
-    const {
-        pagina: paginaReservas,
-        setPagina: setPaginaReservas,
-        totalPaginas: totalPaginasReservas,
-        itemsPagina: itemsPaginaReservas,
-        desde: desdeReservas,
-        hasta: hastaReservas
-    } = usePagination(misReservasOrdenadas, 10);
+    const itemsPaginaReservas = misReservasOrdenadas;
 
     // Catálogo de espacios/equipos: 6 tarjetas por página. Es una lista
     // independiente de "Mis reservas", así que lleva su propio paginador.
@@ -171,19 +197,25 @@ function Reservas() {
                 </div>
             </div>
 
-            {(enLinea === false || enLineaRecursos === false) && (
+            {(errorReservas || enLineaRecursos === false) && (
                 <div className="toast toast--error">
                     <Icon name="info" size={14} />
                     Sin conexión con el servidor: se muestra la última data sincronizada.
                     <button
                         className="button button--ghost button--sm"
                         onClick={() => {
-                            recargar();
+                            setIntentoReservas((actual) => actual + 1);
                             recargarRecursos();
                         }}
                     >
                         Reintentar
                     </button>
+                </div>
+            )}
+            {cargandoReservas && (
+                <div className="toast toast--info">
+                    <Icon name="info" size={14} />
+                    Cargando reservas…
                 </div>
             )}
 
@@ -319,7 +351,7 @@ function Reservas() {
                     <h2>Mis reservas</h2>
                     {misReservasOrdenadas.length > 0 && (
                         <span className="dashboard__card-view">
-                            {desdeReservas}–{hastaReservas} de {misReservasOrdenadas.length} reservas
+                            Página {paginaReservas} de {totalPaginasReservas} reservas
                         </span>
                     )}
                 </div>
@@ -394,9 +426,6 @@ function Reservas() {
                             pagina={paginaReservas}
                             totalPaginas={totalPaginasReservas}
                             onChange={setPaginaReservas}
-                            desde={desdeReservas}
-                            hasta={hastaReservas}
-                            total={misReservasOrdenadas.length}
                         />
                     </>
                 )}
