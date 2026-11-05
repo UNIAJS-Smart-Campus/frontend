@@ -4,7 +4,8 @@ import { useTheme } from "../../context/ThemeContext";
 import useFontSize from "../../hooks/useFontSize";
 import useColeccion from "../../hooks/useColeccion";
 import Icon from "../../components/Icon/Icon";
-import { usersApi, authApi } from "../../utils/api";
+import { usersApi, authApi, configurationApi } from "../../utils/api";
+import { ROLES } from "../../utils/users";
 import {
     CLAVE_CONFIGURACION,
     configuracionDeUsuario,
@@ -45,6 +46,15 @@ const MODULOS_NOTIFICACION = [
     { id: "pqrs", etiqueta: "PQRS" },
     { id: "info_academica", etiqueta: "Información académica" }
 ];
+
+const OPCIONES_PERMISOS = [...new Set(ROLES.flatMap((rol) => rol.permisos))];
+const OPCIONES_ACCIONES = [...new Set(ROLES.flatMap((rol) => rol.acciones))];
+
+function etiquetaPermiso(valor) {
+    return valor
+        .replaceAll("_", " ")
+        .replace(/\b\w/g, (letra) => letra.toUpperCase());
+}
 
 // configBase ya NO incluye idioma/zona/fecha en "cuenta" —
 // esos campos viven únicamente en "preferencias".
@@ -192,7 +202,7 @@ function normalizarConfiguracion(base, extra) {
 }
 
 function Configuracion() {
-    const { user, logout, updateUser } = useAuth();
+    const { user, logout, updateUser, esAdmin } = useAuth();
     const { tema, setTema } = useTheme();
     const { levels, level, setLevel } = useFontSize();
     const { items: todasLasFilas, recargar: recargarConfig } = useColeccion(CLAVE_CONFIGURACION);
@@ -270,6 +280,15 @@ function Configuracion() {
     const [showPassword, setShowPassword] = useState(false);
     // Usuario al que ya se le aplicó la configuración que llegó del backend.
     const [configAplicadaPara, setConfigAplicadaPara] = useState(null);
+    const [rolPermisos, setRolPermisos] = useState(ROLES[0]?.nombre || "");
+    const [permisosRoles, setPermisosRoles] = useState(() =>
+        Object.fromEntries(ROLES.map((rol) => [
+            rol.nombre,
+            { permisos: [...rol.permisos], acciones: [...rol.acciones] }
+        ]))
+    );
+    const [cargandoPermisos, setCargandoPermisos] = useState(false);
+    const [guardandoPermisos, setGuardandoPermisos] = useState(false);
 
     // Estado local del formulario de cuenta (se sincroniza con config.cuenta al guardar)
     const [correoEditable, setCorreoEditable] = useState(
@@ -287,6 +306,67 @@ function Configuracion() {
     });
     const [pwdError, setPwdError] = useState("");
     const [pwdOk, setPwdOk] = useState(false);
+
+    useEffect(() => {
+        if (!esAdmin()) return undefined;
+        let vigente = true;
+        setCargandoPermisos(true);
+        configurationApi
+            .rolePermissions()
+            .then((guardados) => {
+                if (!vigente || !guardados) return;
+                setPermisosRoles((actuales) => Object.fromEntries(
+                    ROLES.map((rol) => [
+                        rol.nombre,
+                        {
+                            permisos: [...(guardados[rol.nombre]?.permisos || actuales[rol.nombre].permisos)],
+                            acciones: [...(guardados[rol.nombre]?.acciones || actuales[rol.nombre].acciones)]
+                        }
+                    ])
+                ));
+            })
+            .catch((error) => {
+                if (vigente) setErrorConfig(error.message || "No se pudieron cargar los permisos.");
+            })
+            .finally(() => {
+                if (vigente) setCargandoPermisos(false);
+            });
+        return () => {
+            vigente = false;
+        };
+    }, [user?.id, user?.rol]);
+
+    const alternarPermisoRol = (tipo, nombre) => {
+        setPermisosRoles((actuales) => {
+            const rol = actuales[rolPermisos];
+            const lista = rol[tipo].includes(nombre)
+                ? rol[tipo].filter((item) => item !== nombre)
+                : [...rol[tipo], nombre];
+            return {
+                ...actuales,
+                [rolPermisos]: { ...rol, [tipo]: lista }
+            };
+        });
+    };
+
+    const guardarPermisosRoles = async () => {
+        setGuardandoPermisos(true);
+        try {
+            const guardados = await configurationApi.updateRolePermissions(permisosRoles);
+            setPermisosRoles((actuales) => Object.fromEntries(
+                ROLES.map((rol) => [
+                    rol.nombre,
+                    guardados?.[rol.nombre] || actuales[rol.nombre]
+                ])
+            ));
+            marcarGuardado();
+            setErrorConfig("");
+        } catch (error) {
+            setErrorConfig(error.message || "No se pudieron guardar los permisos.");
+        } finally {
+            setGuardandoPermisos(false);
+        }
+    };
 
     // Estado de confirmación para acciones de Zona de peligro
     const [confirmando, setConfirmando] = useState(null); // "sesiones" | "desactivar"
@@ -651,10 +731,99 @@ function Configuracion() {
                                 {item.titulo}
                             </button>
                         ))}
+                        {esAdmin() && (
+                            <button
+                                className={
+                                    seccion === "permisos-roles"
+                                        ? "config__menu-item config__menu-item--active"
+                                        : "config__menu-item"
+                                }
+                                onClick={() => setSeccion("permisos-roles")}
+                            >
+                                <Icon name="usuarios" size={17} />
+                                Permisos por rol
+                            </button>
+                        )}
                     </nav>
                 </aside>
 
                 <div className="config__content">
+                    {seccion === "permisos-roles" && esAdmin() && (
+                        <section className="config__card">
+                            <div className="config__card-header">
+                                <div className="config__card-header-icon">
+                                    <Icon name="usuarios" size={17} />
+                                </div>
+                                <div>
+                                    <h2>Permisos por rol</h2>
+                                    <p>Define qué módulos y acciones puede utilizar cada rol.</p>
+                                </div>
+                            </div>
+
+                            {cargandoPermisos ? (
+                                <p className="config__empty">Cargando permisos...</p>
+                            ) : (
+                                <>
+                                    <div className="config__role-tabs">
+                                        {ROLES.map((rol) => (
+                                            <button
+                                                key={rol.nombre}
+                                                className={rolPermisos === rol.nombre
+                                                    ? "config__role-tab config__role-tab--active"
+                                                    : "config__role-tab"}
+                                                onClick={() => setRolPermisos(rol.nombre)}
+                                            >
+                                                {rol.nombre}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div className="config__permissions-section">
+                                        <h3>Módulos visibles</h3>
+                                        <div className="config__permissions-grid">
+                                            {OPCIONES_PERMISOS.map((permiso) => (
+                                                <label className="config__permission" key={permiso}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={permisosRoles[rolPermisos].permisos.includes(permiso)}
+                                                        onChange={() => alternarPermisoRol("permisos", permiso)}
+                                                    />
+                                                    <span>{etiquetaPermiso(permiso)}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="config__permissions-section">
+                                        <h3>Acciones permitidas</h3>
+                                        <div className="config__permissions-grid">
+                                            {OPCIONES_ACCIONES.map((accion) => (
+                                                <label className="config__permission" key={accion}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={permisosRoles[rolPermisos].acciones.includes(accion)}
+                                                        onChange={() => alternarPermisoRol("acciones", accion)}
+                                                    />
+                                                    <span>{etiquetaPermiso(accion)}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="config__form-actions">
+                                        <button
+                                            className="config__primary-button"
+                                            onClick={guardarPermisosRoles}
+                                            disabled={guardandoPermisos}
+                                        >
+                                            {guardandoPermisos ? "Guardando..." : "Guardar permisos"}
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </section>
+                    )}
+
                     {/* ============ CUENTA ============ */}
                     {seccion === "cuenta" && (
                         <section className="config__card">

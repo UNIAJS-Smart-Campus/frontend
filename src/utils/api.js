@@ -333,7 +333,13 @@ export const configurationApi = {
         apiFetch(`/configuration/usuario/${idUsuario}/seccion/${seccion}`),
     create: (data) => apiFetch("/configuration", { method: "POST", body: data }),
     update: (id, data) => apiFetch(`/configuration/${id}`, { method: "PUT", body: data }),
-    remove: (id) => apiFetch(`/configuration/${id}`, { method: "DELETE" })
+    remove: (id) => apiFetch(`/configuration/${id}`, { method: "DELETE" }),
+    rolePermissions: () => apiFetch("/configuration/roles-permisos"),
+    updateRolePermissions: (roles) =>
+        apiFetch("/configuration/roles-permisos", {
+            method: "PUT",
+            body: { roles }
+        })
 };
 
 // ==========================================

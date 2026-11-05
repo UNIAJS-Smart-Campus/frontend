@@ -108,6 +108,65 @@
     background: linear-gradient(90deg, var(--color-accent-dark), var(--color-accent));
 }
 
+.config__role-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 12px;
+}
+
+.config__role-tab {
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 14px;
+}
+
+.config__role-tab--active {
+    background: var(--color-primary-100);
+    border-color: var(--color-primary-300);
+    color: var(--color-primary-700);
+}
+
+.config__permissions-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.config__permissions-section h3 {
+    color: var(--color-text);
+    font-size: 14px;
+    margin: 0;
+}
+
+.config__permissions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 8px;
+}
+
+.config__permission {
+    align-items: center;
+    background: var(--color-primary-50);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text);
+    display: flex;
+    font-size: 12px;
+    gap: 8px;
+    padding: 10px;
+}
+
+.config__permission input {
+    accent-color: var(--color-primary-600);
+}
+
 /* ============ CONTENT ============ */
 .config__content {
     display: flex;

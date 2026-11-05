@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AuthContext } from "./auth-context";
 import { permisosDeRol, accionesDeRol } from "../utils/users";
-import { authApi } from "../utils/api";
+import { authApi, configurationApi } from "../utils/api";
 import { mapearUsuarioSesion } from "../utils/mapeo";
 import { syncPhotoFromBackend } from "../utils/avatar";
 import { clearToken } from "../utils/authToken";
@@ -66,6 +66,28 @@ function getSession() {
 
 function AuthProvider({ children }) {
     const [user, setUser] = useState(getSession);
+    const [permisosRoles, setPermisosRoles] = useState(null);
+
+    useEffect(() => {
+        if (!user) {
+            setPermisosRoles(null);
+            return undefined;
+        }
+        let vigente = true;
+        configurationApi
+            .rolePermissions()
+            .then((data) => {
+                if (vigente && data && typeof data === "object") {
+                    setPermisosRoles(data);
+                }
+            })
+            .catch((error) => {
+                console.warn("No se pudieron cargar los permisos personalizados:", error);
+            });
+        return () => {
+            vigente = false;
+        };
+    }, [user?.id]);
 
     const login = async (cedula, password) => {
         try {
@@ -235,13 +257,15 @@ function AuthProvider({ children }) {
 
     const tienePermiso = (permiso) => {
         if (!user) return false;
-        const permisos = permisosDeRol(user.rol);
+        const permisos = permisosRoles?.[user.rol]?.permisos
+            || permisosDeRol(user.rol);
         return permisos ? permisos.includes(permiso) : false;
     };
 
     const puede = (accion) => {
         if (!user) return false;
-        const acciones = accionesDeRol(user.rol);
+        const acciones = permisosRoles?.[user.rol]?.acciones
+            || accionesDeRol(user.rol);
         return acciones ? acciones.includes(accion) : false;
     };
 
