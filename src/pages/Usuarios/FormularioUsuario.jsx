@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import Icon from "../../components/Icon/Icon";
 import useAuth from "../../context/useAuth";
 import { useToast } from "../../context/ToastContext";
 import useColeccion from "../../hooks/useColeccion";
 import { ROLES, crearUsuario, actualizarUsuario } from "../../utils/users";
+import { configurationApi } from "../../utils/api";
 import "./Usuarios.css";
 import "./FormularioUsuario.css";
 
@@ -49,6 +50,35 @@ function FormUsuario({ inicial, esEdicion, id, actual, items, recargar }) {
     const [pwdError, setPwdError] = useState("");
     const [mostrarPass, setMostrarPass] = useState(false);
     const [guardando, setGuardando] = useState(false);
+    const [programasPorRol, setProgramasPorRol] = useState({});
+    const [cargandoProgramas, setCargandoProgramas] = useState(true);
+
+    useEffect(() => {
+        let vigente = true;
+        configurationApi.rolePermissions()
+            .then((configuracion) => {
+                if (!vigente || !configuracion) return;
+                setProgramasPorRol(Object.fromEntries(
+                    ROLES.map((rol) => [rol.nombre, configuracion[rol.nombre]?.programas || []])
+                ));
+            })
+            .catch(() => {
+                // El formulario conserva el valor existente si el servicio no responde.
+            })
+            .finally(() => {
+                if (vigente) setCargandoProgramas(false);
+            });
+        return () => {
+            vigente = false;
+        };
+    }, []);
+
+    const opcionesPrograma = [
+        ...new Set([
+            ...(programasPorRol[form.rol] || []),
+            ...(form.programa ? [form.programa] : [])
+        ])
+    ];
 
     const faltantes = CAMPOS_OBLIGATORIOS.filter(
         (campo) => !String(form[campo] ?? "").trim()
@@ -59,6 +89,15 @@ function FormUsuario({ inicial, esEdicion, id, actual, items, recargar }) {
         setForm((prev) => ({ ...prev, [name]: value }));
         if (name === "password") setPwdError("");
         if (error) setError("");
+        if (name === "rol") {
+            const opciones = programasPorRol[value] || [];
+            setForm((prev) => ({
+                ...prev,
+                rol: value,
+                programa: opciones.includes(prev.programa) ? prev.programa : (opciones[0] || "")
+            }));
+            return;
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -224,14 +263,36 @@ function FormUsuario({ inicial, esEdicion, id, actual, items, recargar }) {
                     <label htmlFor="u-programa">
                         Programa / Dependencia <span className="users__req">*</span>
                     </label>
-                    <input
-                        id="u-programa"
-                        type="text"
-                        name="programa"
-                        value={form.programa}
-                        onChange={handleChange}
-                        placeholder="ej. Ingeniería de Sistemas"
-                    />
+                    {opcionesPrograma.length > 0 ? (
+                        <select
+                            id="u-programa"
+                            name="programa"
+                            value={form.programa}
+                            onChange={handleChange}
+                        >
+                            <option value="">Selecciona un programa o dependencia</option>
+                            {opcionesPrograma.map((programa) => (
+                                <option key={programa} value={programa}>
+                                    {programa}
+                                </option>
+                            ))}
+                        </select>
+                    ) : (
+                        <input
+                            id="u-programa"
+                            type="text"
+                            name="programa"
+                            value={form.programa}
+                            onChange={handleChange}
+                            placeholder="Configura primero un programa o dependencia"
+                            disabled={cargandoProgramas}
+                        />
+                    )}
+                    {!cargandoProgramas && opcionesPrograma.length === 0 && (
+                        <small className="users__field-hint">
+                            No hay programas configurados para este rol. Agrégalos en Roles por programa.
+                        </small>
+                    )}
                 </div>
             </div>
 
