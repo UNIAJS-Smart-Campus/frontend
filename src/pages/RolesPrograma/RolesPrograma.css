@@ -70,6 +70,99 @@
     padding: 11px 12px;
 }
 
+.roles-programa .config__role-tabs {
+    border-bottom: 0;
+    gap: 10px;
+    padding-bottom: 0;
+}
+
+.roles-programa .config__role-tab {
+    background: var(--color-surface-alt);
+    border-color: transparent;
+    box-shadow: inset 0 0 0 1px var(--color-border);
+    min-height: 38px;
+    padding: 9px 16px;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.roles-programa .config__role-tab:hover {
+    border-color: var(--color-primary-300);
+    color: var(--color-primary-700);
+    transform: translateY(-1px);
+}
+
+.roles-programa .config__role-tab--active {
+    background: var(--color-primary-600);
+    border-color: var(--color-primary-600);
+    box-shadow: 0 4px 10px rgb(15 118 110 / 18%);
+    color: var(--color-surface);
+}
+
+.roles-programa .config__outline-button,
+.roles-programa .config__primary-button,
+.roles-programa .config__table-delete {
+    align-items: center;
+    border-radius: 8px;
+    display: inline-flex;
+    justify-content: center;
+    min-height: 38px;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.roles-programa .config__outline-button {
+    background: var(--color-primary-600);
+    border: 1px solid var(--color-primary-600);
+    color: var(--color-surface);
+    font-size: 12px;
+    padding: 0 18px;
+}
+
+.roles-programa .config__outline-button:hover {
+    background: var(--color-primary-700);
+    border-color: var(--color-primary-700);
+    box-shadow: 0 4px 10px rgb(15 118 110 / 18%);
+    color: var(--color-surface);
+    transform: translateY(-1px);
+}
+
+.roles-programa .config__primary-button {
+    align-self: flex-start;
+    font-size: 12px;
+    padding: 0 20px;
+}
+
+.roles-programa .config__primary-button:hover:not(:disabled) {
+    box-shadow: 0 4px 10px rgb(15 118 110 / 18%);
+    transform: translateY(-1px);
+}
+
+.roles-programa .config__table-delete {
+    background: var(--color-danger-50, #fef2f2);
+    border: 1px solid var(--color-danger-100, #fee2e2);
+    color: var(--color-danger);
+    font-size: 11px;
+    min-height: 32px;
+    padding: 0 11px;
+}
+
+.roles-programa .config__table-delete:hover {
+    background: var(--color-danger);
+    border-color: var(--color-danger);
+    color: var(--color-surface);
+    transform: translateY(-1px);
+}
+
+.roles-programa button:focus-visible {
+    outline: 3px solid var(--color-primary-200);
+    outline-offset: 2px;
+}
+
+.roles-programa button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+    transform: none;
+}
+
 .roles-programa__denied {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
