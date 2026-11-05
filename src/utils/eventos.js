@@ -315,6 +315,7 @@ crearColeccion({
     // se traduce al modelo de la UI y después se normaliza.
     mapear: (raw) => normalizarEvento(mapearEvento(raw)),
     semilla: EVENTOS_BASE,
+    autoRefresh: false,
     crear: async (modelo) => {
         const creado = await eventsApi.create(payloadDe(modelo));
         return normalizarEvento(mapearEvento(creado));
@@ -327,6 +328,10 @@ crearColeccion({
         await eventsApi.remove(modelo.id);
     }
 });
+
+export function adaptarEventoRemoto(raw) {
+    return normalizarEvento(mapearEvento(raw));
+}
 
 // ============================================================
 // API PÚBLICA DEL MÓDULO

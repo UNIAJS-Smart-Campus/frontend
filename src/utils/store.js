@@ -81,7 +81,8 @@ export function crearColeccion({
     semilla = [],
     crear,
     actualizar,
-    eliminar
+    eliminar,
+    autoRefresh = true
 }) {
     if (!colecciones.has(clave)) {
         const cacheado = leerCache(clave);
@@ -105,7 +106,7 @@ export function crearColeccion({
         colecciones.set(clave, estado);
 
         // Primera carga desde la API, sin bloquear el render.
-        if (leer) {
+        if (leer && autoRefresh) {
             queueMicrotask(() => refrescar(clave));
         }
     }

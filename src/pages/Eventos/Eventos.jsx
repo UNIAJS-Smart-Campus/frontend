@@ -7,8 +7,9 @@ import useAuth from "../../context/useAuth";
 import { useToast } from "../../context/ToastContext";
 import useColeccion from "../../hooks/useColeccion";
 import useSugerencias from "../../hooks/useSugerencias";
-import usePagination from "../../hooks/usePagination";
 import Pagination from "../../components/Pagination/Pagination";
+import { eventsApi } from "../../utils/api";
+import { establecer } from "../../utils/store";
 import {
     CLAVE_EVENTOS,
     CATEGORIAS_EVENTO,
@@ -21,7 +22,8 @@ import {
     inscribirEvento,
     desinscribirEvento,
     cuposDisponibles,
-    contarInscritos
+    contarInscritos,
+    adaptarEventoRemoto
 } from "../../utils/eventos";
 import "./Eventos.css";
 
@@ -62,7 +64,7 @@ function formatearHora(hora) {
 }
 
 function Eventos() {
-    const { items, recargar, enLinea } = useColeccion(CLAVE_EVENTOS);
+    const { items } = useColeccion(CLAVE_EVENTOS, { autoRefresh: false });
     const { user, puede } = useAuth();
     const toast = useToast();
     const esAdmin = puede("publicar_eventos");
@@ -76,6 +78,40 @@ function Eventos() {
     const [detalleAbierto, setDetalleAbierto] = useState(null);
     const [inscritosDe, setInscritosDe] = useState(null);
     const [aviso, setAviso] = useState("");
+    const [pagina, setPagina] = useState(1);
+    const [totalPaginas, setTotalPaginas] = useState(1);
+    const [totalEventos, setTotalEventos] = useState(0);
+    const [cargando, setCargando] = useState(true);
+    const [errorCarga, setErrorCarga] = useState(null);
+    const [intento, setIntento] = useState(0);
+
+    useEffect(() => {
+        let cancelado = false;
+        setCargando(true);
+        eventsApi.list({ page: pagina, limit: 6 })
+            .then((respuesta) => {
+                if (cancelado) return;
+                const paginaRemota = respuesta?.items ? respuesta : { items: respuesta };
+                const eventos = (paginaRemota.items || [])
+                    .map(adaptarEventoRemoto)
+                    .filter(Boolean);
+                establecer(CLAVE_EVENTOS, eventos);
+                setTotalEventos(Number(paginaRemota.pagination?.total) || eventos.length);
+                setTotalPaginas(
+                    Math.max(1, Number(paginaRemota.pagination?.totalPages) || 1)
+                );
+                setErrorCarga(null);
+            })
+            .catch((error) => {
+                if (!cancelado) setErrorCarga(error);
+            })
+            .finally(() => {
+                if (!cancelado) setCargando(false);
+            });
+        return () => {
+            cancelado = true;
+        };
+    }, [pagina, intento]);
 
     // El padrón real de inscritos lo expone el backend; se pide al abrir el detalle.
     useEffect(() => {
@@ -114,10 +150,6 @@ function Eventos() {
         }
         return (a.nombre || "").localeCompare(b.nombre || "");
     });
-
-    const { pagina, setPagina, totalPaginas, itemsPagina, desde, hasta } =
-        usePagination(encontrados, 6);
-
 
     // Respaldo local: se usa si Elasticsearch no responde.
     const sugerenciasLocales = useMemo(
@@ -217,11 +249,14 @@ function Eventos() {
                 </div>
             )}
 
-            {enLinea === false && (
+            {errorCarga && (
                 <div className="toast toast--error">
                     <Icon name="info" size={14} />
-                    Sin conexión con el servidor: se muestra la última data sincronizada.
-                    <button className="button button--ghost button--sm" onClick={recargar}>
+                    Sin conexión con el servidor: se muestra la última página sincronizada.
+                    <button
+                        className="button button--ghost button--sm"
+                        onClick={() => setIntento((actual) => actual + 1)}
+                    >
                         Reintentar
                     </button>
                 </div>
@@ -319,17 +354,19 @@ function Eventos() {
             <div className="list-header">
                 <h2>Eventos disponibles</h2>
                 <span className="list-header__meta">
-                    {encontrados.length} evento(s) encontrado(s)
+                    {totalEventos} evento(s) disponible(s)
                 </span>
             </div>
 
-            {encontrados.length === 0 ? (
+            {cargando ? (
+                <div className="empty">Cargando eventos…</div>
+            ) : encontrados.length === 0 ? (
                 <div className="empty">
                     No se encontraron eventos con los filtros aplicados.
                 </div>
             ) : (
                 <div className="eventos__grid">
-                    {itemsPagina.map((ev) => (
+                    {encontrados.map((ev) => (
                         <article className="eventos__item" key={ev.id}>
                             <div className="eventos__item-media">
                                 <ImagenCategoria grupo="evento" tipo={ev.tipo} semilla={ev.id} />
@@ -427,9 +464,6 @@ function Eventos() {
                 pagina={pagina}
                 totalPaginas={totalPaginas}
                 onChange={setPagina}
-                desde={desde}
-                hasta={hasta}
-                total={encontrados.length}
             />
 
             {detalle && (
