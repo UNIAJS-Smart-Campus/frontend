@@ -64,7 +64,7 @@ export function mapearUsuario(raw) {
         apellido: texto(raw.apellido),
         correo: texto(raw.correo),
         telefono: texto(raw.telefono),
-        rol: nombreDeRol(raw.id_rol, raw.tipo_usuario),
+        rol: texto(raw.nombre_rol, nombreDeRol(raw.id_rol, raw.tipo_usuario)),
         id_rol: Number(raw.id_rol) || 2,
         tipo_usuario: texto(raw.tipo_usuario, "Estudiante"),
         programa: texto(raw.programa, "No especificado"),

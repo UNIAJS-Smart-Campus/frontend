@@ -5,7 +5,7 @@ import useAuth from "../../context/useAuth";
 import { useToast } from "../../context/ToastContext";
 import useColeccion from "../../hooks/useColeccion";
 import { ROLES, crearUsuario, actualizarUsuario } from "../../utils/users";
-import { configurationApi } from "../../utils/api";
+import { configurationApi, usersApi } from "../../utils/api";
 import "./Usuarios.css";
 import "./FormularioUsuario.css";
 
@@ -51,17 +51,25 @@ function FormUsuario({ inicial, esEdicion, id, actual, items, recargar }) {
     const [mostrarPass, setMostrarPass] = useState(false);
     const [guardando, setGuardando] = useState(false);
     const [programasPorRol, setProgramasPorRol] = useState({});
+    const [rolesCatalogo, setRolesCatalogo] = useState([]);
     const [cargandoProgramas, setCargandoProgramas] = useState(true);
 
     useEffect(() => {
         let vigente = true;
-        configurationApi.rolePermissions()
-            .then((configuracion) => {
-                if (!vigente || !configuracion) return;
+        Promise.all([usersApi.roles(), configurationApi.rolePermissions()])
+            .then(([roles, configuracion]) => {
+                if (!vigente) return;
+                const catalogo = (roles || []).map((rol) => ({
+                    id: Number(rol.id_rol),
+                    nombre: rol.nombre_rol,
+                    descripcion: rol.descripcion
+                }));
+                setRolesCatalogo(catalogo);
                 setProgramasPorRol(Object.fromEntries(
-                    ROLES.map((rol) => [
+                    [...ROLES, ...catalogo.filter((rol) => !ROLES.some((base) => base.nombre === rol.nombre))]
+                        .map((rol) => [
                         rol.nombre,
-                        configuracion[rol.nombre]?.programas || rol.programas || []
+                        configuracion?.[rol.nombre]?.programas || rol.programas || []
                     ])
                 ));
             })
@@ -75,6 +83,10 @@ function FormUsuario({ inicial, esEdicion, id, actual, items, recargar }) {
             vigente = false;
         };
     }, []);
+
+    const rolesDisponibles = rolesCatalogo.length
+        ? rolesCatalogo
+        : ROLES.map((rol) => ({ id: rol.id, nombre: rol.nombre }));
 
     const opcionesPrograma = [
         ...new Set([
@@ -146,6 +158,7 @@ function FormUsuario({ inicial, esEdicion, id, actual, items, recargar }) {
             codigo: form.codigo.trim(),
             telefono: form.telefono.trim(),
             rol: form.rol,
+            id_rol: rolesDisponibles.find((rol) => rol.nombre === form.rol)?.id,
             programa: form.programa.trim(),
             estado: form.estado
         };
@@ -344,7 +357,7 @@ function FormUsuario({ inicial, esEdicion, id, actual, items, recargar }) {
                         value={form.rol}
                         onChange={handleChange}
                     >
-                        {ROLES.map((rol) => (
+                        {rolesDisponibles.map((rol) => (
                             <option key={rol.nombre} value={rol.nombre}>
                                 {rol.nombre}
                             </option>

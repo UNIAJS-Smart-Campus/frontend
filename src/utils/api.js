@@ -216,6 +216,7 @@ export const authApi = {
 // ==========================================
 export const usersApi = {
     list: () => apiFetch("/users"),
+    roles: () => apiFetch("/users/roles"),
     get: (id) => apiFetch(`/users/${id}`),
     create: (data) => apiFetch("/users", { method: "POST", body: data }),
     update: (id, data) => apiFetch(`/users/${id}`, { method: "PUT", body: data }),
