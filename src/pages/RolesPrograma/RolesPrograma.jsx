@@ -104,13 +104,7 @@ function RolesPrograma() {
 
     return (
         <div className="page roles-programa">
-            <div className="page__header">
-                <div className="page__title">
-                    <h1>Roles por programa y dependencia</h1>
-                    <p>Administra las asignaciones académicas e institucionales de cada rol.</p>
-                </div>
-                {guardado && <span className="badge badge--green">Cambios guardados</span>}
-            </div>
+            {guardado && <div className="page__header"><span className="badge badge--green">Cambios guardados</span></div>}
 
             {error && <div className="badge badge--red" role="alert">{error}</div>}
 
