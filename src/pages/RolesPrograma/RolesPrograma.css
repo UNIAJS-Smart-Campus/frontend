@@ -70,16 +70,28 @@
     padding: 11px 12px;
 }
 
+/* Estilos base de las clases "config__*" reutilizadas de Configuracion.
+   Configuracion.css solo se carga en /configuracion (ruta lazy), así que
+   aquí va su versión base: sin `color`, el botón hereda el color por
+   defecto del navegador (negro) y el texto queda invisible sobre el fondo
+   oscuro. */
 .roles-programa .config__role-tabs {
     border-bottom: 0;
+    display: flex;
+    flex-wrap: wrap;
     gap: 10px;
     padding-bottom: 0;
 }
 
 .roles-programa .config__role-tab {
     background: var(--color-surface-alt);
-    border-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 999px;
     box-shadow: inset 0 0 0 1px var(--color-border);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
     min-height: 38px;
     padding: 9px 16px;
     transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
@@ -87,7 +99,7 @@
 
 .roles-programa .config__role-tab:hover {
     border-color: var(--color-primary-300);
-    color: var(--color-primary-700);
+    color: var(--color-primary-500);
     transform: translateY(-1px);
 }
 
@@ -127,13 +139,51 @@
 
 .roles-programa .config__primary-button {
     align-self: flex-start;
+    background: var(--color-primary-600);
+    border: 1px solid var(--color-primary-600);
+    color: var(--color-surface);
+    cursor: pointer;
     font-size: 12px;
+    font-weight: 700;
     padding: 0 20px;
 }
 
 .roles-programa .config__primary-button:hover:not(:disabled) {
+    background: var(--color-primary-700);
+    border-color: var(--color-primary-700);
     box-shadow: 0 4px 10px rgb(15 118 110 / 18%);
     transform: translateY(-1px);
+}
+
+/* Tabla de asignaciones (base de Configuracion.css). */
+.roles-programa .config__program-table-wrap {
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    overflow-x: auto;
+}
+
+.roles-programa .config__program-table {
+    border-collapse: collapse;
+    min-width: 520px;
+    width: 100%;
+}
+
+.roles-programa .config__program-table th,
+.roles-programa .config__program-table td {
+    border-bottom: 1px solid var(--color-border);
+    font-size: 12px;
+    padding: 12px;
+    text-align: left;
+}
+
+.roles-programa .config__program-table th {
+    background: var(--color-primary-50);
+    color: var(--color-text-muted);
+    font-weight: 700;
+}
+
+.roles-programa .config__program-table tr:last-child td {
+    border-bottom: 0;
 }
 
 .roles-programa .config__table-delete {
