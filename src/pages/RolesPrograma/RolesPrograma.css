@@ -62,12 +62,36 @@
 }
 
 .roles-programa__form input {
+    appearance: none;
+    background-color: var(--color-input-bg) !important;
     border: 1px solid var(--color-border);
     border-radius: 8px;
-    color: var(--color-text);
+    color: var(--color-text) !important;
     flex: 1;
     min-width: 0;
     padding: 11px 12px;
+    -webkit-text-fill-color: var(--color-text) !important;
+}
+
+.roles-programa__form input:focus {
+    background-color: var(--color-input-bg) !important;
+    border-color: var(--color-primary-400);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-400) 22%, transparent);
+    outline: none;
+}
+
+.roles-programa__form input::placeholder {
+    color: var(--color-text-muted);
+    opacity: 1;
+    -webkit-text-fill-color: var(--color-text-muted) !important;
+}
+
+.roles-programa__form input:-webkit-autofill,
+.roles-programa__form input:-webkit-autofill:hover,
+.roles-programa__form input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--color-text) !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--color-input-bg) inset !important;
+    box-shadow: 0 0 0 1000px var(--color-input-bg) inset !important;
 }
 
 /* Estilos base de las clases "config__*" reutilizadas de Configuracion.
@@ -124,8 +148,10 @@
 .roles-programa .config__outline-button {
     background: var(--color-primary-600);
     border: 1px solid var(--color-primary-600);
-    color: var(--color-surface);
+    color: #fff;
+    cursor: pointer;
     font-size: 12px;
+    font-weight: 700;
     padding: 0 18px;
 }
 
@@ -171,6 +197,7 @@
 .roles-programa .config__program-table th,
 .roles-programa .config__program-table td {
     border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
     font-size: 12px;
     padding: 12px;
     text-align: left;
