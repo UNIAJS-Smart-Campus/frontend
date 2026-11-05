@@ -300,7 +300,7 @@ function Dashboard() {
             {/* ── HEADER ── */}
             <div className="page__header">
                 <div className="page__title">
-                    <span className="dashboard__eyebrow">Tu espacio de aprendizaje</span>
+                    <span className="dashboard__eyebrow">Panel académico</span>
                     <h1>Hola, {primerNombre} 👋</h1>
                     <p>Organiza tu vida universitaria, descubre oportunidades y avanza en tu experiencia UAJS.</p>
                 </div>
@@ -315,48 +315,6 @@ function Dashboard() {
                     </div>
                 </div>
             </div>
-
-            <section className="dashboard__learning">
-                <div className="dashboard__learning-intro">
-                    <div className="dashboard__learning-mark">
-                        <Icon name="info" size={22} />
-                    </div>
-                    <div>
-                        <span className="dashboard__eyebrow">Ruta recomendada</span>
-                        <h2>Aprende, participa y conecta</h2>
-                        <p>Usa estos accesos para aprovechar mejor tu campus digital.</p>
-                    </div>
-                </div>
-                <div className="dashboard__learning-steps">
-                    <Link to="/eventos" className="dashboard__learning-step">
-                        <span className="dashboard__learning-number">01</span>
-                        <Icon name="eventos" size={20} />
-                        <span>
-                            <strong>Descubre</strong>
-                            <small>Eventos y actividades</small>
-                        </span>
-                        <span className="dashboard__learning-arrow">→</span>
-                    </Link>
-                    <Link to="/solicitudes/nueva" className="dashboard__learning-step">
-                        <span className="dashboard__learning-number">02</span>
-                        <Icon name="solicitudes" size={20} />
-                        <span>
-                            <strong>Gestiona</strong>
-                            <small>Tus necesidades académicas</small>
-                        </span>
-                        <span className="dashboard__learning-arrow">→</span>
-                    </Link>
-                    <Link to="/reservas" className="dashboard__learning-step">
-                        <span className="dashboard__learning-number">03</span>
-                        <Icon name="reservas" size={20} />
-                        <span>
-                            <strong>Participa</strong>
-                            <small>Espacios y recursos</small>
-                        </span>
-                        <span className="dashboard__learning-arrow">→</span>
-                    </Link>
-                </div>
-            </section>
 
             {/* ── SERVICIOS ── */}
             <section className="dashboard__services">
