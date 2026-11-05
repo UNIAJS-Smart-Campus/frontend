@@ -211,16 +211,23 @@ export function refrescarNotificaciones() {
 /**
  * Marca una notificación como leída.
  *
- * OJO: el backend no tiene PATCH /notifications/:id/read. El PUT actualiza
- * TODAS las columnas, así que hay que reenviar la fila completa
- * (notificationsApi.markRead solo manda id_usuario + leida y el controller
- * dejaría titulo/mensaje en NULL, que son NOT NULL).
+ * El endpoint PUT acepta actualizaciones parciales y el servidor confirma
+ * el valor persistido antes de actualizar la colección local.
  */
 export async function marcarLeida(item) {
     if (item?.id_usuario == null) {
         throw new Error("La notificación no está sincronizada con el servidor.");
     }
-    return actualizar(CLAVE_COLECCION, item, { leida: true });
+    const actualizada = await notificationsApi.markRead(item.id, item.id_usuario);
+    const modelo = normalizarNotificacion(actualizada);
+    establecer(
+        CLAVE_COLECCION,
+        listar(CLAVE_COLECCION).map((actual) =>
+            actual.id === item.id ? modelo : actual
+        )
+    );
+    await refrescar(CLAVE_COLECCION, { forzar: true });
+    return modelo;
 }
 
 /** Marca como leídas todas las notificaciones del usuario en sesión. */
