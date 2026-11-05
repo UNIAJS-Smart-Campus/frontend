@@ -768,17 +768,30 @@ function Configuracion() {
                             </button>
                         ))}
                         {esAdmin() && (
-                            <button
-                                className={
-                                    seccion === "permisos-roles"
-                                        ? "config__menu-item config__menu-item--active"
-                                        : "config__menu-item"
-                                }
-                                onClick={() => setSeccion("permisos-roles")}
-                            >
-                                <Icon name="usuarios" size={17} />
-                                Permisos por rol
-                            </button>
+                            <>
+                                <button
+                                    className={
+                                        seccion === "permisos-roles"
+                                            ? "config__menu-item config__menu-item--active"
+                                            : "config__menu-item"
+                                    }
+                                    onClick={() => setSeccion("permisos-roles")}
+                                >
+                                    <Icon name="configuracion" size={17} />
+                                    Permisos por rol
+                                </button>
+                                <button
+                                    className={
+                                        seccion === "roles-programa"
+                                            ? "config__menu-item config__menu-item--active"
+                                            : "config__menu-item"
+                                    }
+                                    onClick={() => setSeccion("roles-programa")}
+                                >
+                                    <Icon name="usuarios" size={17} />
+                                    Roles por programa
+                                </button>
+                            </>
                         )}
                     </nav>
                 </aside>
@@ -812,60 +825,6 @@ function Configuracion() {
                                                 {rol.nombre}
                                             </button>
                                         ))}
-                                    </div>
-
-                                    <div className="config__permissions-section">
-                                        <h3>Programa / Dependencia</h3>
-                                        <p className="config__section-help">
-                                            Asigna programas o dependencias al rol y consulta cuántos usuarios activos pertenecen a cada una.
-                                        </p>
-                                        <form className="config__program-form" onSubmit={agregarProgramaRol}>
-                                            <input
-                                                value={nuevoPrograma}
-                                                onChange={(e) => setNuevoPrograma(e.target.value)}
-                                                placeholder="Ej. Matemáticas"
-                                                aria-label="Programa o dependencia"
-                                            />
-                                            <button className="config__outline-button" type="submit">
-                                                Agregar
-                                            </button>
-                                        </form>
-                                        <div className="config__program-table-wrap">
-                                            <table className="config__program-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Programa / Dependencia</th>
-                                                        <th>Usuarios activos</th>
-                                                        <th aria-label="Acciones" />
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {permisosRoles[rolPermisos].programas.length ? (
-                                                        permisosRoles[rolPermisos].programas.map((programa) => (
-                                                            <tr key={programa}>
-                                                                <td>{programa}</td>
-                                                                <td>
-                                                                    <strong>{contarUsuariosPorPrograma(programa)}</strong>
-                                                                </td>
-                                                                <td>
-                                                                    <button
-                                                                        className="config__table-delete"
-                                                                        onClick={() => eliminarProgramaRol(programa)}
-                                                                        type="button"
-                                                                    >
-                                                                        Eliminar
-                                                                    </button>
-                                                                </td>
-                                                            </tr>
-                                                        ))
-                                                    ) : (
-                                                        <tr>
-                                                            <td colSpan="3">Aún no hay programas o dependencias asignados.</td>
-                                                        </tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                        </div>
                                     </div>
 
                                     <div className="config__permissions-section">
@@ -907,6 +866,102 @@ function Configuracion() {
                                             disabled={guardandoPermisos}
                                         >
                                             {guardandoPermisos ? "Guardando..." : "Guardar permisos"}
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </section>
+                    )}
+
+                    {seccion === "roles-programa" && esAdmin() && (
+                        <section className="config__card">
+                            <div className="config__card-header">
+                                <div className="config__card-header-icon">
+                                    <Icon name="usuarios" size={17} />
+                                </div>
+                                <div>
+                                    <h2>Roles por programa y dependencia</h2>
+                                    <p>Organiza los roles según su programa académico o dependencia institucional.</p>
+                                </div>
+                            </div>
+
+                            {cargandoPermisos ? (
+                                <p className="config__empty">Cargando asignaciones...</p>
+                            ) : (
+                                <>
+                                    <div className="config__role-tabs">
+                                        {ROLES.map((rol) => (
+                                            <button
+                                                key={rol.nombre}
+                                                className={rolPermisos === rol.nombre
+                                                    ? "config__role-tab config__role-tab--active"
+                                                    : "config__role-tab"}
+                                                onClick={() => setRolPermisos(rol.nombre)}
+                                            >
+                                                {rol.nombre}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="config__permissions-section">
+                                        <h3>Programa / Dependencia para {rolPermisos}</h3>
+                                        <p className="config__section-help">
+                                            Agrega una asignación y consulta cuántos usuarios activos tienen ese rol y pertenecen a ella.
+                                        </p>
+                                        <form className="config__program-form" onSubmit={agregarProgramaRol}>
+                                            <input
+                                                value={nuevoPrograma}
+                                                onChange={(e) => setNuevoPrograma(e.target.value)}
+                                                placeholder="Ej. Matemáticas o Bienestar Universitario"
+                                                aria-label="Programa o dependencia"
+                                            />
+                                            <button className="config__outline-button" type="submit">
+                                                Agregar asignación
+                                            </button>
+                                        </form>
+                                        <div className="config__program-table-wrap">
+                                            <table className="config__program-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Rol</th>
+                                                        <th>Programa / Dependencia</th>
+                                                        <th>Usuarios activos</th>
+                                                        <th aria-label="Acciones" />
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {permisosRoles[rolPermisos].programas.length ? (
+                                                        permisosRoles[rolPermisos].programas.map((programa) => (
+                                                            <tr key={programa}>
+                                                                <td>{rolPermisos}</td>
+                                                                <td>{programa}</td>
+                                                                <td><strong>{contarUsuariosPorPrograma(programa)}</strong></td>
+                                                                <td>
+                                                                    <button
+                                                                        className="config__table-delete"
+                                                                        onClick={() => eliminarProgramaRol(programa)}
+                                                                        type="button"
+                                                                    >
+                                                                        Eliminar
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    ) : (
+                                                        <tr>
+                                                            <td colSpan="4">Aún no hay asignaciones para este rol.</td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div className="config__form-actions">
+                                        <button
+                                            className="config__primary-button"
+                                            onClick={guardarPermisosRoles}
+                                            disabled={guardandoPermisos}
+                                        >
+                                            {guardandoPermisos ? "Guardando..." : "Guardar asignaciones"}
                                         </button>
                                     </div>
                                 </>
