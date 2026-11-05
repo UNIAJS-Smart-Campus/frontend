@@ -118,6 +118,49 @@ export const ROLES = [
             "solicitar_recursos",
             "consultar_info_academica"
         ]
+    },
+    {
+        nombre: "Coordinador",
+        permisos: [
+            "dashboard",
+            "usuarios",
+            "solicitudes",
+            "reservas",
+            "recursos",
+            "eventos",
+            "notificaciones",
+            "pqrs",
+            "reportes",
+            "perfil",
+            "info_academica",
+            "configuracion"
+        ],
+        acciones: [
+            "consultar_solicitudes",
+            "gestionar_solicitudes",
+            "actualizar_estados",
+            "gestionar_reservas",
+            "administrar_recursos",
+            "publicar_eventos",
+            "consultar_estadisticas",
+            "publicar_info_academica"
+        ],
+        programas: ["Ingeniería de Sistemas", "Matemáticas"]
+    },
+    {
+        nombre: "Egresado",
+        permisos: [
+            "dashboard",
+            "eventos",
+            "notificaciones",
+            "perfil",
+            "info_academica"
+        ],
+        acciones: [
+            "consultar_info_academica",
+            "consultar_eventos"
+        ],
+        programas: ["Egresados", "Bienestar Universitario"]
     }
 ];
 

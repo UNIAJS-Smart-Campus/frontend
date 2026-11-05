@@ -59,7 +59,10 @@ function FormUsuario({ inicial, esEdicion, id, actual, items, recargar }) {
             .then((configuracion) => {
                 if (!vigente || !configuracion) return;
                 setProgramasPorRol(Object.fromEntries(
-                    ROLES.map((rol) => [rol.nombre, configuracion[rol.nombre]?.programas || []])
+                    ROLES.map((rol) => [
+                        rol.nombre,
+                        configuracion[rol.nombre]?.programas || rol.programas || []
+                    ])
                 ));
             })
             .catch(() => {

@@ -11,7 +11,9 @@ export const ID_ROL = {
     1: "Administrador",
     2: "Estudiante",
     3: "Docente",
-    4: "Administrativo"
+    4: "Administrativo",
+    5: "Coordinador",
+    6: "Egresado"
 };
 
 // Nombre -> id explicito. Antes se usaba findIndex(ROLES) + 1, pero el

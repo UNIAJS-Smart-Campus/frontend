@@ -11,7 +11,7 @@ function RolesPrograma() {
     const { items: usuarios } = useColeccion("usuarios");
     const [rolSeleccionado, setRolSeleccionado] = useState(ROLES[0]?.nombre || "");
     const [asignaciones, setAsignaciones] = useState(() =>
-        Object.fromEntries(ROLES.map((rol) => [rol.nombre, []]))
+        Object.fromEntries(ROLES.map((rol) => [rol.nombre, [...(rol.programas || [])]]))
     );
     const [nuevoPrograma, setNuevoPrograma] = useState("");
     const [cargando, setCargando] = useState(true);
@@ -29,7 +29,10 @@ function RolesPrograma() {
             .then((data) => {
                 if (!vigente || !data) return;
                 setAsignaciones(Object.fromEntries(
-                    ROLES.map((rol) => [rol.nombre, [...(data[rol.nombre]?.programas || [])]])
+                    ROLES.map((rol) => [
+                        rol.nombre,
+                        [...(data[rol.nombre]?.programas || rol.programas || [])]
+                    ])
                 ));
             })
             .catch((err) => {

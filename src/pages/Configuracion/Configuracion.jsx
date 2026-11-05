@@ -318,7 +318,7 @@ function Configuracion() {
     const [permisosRoles, setPermisosRoles] = useState(() =>
         Object.fromEntries(ROLES.map((rol) => [
             rol.nombre,
-            { permisos: [...rol.permisos], acciones: [...rol.acciones], programas: [] }
+            { permisos: [...rol.permisos], acciones: [...rol.acciones], programas: [...(rol.programas || [])] }
         ]))
     );
     const [cargandoPermisos, setCargandoPermisos] = useState(false);
