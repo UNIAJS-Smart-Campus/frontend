@@ -6,6 +6,7 @@ import { useToast } from "../../context/ToastContext";
 import useColeccion from "../../hooks/useColeccion";
 import { ROLES, crearUsuario, actualizarUsuario } from "../../utils/users";
 import { configurationApi, usersApi } from "../../utils/api";
+import { idDeRol } from "../../utils/mapeo";
 import "./Usuarios.css";
 import "./FormularioUsuario.css";
 
@@ -86,7 +87,7 @@ function FormUsuario({ inicial, esEdicion, id, actual, items, recargar }) {
 
     const rolesDisponibles = rolesCatalogo.length
         ? rolesCatalogo
-        : ROLES.map((rol) => ({ id: rol.id, nombre: rol.nombre }));
+        : ROLES.map((rol) => ({ id: idDeRol(rol.nombre), nombre: rol.nombre }));
 
     const opcionesPrograma = [
         ...new Set([
