@@ -32,6 +32,23 @@ function limpiarDatosDeUsuario() {
         }
     }
 }
+
+// Borra la sesión local (perfil + cachés). Vive en ámbito de módulo: la
+// llaman `logout` y el listener de "uajs:sesion-expirada", que están fuera
+// de `limpiarDatosDeUsuario`. Declararla dentro de esa función lanzaba
+// ReferenceError y abortaba el cierre antes de `setUser(null)`, dejando la
+// UI "logueada" sin cookies: cada petición devolvía 401 y el refresh también,
+// en bucle infinito.
+function limpiarSesionLocal() {
+    try {
+        localStorage.removeItem(SESSION_KEY);
+        sessionStorage.removeItem(SESSION_KEY);
+    } catch {
+        // El estado React también se limpia si el almacenamiento no está disponible.
+    }
+    clearToken();
+    limpiarDatosDeUsuario();
+}
 const IDLE_BEFORE_WARNING_MS = 10 * 60 * 1000;
 const WARNING_COUNTDOWN_MS = 2 * 60 * 1000;
 const ACTIVITY_EVENTS = ["mousemove", "keydown", "click", "scroll", "touchstart"];
@@ -67,9 +84,10 @@ function getSession() {
 function AuthProvider({ children }) {
     const [user, setUser] = useState(getSession);
     const [permisosRoles, setPermisosRoles] = useState(null);
+    const [authReady, setAuthReady] = useState(false);
 
     useEffect(() => {
-        if (!user) {
+        if (!user || !authReady) {
             setPermisosRoles(null);
             return undefined;
         }
@@ -88,7 +106,7 @@ function AuthProvider({ children }) {
         return () => {
             vigente = false;
         };
-    }, [user?.id]);
+    }, [user?.id, authReady]);
 
     const login = async (cedula, password) => {
         try {
@@ -134,14 +152,9 @@ function AuthProvider({ children }) {
             // Si el servidor no responde, igual limpiamos la sesión local.
         }
 
+        limpiarSesionLocal();
         setUser(null);
-        try {
-            localStorage.removeItem(SESSION_KEY);
-        } catch {
-            // Si localStorage no está disponible se ignora
-        }
-        clearToken();
-        limpiarDatosDeUsuario();
+        setAuthReady(true);
     };
 
     // El cliente HTTP avisa con este evento cuando el gateway responde 401
@@ -149,20 +162,12 @@ function AuthProvider({ children }) {
     // mostrando datos que ya no puede sincronizar.
     useEffect(() => {
         const onSesionExpirada = () => {
-            setUser((prev) => {
-                // Un 401 durante el propio login no debe cerrar nada: ahí
-                // todavía no hay sesión que invalidar.
-                if (prev) {
-                    try {
-                        localStorage.removeItem(SESSION_KEY);
-                    } catch {
-                        // sin localStorage no hay nada que limpiar
-                    }
-                    clearToken();
-                    limpiarDatosDeUsuario();
-                }
-                return null;
-            });
+            // También se revoca/borran las cookies HttpOnly; JavaScript no
+            // puede limpiarlas directamente.
+            void authApi.logout().catch(() => {});
+            limpiarSesionLocal();
+            setUser(null);
+            setAuthReady(true);
         };
         window.addEventListener("uajs:sesion-expirada", onSesionExpirada);
         return () =>
@@ -171,10 +176,9 @@ function AuthProvider({ children }) {
 
     // Validación de sesión al recargar.
     //
-    // El JWT dura 24h pero el token se guarda en localStorage: si el usuario
-    // fue desactivado, cambió su rol o el token expiró, la UI lo descubriría
-    // recién al fallar otra llamada. Aquí se consulta /auth/me UNA vez al
-    // montar para refrescar el perfil y detectar tokens inválidos.
+    // La sesión visible se guarda en localStorage solo como perfil; los JWT
+    // viven en cookies HttpOnly. Aquí se consulta /auth/me UNA vez al montar
+    // para comprobar que esas cookies siguen presentes y son válidas.
     //
     // Decisiones para no expulsar al usuario por un falso positivo:
     //   - authApi.me usa apiFetch "silencioso": un 401 aquí NO dispara el
@@ -186,7 +190,10 @@ function AuthProvider({ children }) {
     //     justo el diseño del store.
     useEffect(() => {
         const sesionGuardada = getSession();
-        if (!sesionGuardada?.token) return undefined;
+        if (!sesionGuardada) {
+            setAuthReady(true);
+            return undefined;
+        }
 
         let vigente = true;
 
@@ -203,9 +210,7 @@ function AuthProvider({ children }) {
                 setUser((prev) => {
                     if (!prev) return prev;
                     const refrescado = {
-                        ...mapearUsuarioSesion({ ...prev, ...data }),
-                        // /auth/me no devuelve token: se conserva el vigente.
-                        token: prev.token
+                        ...mapearUsuarioSesion({ ...prev, ...data })
                     };
                     try {
                         localStorage.setItem(SESSION_KEY, JSON.stringify(refrescado));
@@ -226,6 +231,9 @@ function AuthProvider({ children }) {
                 }
                 // Cualquier otro fallo (red, 5xx, timeout) se ignora: la
                 // sesión sigue siendo válida desde el punto de vista local.
+            })
+            .finally(() => {
+                if (vigente) setAuthReady(true);
             });
 
         return () => {
@@ -285,6 +293,7 @@ function AuthProvider({ children }) {
     return (
         <AuthContext.Provider value={{ 
             user, 
+            authReady,
             login, 
             logout,
             updateUser,

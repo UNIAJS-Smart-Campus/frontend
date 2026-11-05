@@ -28,10 +28,10 @@ function emitirEvento(nombre, detail) {
 }
 
 function RealtimeProvider({ children }) {
-    const { user } = useAuth();
+    const { user, authReady } = useAuth();
 
     useEffect(() => {
-        if (!user?.id) return undefined;
+        if (!authReady || !user?.id) return undefined;
 
         const wsUrl = resolverUrlWebSocket();
         if (!wsUrl) return undefined;
@@ -51,6 +51,7 @@ function RealtimeProvider({ children }) {
                 socket = io(wsUrl, {
                     path: "/socket.io",
                     transports: ["websocket", "polling"],
+                    withCredentials: true,
                     reconnection: true,
                     // Render Free puede suspender el backend; no mantener un
                     // bucle infinito de reconexiones mientras la API despierta.
@@ -61,7 +62,7 @@ function RealtimeProvider({ children }) {
 
                 socket.on("connect_error", (error) => {
                     if (/token/i.test(error?.message || "")) {
-                        emitirEvento("uajs:session-expired", {});
+                        emitirEvento("uajs:sesion-expirada", {});
                     }
                 });
 
@@ -116,7 +117,7 @@ function RealtimeProvider({ children }) {
                 socket.disconnect();
             }
         };
-    }, [user?.id, user?.rol]);
+    }, [authReady, user?.id, user?.rol]);
 
     return children;
 }

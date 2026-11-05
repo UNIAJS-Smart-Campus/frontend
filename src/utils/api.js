@@ -208,7 +208,9 @@ export const authApi = {
     // Renueva el access token usando la cookie de refresh token (rota el par).
     refresh: () => apiFetch("/auth/refresh", { method: "POST" }),
     // Cierra la sesión: revoca en el servidor y borra las cookies.
-    logout: () => apiFetch("/auth/logout", { method: "POST" })
+    // `silencioso`: un 401 aquí no debe reintentar refresh ni re-disparar
+    // "uajs:sesion-expirada" (el listener es quien llama a este método).
+    logout: () => apiFetch("/auth/logout", { method: "POST", silencioso: true })
 };
 
 // ==========================================

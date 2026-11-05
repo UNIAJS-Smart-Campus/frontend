@@ -36,6 +36,12 @@ npm run preview
    los dominios de preview si los vas a usar).
 5. Vuelve a desplegar después de cambiar variables de entorno.
 
+La autenticación usa cookies HttpOnly para los tokens. En producción el backend
+debe usar HTTPS, `COOKIE_SECURE=1`, `SameSite=None` y
+`Access-Control-Allow-Credentials: true`; además, el origen exacto del frontend
+debe estar en `CORS_ORIGINS`. Tras cambiar estas variables hay que reconstruir y
+redesplegar el frontend.
+
 > Vercel solo aloja este frontend estático. El backend real (gateway,
 > microservicios, MySQL y Elasticsearch) no puede ejecutarse en Vercel; debe
 > estar en un VPS/Docker, Render, Railway u otro servicio con persistencia y
