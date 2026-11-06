@@ -376,6 +376,10 @@ export function guardarEventos(lista) {
 
 export function contarInscritos(evento) {
     if (!evento) return 0;
+    // Si se cargó el padrón real del backend, usa ese contador; si no, cae al
+    // denormalizado del evento + participantes locales.
+    const cache = inscripcionesPorEvento.get(evento.id);
+    if (cache) return cache.usuarios.size;
     const base = Number(evento.inscritos) || 0;
     return base + (participantesLocales.get(evento.id)?.size ?? 0);
 }
