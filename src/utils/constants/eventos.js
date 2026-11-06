@@ -3,21 +3,20 @@ export const TIPOS_EVENTO = [
     "Cultural",
     "Deportivo",
     "Formaci\u00F3n",
-    "Social",
-    "Otro"
+    "Institucional"
 ];
 
 export const ESTADOS_EVENTO = [
-    "Activo",
+    "Programado",
+    "En curso",
     "Finalizado",
-    "Cancelado",
-    "Pospuesto"
+    "Cancelado"
 ];
 
 export const MODALIDADES = [
     "Presencial",
     "Virtual",
-    "Hibrido"
+    "Híbrido"
 ];
 
 export const MODALIDADES_EVENTO = MODALIDADES;

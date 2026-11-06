@@ -23,6 +23,7 @@ import {
     desinscribirEvento,
     cuposDisponibles,
     contarInscritos,
+    obtenerDetalleInscriptos,
     adaptarEventoRemoto
 } from "../../utils/eventos";
 import "./Eventos.css";
@@ -625,41 +626,59 @@ function Eventos() {
                                 const detalle = items.find(
                                     (i) => i.id === inscritosDe.id
                                 );
-                                const lista = participantesDe(
-                                    detalle || inscritosDe
-                                );
-                                if (lista.length === 0) {
-                                    return (
-                                        <p className="eventos__empty">
-                                            Aún no hay inscritos en este evento.
-                                        </p>
-                                    );
-                                }
-                                return (
-                                    <ul className="eventos__inscritos-list">
-                                        {lista.map((p, i) => (
-                                            <li
-                                                className="eventos__inscrito"
-                                                key={`${p.usuarioId || "anon"}-${i}`}
-                                            >
-                                                <span className="eventos__inscrito-avatar">
-                                                    {(p.nombre || "U")
-                                                        .split(" ")
-                                                        .map((s) => s[0])
-                                                        .join("")
-                                                        .slice(0, 2)
-                                                        .toUpperCase()}
-                                                </span>
-                                                <span className="eventos__inscrito-name">
-                                                    {p.nombre || "Inscrito"}
-                                                </span>
-                                                <span className="eventos__inscrito-fecha">
-                                                    {p.fecha || ""}
-                                                </span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                );
+                                // Usar obtenerDetalleInscriptos para mostrar cédula, nombre, carrera
+                                // y fecha de inscripción en formato de tabla tipo Excel
+                                obtenerDetalleInscriptos(detalle?.id).then(
+                                    lista => {
+                                        if (lista.length === 0) {
+                                            return (
+                                                <p className="eventos__empty">
+                                                    Aún no hay inscritos en este evento.
+                                                </p>
+                                            );
+                                        }
+                                        return (
+                                            <div className="eventos__inscritos-table">
+                                                <h3>Lista de Inscritos</h3>
+                                                <table className="eventos__inscritos-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Cédula</th>
+                                                            <th>Nombre</th>
+                                                            <th>Carrera</th>
+                                                            <th>Fecha de Inscripción</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {lista.map((p, i) => (
+                                                            <tr key={`${p.cedula}-${i}`}>
+                                                                <td>{p.cedula}</td>
+                                                                <td>{p.nombre}</td>
+                                                                <td>{p.programa}</td>
+                                                                <td>{p.fechaInscripcion}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                                <button
+                                                    className="eventos__print-button"
+                                                    onClick={() => window.print()}
+                                                >
+                                                    Imprimir
+                                                </button>
+                                            </div>
+                                        );
+                                    }
+                                ).catch(() => {
+                                    if (lista.length === 0) {
+                                        return (
+                                            <p className="eventos__empty">
+                                                Aún no hay inscritos en este evento.
+                                            </p>
+                                        );
+                                    }
+                                    return null;
+                                });
                             })()}
                         </div>
                     </div>
