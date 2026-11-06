@@ -21,6 +21,29 @@ npm run build
 npm run preview
 ```
 
+## Cabeceras de seguridad y CSP
+
+`vercel.json` envía cabeceras de seguridad en todas las rutas, incluida una
+**Content-Security-Policy** con hashes SHA-256 de los dos bloques inline de
+`index.html` (el `<style>` del splash de carga y el `<script>` que aplica el
+tema). Los hashes corresponden al CSS ya minificado que Vite emite en
+`dist/index.html`, no al fuente.
+
+Si editas cualquiera de esos dos bloques, recalcula los hashes o el navegador
+bloqueará el splash/tema (la app sigue funcionando, solo pierde ese estilo):
+
+```bash
+npm run build
+npm run csp:hashes
+```
+
+Pega los valores en `vercel.json` → `headers` → `Content-Security-Policy`
+(`script-src` y `style-src`). La directiva `connect-src` también lista el
+origen del backend (`https://backend-8pq5.onrender.com`): si cambia la URL de
+`VITE_API_URL` o `VITE_WS_URL`, actualízala ahí. El script nunca usa
+`'unsafe-inline'` ni `'unsafe-eval'`, y el backend no envía CSP porque solo
+devuelve JSON (helmet la deja desactivada a propósito).
+
 ## Despliegue en Vercel
 
 1. Importa el repositorio `UNIAJS-Smart-Campus/frontend` en Vercel.
