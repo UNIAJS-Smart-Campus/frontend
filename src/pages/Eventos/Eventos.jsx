@@ -85,6 +85,22 @@ function Eventos() {
     const [cargando, setCargando] = useState(true);
     const [errorCarga, setErrorCarga] = useState(null);
     const [intento, setIntento] = useState(0);
+    const [inscritosLista, setInscritosLista] = useState([]);
+    const [cargandoInscritos, setCargandoInscritos] = useState(false);
+
+    useEffect(() => {
+        if (!inscritosDe) return;
+        setCargandoInscritos(true);
+        obtenerDetalleInscriptos(inscritosDe.id)
+            .then((lista) => {
+                setInscritosLista(lista);
+                setCargandoInscritos(false);
+            })
+            .catch(() => {
+                setInscritosLista([]);
+                setCargandoInscritos(false);
+            });
+    }, [inscritosDe]);
 
     useEffect(() => {
         let cancelado = false;
@@ -223,6 +239,32 @@ function Eventos() {
     };
 
     const verDetalle = (ev) => setDetalleAbierto(ev);
+
+    const exportarInscritosCSV = () => {
+        const evento = items.find((i) => i.id === inscritosDe?.id);
+        const filas = [
+            ["Cédula", "Nombre", "Carrera", "Fecha de Inscripción"],
+            ...inscritosLista.map((p) => [
+                p.cedula,
+                p.nombre,
+                p.programa,
+                p.fechaInscripcion,
+            ]),
+        ];
+        const csvContent =
+            "data:text/csv;charset=utf-8," +
+            filas.map((fila) => fila.join(";")).join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute(
+            "download",
+            `inscritos_${evento?.nombre || "evento"}_${new Date().toISOString().slice(0, 10)}.csv`
+        );
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     const detalle = detalleAbierto
         ? items.find((item) => item.id === detalleAbierto.id) || detalleAbierto
@@ -599,7 +641,10 @@ function Eventos() {
             {inscritosDe && (
                 <div
                     className="eventos__overlay"
-                    onClick={() => setInscritosDe(null)}
+                    onClick={() => {
+                        setInscritosDe(null);
+                        setInscritosLista([]);
+                    }}
                 >
                     <div
                         className="eventos__modal"
@@ -609,77 +654,82 @@ function Eventos() {
                             <div>
                                 <h2>Inscritos</h2>
                                 <p>
-                                    {items.find((i) => i.id === inscritosDe.id)?.nombre ||
+                                    {items.find(
+                                        (i) => i.id === inscritosDe.id
+                                    )?.nombre ||
                                         ""}
                                 </p>
                             </div>
                             <button
                                 className="eventos__modal-close"
-                                onClick={() => setInscritosDe(null)}
+                                onClick={() => {
+                                    setInscritosDe(null);
+                                    setInscritosLista([]);
+                                }}
                             >
                                 ×
                             </button>
                         </div>
 
                         <div className="eventos__inscritos">
-                            {(() => {
-                                const detalle = items.find(
-                                    (i) => i.id === inscritosDe.id
-                                );
-                                // Usar obtenerDetalleInscriptos para mostrar cédula, nombre, carrera
-                                // y fecha de inscripción en formato de tabla tipo Excel
-                                obtenerDetalleInscriptos(detalle?.id).then(
-                                    lista => {
-                                        if (lista.length === 0) {
-                                            return (
-                                                <p className="eventos__empty">
-                                                    Aún no hay inscritos en este evento.
-                                                </p>
-                                            );
-                                        }
-                                        return (
-                                            <div className="eventos__inscritos-table">
-                                                <h3>Lista de Inscritos</h3>
-                                                <table className="eventos__inscritos-table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Cédula</th>
-                                                            <th>Nombre</th>
-                                                            <th>Carrera</th>
-                                                            <th>Fecha de Inscripción</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {lista.map((p, i) => (
-                                                            <tr key={`${p.cedula}-${i}`}>
-                                                                <td>{p.cedula}</td>
-                                                                <td>{p.nombre}</td>
-                                                                <td>{p.programa}</td>
-                                                                <td>{p.fechaInscripcion}</td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                                <button
-                                                    className="eventos__print-button"
-                                                    onClick={() => window.print()}
+                            {cargandoInscritos ? (
+                                <p className="eventos__empty">
+                                    Cargando inscritos…
+                                </p>
+                            ) : inscritosLista.length === 0 ? (
+                                <p className="eventos__empty">
+                                    Aún no hay inscritos en este evento.
+                                </p>
+                            ) : (
+                                <div className="eventos__inscritos-table">
+                                    <div className="eventos__table-toolbar">
+                                        <h3>Lista de Inscritos</h3>
+                                        <button
+                                            className="eventos__export-button"
+                                            onClick={exportarInscritosCSV}
+                                        >
+                                            Exportar a CSV
+                                        </button>
+                                    </div>
+                                    <table className="eventos__inscritos-table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Cédula</th>
+                                                <th>Nombre</th>
+                                                <th>Carrera</th>
+                                                <th>Fecha de Inscripción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {inscritosLista.map((p, i) => (
+                                                <tr
+                                                    key={`${p.cedula}-${i}`}
+                                                    className={
+                                                        i % 2 === 0
+                                                            ? "eventos__table-row--even"
+                                                            : "eventos__table-row--odd"
+                                                    }
                                                 >
-                                                    Imprimir
-                                                </button>
-                                            </div>
-                                        );
-                                    }
-                                ).catch(() => {
-                                    if (lista.length === 0) {
-                                        return (
-                                            <p className="eventos__empty">
-                                                Aún no hay inscritos en este evento.
-                                            </p>
-                                        );
-                                    }
-                                    return null;
-                                });
-                            })()}
+                                                    <td>{i + 1}</td>
+                                                    <td>{p.cedula}</td>
+                                                    <td>{p.nombre}</td>
+                                                    <td>{p.programa}</td>
+                                                    <td>{p.fechaInscripcion}</td>
+                                                </tr>
+                                            ))}
+                                            <tr className="eventos__table-row--total">
+                                                <td colSpan="3">
+                                                    <strong>Total de inscritos</strong>
+                                                </td>
+                                                <td colSpan="2">
+                                                    {inscritosLista.length}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
