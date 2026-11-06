@@ -374,6 +374,12 @@ export function guardarEventos(lista) {
     refrescarColeccion(CLAVE_EVENTOS);
 }
 
+export function contarInscritos(evento) {
+    if (!evento) return 0;
+    const base = Number(evento.inscritos) || 0;
+    return base + (participantesLocales.get(evento.id)?.size ?? 0);
+}
+
 export async function contarInscritosAsync(evento) {
     if (!evento) return 0;
     // Try to get actual inscription count from backend API
