@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import useAuth from "../../context/useAuth";
 import Icon from "../../components/Icon/Icon";
 import {
@@ -7,8 +8,18 @@ import {
 } from "../../utils/avatar";
 import "./Perfil.css";
 
+// Icono que corresponde al rol (antes estaba hardcodeado "estudiante"
+// para todos los usuarios, incluso administradores y docentes).
+const ICONO_POR_ROL = {
+    Administrador: "admin",
+    Administrativo: "admin",
+    Coordinador: "admin",
+    Docente: "docente"
+};
+
 function Perfil() {
     const { user } = useAuth();
+    const navigate = useNavigate();
 
     // La foto es de solo lectura aquí: se cambia desde Configuración.
     const foto = getPhotoByUserId(user?.id) || "";
@@ -19,24 +30,33 @@ function Perfil() {
     const correo = user?.correo || "—";
     const usuario = user?.usuario || "—";
 
+    // Datos reales que entrega la sesión (mapearUsuarioSesion). Antes la
+    // página mostraba valores inventados ("1.102.XXX.XXX", "Facultad de
+    // Ingeniería", "2026-II", "+57 300 XXX XXXX", "Sincelejo, Sucre"...).
+    const cedula = user?.cedula || "—";
+    const telefono = user?.telefono || "—";
+    const campus = user?.campus || "—";
+    const cargo = user?.cargo || "—";
+    const estado = user?.estado || "Activo";
+    const cuentaActiva = String(estado).trim().toLowerCase() === "activo";
+    const iconoRol = ICONO_POR_ROL[rol] || "estudiante";
+
     const infoPersonal = [
         { label: "Nombre completo", value: user?.nombre || "—" },
         { label: "Tipo de usuario", value: rol },
         { label: "Usuario", value: usuario },
-        { label: "Documento", value: "1.102.XXX.XXX" }
+        { label: "Documento", value: cedula }
     ];
 
     const infoAcademica = [
         { label: "Programa / Dependencia", value: programa },
-        { label: "Facultad", value: "Facultad de Ingeniería" },
-        { label: "Semestre", value: "2026-II" },
-        { label: "Tipo de usuario", value: rol }
+        { label: "Campus", value: campus },
+        { label: "Cargo", value: cargo }
     ];
 
     const infoCuenta = [
         { label: "Rol", value: rol.toUpperCase() },
-        { label: "Estado", value: "Activa" },
-        { label: "Fecha de registro", value: "15 de enero de 2025" },
+        { label: "Estado", value: estado },
         { label: "Plataforma", value: "UAJS Smart Campus" }
     ];
 
@@ -47,7 +67,10 @@ function Perfil() {
                     <p>Consulta y administra tu información personal y académica.</p>
                 </div>
 
-                <button className="button button--outline button--md">
+                <button
+                    className="button button--outline button--md"
+                    onClick={() => navigate("/configuracion")}
+                >
                     <Icon name="configuracion" size={14} />
                     Editar información
                 </button>
@@ -80,18 +103,28 @@ function Perfil() {
 
                 <div className="perfil__hero-main">
                     <h2>{user?.nombre}</h2>
-                    <p>Estudiante · Universidad Antonio José de Sucre</p>
+                    <p>{rol} · Universidad Antonio José de Sucre</p>
                     <span className="perfil__role-badge">
-                        <Icon name="estudiante" size={12} />
+                        <Icon name={iconoRol} size={12} />
                         {rol.toUpperCase()}
                     </span>
                 </div>
 
                 <div className="perfil__account-status">
                     <div className="perfil__account-status-label">Estado de cuenta</div>
-                    <div className="perfil__account-status-value">
-                        <span className="perfil__status-dot" />
-                        Cuenta activa
+                    <div
+                        className={
+                            "perfil__account-status-value" +
+                            (cuentaActiva ? "" : " perfil__account-status-value--inactiva")
+                        }
+                    >
+                        <span
+                            className={
+                                "perfil__status-dot" +
+                                (cuentaActiva ? "" : " perfil__status-dot--inactiva")
+                            }
+                        />
+                        {cuentaActiva ? "Cuenta activa" : `Cuenta ${estado.toLowerCase()}`}
                     </div>
                 </div>
             </div>
@@ -125,7 +158,7 @@ function Perfil() {
                         </div>
                         <div>
                             <h2>Información académica</h2>
-                            <p>Información del estudiante</p>
+                            <p>Programa, campus y cargo de la cuenta</p>
                         </div>
                     </div>
 
@@ -166,7 +199,7 @@ function Perfil() {
                         </div>
                         <div className="perfil__contact-info">
                             <span className="perfil__contact-label">Teléfono</span>
-                            <span className="perfil__contact-value">+57 300 XXX XXXX</span>
+                            <span className="perfil__contact-value">{telefono}</span>
                         </div>
                     </div>
 
@@ -175,8 +208,8 @@ function Perfil() {
                             <Icon name="eventos" size={14} />
                         </div>
                         <div className="perfil__contact-info">
-                            <span className="perfil__contact-label">Ubicación</span>
-                            <span className="perfil__contact-value">Sincelejo, Sucre</span>
+                            <span className="perfil__contact-label">Campus</span>
+                            <span className="perfil__contact-value">{campus}</span>
                         </div>
                     </div>
                 </div>
@@ -198,9 +231,16 @@ function Perfil() {
                         </div>
                         <div className="perfil__security-info">
                             <div className="perfil__security-title">Contraseña</div>
-                            <div className="perfil__security-description">Última modificación hace 30 días</div>
+                            <div className="perfil__security-description">
+                                Actualízala cuando lo necesites
+                            </div>
                         </div>
-                        <button className="perfil__security-button">Cambiar</button>
+                        <button
+                            className="perfil__security-button"
+                            onClick={() => navigate("/configuracion")}
+                        >
+                            Cambiar
+                        </button>
                     </div>
 
                     <div className="perfil__security-row">
@@ -211,7 +251,12 @@ function Perfil() {
                             <div className="perfil__security-title">Autenticación</div>
                             <div className="perfil__security-description">Acceso mediante cuenta institucional</div>
                         </div>
-                        <button className="perfil__security-button">Configurar</button>
+                        <button
+                            className="perfil__security-button"
+                            onClick={() => navigate("/configuracion")}
+                        >
+                            Configurar
+                        </button>
                     </div>
 
                     <div className="perfil__security-row">
@@ -220,9 +265,16 @@ function Perfil() {
                         </div>
                         <div className="perfil__security-info">
                             <div className="perfil__security-title">Último acceso</div>
-                            <div className="perfil__security-description">Hoy, 10:23 a. m.</div>
+                            <div className="perfil__security-description">
+                                Historial disponible en Configuración
+                            </div>
                         </div>
-                        <button className="perfil__security-button">Ver</button>
+                        <button
+                            className="perfil__security-button"
+                            onClick={() => navigate("/configuracion")}
+                        >
+                            Ver
+                        </button>
                     </div>
                 </div>
 

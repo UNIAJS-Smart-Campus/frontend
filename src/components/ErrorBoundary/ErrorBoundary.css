@@ -1,0 +1,109 @@
+/* ============ ERROR BOUNDARY ============ */
+/* Mismo lenguaje visual que PageLoading: panel centrado sobre el fondo
+   de la app, con variables de tema (funciona en modo claro y oscuro). */
+
+.error-boundary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-body, "Inter", "Segoe UI", Arial, sans-serif);
+}
+
+/* Pantalla completa: cuando el error ocurre fuera del layout. */
+.error-boundary--screen {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    padding: 24px;
+    background: var(--color-bg, #f2f2f2);
+}
+
+/* Dentro del dashboard: solo el área de contenido, sin tapar el menú. */
+.error-boundary--content {
+    min-height: min(60vh, 420px);
+    width: 100%;
+    padding: 24px;
+    background: transparent;
+}
+
+.error-boundary__panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    max-width: 520px;
+    padding: 30px 34px;
+    text-align: center;
+    border-radius: 16px;
+    background: var(--color-surface, #ffffff);
+    border: 1px solid var(--color-border, #dde1e6);
+    box-shadow: 0 10px 30px rgba(2, 48, 89, 0.08);
+}
+
+.error-boundary--content .error-boundary__panel {
+    box-shadow: 0 6px 18px rgba(2, 48, 89, 0.06);
+}
+
+.error-boundary__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    font-size: 24px;
+    font-weight: 800;
+    color: #ffffff;
+    background: var(--color-danger, #ef4444);
+}
+
+.error-boundary__title {
+    margin: 4px 0 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-text, #273e4e);
+}
+
+.error-boundary__hint {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-text-secondary, #7a848a);
+}
+
+.error-boundary__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.error-boundary__details {
+    width: 100%;
+    margin-top: 8px;
+    text-align: left;
+    font-size: 12px;
+    color: var(--color-text-secondary, #7a848a);
+}
+
+.error-boundary__details summary {
+    cursor: pointer;
+    user-select: none;
+}
+
+.error-boundary__details pre {
+    max-height: 160px;
+    margin: 8px 0 0;
+    padding: 10px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: var(--font-mono, "Consolas", "SFMono-Regular", monospace);
+    font-size: 11px;
+    line-height: 1.5;
+    border-radius: 8px;
+    background: var(--color-bg, #f2f2f2);
+    border: 1px solid var(--color-border, #dde1e6);
+    color: var(--color-text, #273e4e);
+}

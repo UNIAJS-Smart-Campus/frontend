@@ -141,6 +141,16 @@
     border-radius: 50%;
 }
 
+/* Cuenta no activa: el punto y el texto pasan a rojo (antes todo se
+   pintaba verde y decía "Cuenta activa" sin importar el estado real). */
+.perfil__account-status-value--inactiva {
+    color: var(--color-danger);
+}
+
+.perfil__status-dot--inactiva {
+    background: var(--color-danger);
+}
+
 /* ============ GRID ============ */
 .perfil__grid {
     display: grid;

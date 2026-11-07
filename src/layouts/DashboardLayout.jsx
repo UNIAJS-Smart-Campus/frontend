@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Navbar from "../components/Navbar/Navbar";
 import PageLoading from "../components/PageLoading/PageLoading";
+import ErrorBoundary from "../components/ErrorBoundary/ErrorBoundary";
 import useKeyboardShortcuts from "../hooks/useKeyboardShortcuts";
 import useAuth from "../context/useAuth";
 import { SessionGuard } from "../context/AuthContext";
@@ -85,17 +86,23 @@ function DashboardLayout() {
 
                 <main className="app__content">
                     <div className="app__content-inner" key={location.pathname}>
-                        <Suspense
-                            fallback={
-                                <PageLoading
-                                    variant="content"
-                                    label="Cargando módulo..."
-                                    hint="Un momento, estamos preparando la información"
-                                />
-                            }
-                        >
-                            <Outlet />
-                        </Suspense>
+                        {/* Si un módulo falla al renderizar se muestra un
+                            fallback con "Reintentar" en lugar de dejar el
+                            contenido en blanco; el sidebar y la navbar siguen
+                            funcionando para poder navegar a otra ruta. */}
+                        <ErrorBoundary resetKey={location.pathname}>
+                            <Suspense
+                                fallback={
+                                    <PageLoading
+                                        variant="content"
+                                        label="Cargando módulo..."
+                                        hint="Un momento, estamos preparando la información"
+                                    />
+                                }
+                            >
+                                <Outlet />
+                            </Suspense>
+                        </ErrorBoundary>
                     </div>
                 </main>
             </div>
