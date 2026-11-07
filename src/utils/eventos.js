@@ -511,8 +511,10 @@ export async function obtenerDetalleInscriptos(idEvento) {
 
         const detallesInscriptos = filas.map((fila) => {
             const nombre = `${fila.nombre ?? ""} ${fila.apellido ?? ""}`.trim() || "Participante";
+            // Usar cedula primero; si no existe, usar identificacion como fallback
+            const cedula = fila.cedula || fila.identificacion || fila.id_usuario.toString();
             return {
-                cedula: fila.identificacion || fila.id_usuario.toString(),
+                cedula: cedula,
                 nombre: nombre,
                 programa: fila.programa || "No especificado",
                 fechaInscripcion: String(fila.fecha_inscripcion ?? "").slice(0, 10),
