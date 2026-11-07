@@ -84,7 +84,16 @@ function RolesPrograma() {
         && String(item.programa || "").trim().toLowerCase() === programa.toLowerCase()
     ).length;
 
-    const guardar = async (asignacionesParaGuardar = asignaciones) => {
+    const guardar = async (asignacionesParaGuardar) => {
+        // Defensa: si se invoca desde un evento (onClick={guardar}), el primer
+        // argumento es el evento y NO las asignaciones. Se ignora lo que no sea
+        // un objeto plano para no borrar los programas guardados.
+        const esObjetoValido =
+            asignacionesParaGuardar &&
+            typeof asignacionesParaGuardar === "object" &&
+            !Array.isArray(asignacionesParaGuardar);
+        const origen = esObjetoValido ? asignacionesParaGuardar : asignaciones;
+
         setGuardando(true);
         setError("");
         try {
@@ -94,7 +103,7 @@ function RolesPrograma() {
                 {
                     permisos: actual?.[rol.nombre]?.permisos || rol.permisos,
                     acciones: actual?.[rol.nombre]?.acciones || rol.acciones,
-                    programas: asignacionesParaGuardar[rol.nombre] || []
+                    programas: origen[rol.nombre] || []
                 }
             ]));
             await configurationApi.updateRolePermissions(roles);
@@ -205,7 +214,11 @@ function RolesPrograma() {
                                 </tbody>
                             </table>
                         </div>
-                        <button className="config__primary-button" onClick={guardar} disabled={guardando}>
+                        <button
+                            className="config__primary-button"
+                            onClick={() => guardar()}
+                            disabled={guardando}
+                        >
                             {guardando ? "Guardando..." : "Guardar asignaciones"}
                         </button>
                     </>
