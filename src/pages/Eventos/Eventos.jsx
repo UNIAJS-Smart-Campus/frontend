@@ -87,6 +87,7 @@ function Eventos() {
     const [intento, setIntento] = useState(0);
     const [inscritosLista, setInscritosLista] = useState([]);
     const [cargandoInscritos, setCargandoInscritos] = useState(false);
+    const [busquedaInscritos, setBusquedaInscritos] = useState("");
 
     useEffect(() => {
         if (!inscritosDe) return;
@@ -644,15 +645,16 @@ function Eventos() {
                     onClick={() => {
                         setInscritosDe(null);
                         setInscritosLista([]);
+                        setBusquedaInscritos("");
                     }}
                 >
                     <div
-                        className="eventos__modal"
+                        className="eventos__modal eventos__modal--wide"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="eventos__modal-header">
                             <div>
-                                <h2>Inscritos</h2>
+                                <h2>Lista de inscritos</h2>
                                 <p>
                                     {items.find(
                                         (i) => i.id === inscritosDe.id
@@ -662,9 +664,11 @@ function Eventos() {
                             </div>
                             <button
                                 className="eventos__modal-close"
+                                aria-label="Cerrar"
                                 onClick={() => {
                                     setInscritosDe(null);
                                     setInscritosLista([]);
+                                    setBusquedaInscritos("");
                                 }}
                             >
                                 ×
@@ -683,51 +687,129 @@ function Eventos() {
                             ) : (
                                 <div className="eventos__inscritos-table">
                                     <div className="eventos__table-toolbar">
-                                        <h3>Lista de Inscritos</h3>
-                                        <button
-                                            className="eventos__export-button"
-                                            onClick={exportarInscritosCSV}
-                                        >
-                                            Exportar a CSV
-                                        </button>
-                                    </div>
-                                    <table className="eventos__inscritos-table">
-                                        <thead>
-                                            <tr>
-                                                <th>#</th>
-                                                <th>Cédula</th>
-                                                <th>Nombre</th>
-                                                <th>Carrera</th>
-                                                <th>Fecha de Inscripción</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {inscritosLista.map((p, i) => (
-                                                <tr
-                                                    key={`${p.cedula}-${i}`}
-                                                    className={
-                                                        i % 2 === 0
-                                                            ? "eventos__table-row--even"
-                                                            : "eventos__table-row--odd"
-                                                    }
+                                        <div className="eventos__table-count">
+                                            <span className="eventos__count-badge">
+                                                {inscritosLista.length}
+                                            </span>
+                                            <span>
+                                                inscrito
+                                                {inscritosLista.length !== 1
+                                                    ? "s"
+                                                    : ""}
+                                            </span>
+                                        </div>
+                                        <div className="eventos__table-actions">
+                                            <input
+                                                type="search"
+                                                className="eventos__table-search"
+                                                placeholder="Buscar por cédula, nombre o carrera…"
+                                                value={busquedaInscritos}
+                                                onChange={(e) =>
+                                                    setBusquedaInscritos(
+                                                        e.target.value
+                                                    )
+                                                }
+                                            />
+                                            <button
+                                                className="eventos__export-button"
+                                                onClick={exportarInscritosCSV}
+                                            >
+                                                <svg
+                                                    width="13"
+                                                    height="13"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2.2"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
                                                 >
-                                                    <td>{i + 1}</td>
-                                                    <td>{p.cedula}</td>
-                                                    <td>{p.nombre}</td>
-                                                    <td>{p.programa}</td>
-                                                    <td>{p.fechaInscripcion}</td>
+                                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                                    <polyline points="7 10 12 15 17 10" />
+                                                    <line x1="12" y1="15" x2="12" y2="3" />
+                                                </svg>
+                                                CSV
+                                            </button>
+                                            <button
+                                                className="eventos__export-button eventos__export-button--print"
+                                                onClick={() =>
+                                                    window.print()
+                                                }
+                                            >
+                                                <svg
+                                                    width="13"
+                                                    height="13"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2.2"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                >
+                                                    <polyline points="6 9 6 2 18 2 18 9" />
+                                                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                                    <rect x="6" y="14" width="12" height="8" />
+                                                </svg>
+                                                Imprimir
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="eventos__table-scroll">
+                                        <table className="eventos__inscritos-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Cédula</th>
+                                                    <th>Nombre</th>
+                                                    <th>Carrera</th>
+                                                    <th>Fecha de Inscripción</th>
                                                 </tr>
-                                            ))}
-                                            <tr className="eventos__table-row--total">
-                                                <td colSpan="3">
-                                                    <strong>Total de inscritos</strong>
-                                                </td>
-                                                <td colSpan="2">
-                                                    {inscritosLista.length}
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody>
+                                                {inscritosLista
+                                                    .filter((p) => {
+                                                        const q =
+                                                            busquedaInscritos
+                                                                .trim()
+                                                                .toLowerCase();
+                                                        if (!q) return true;
+                                                        return [
+                                                            p.cedula,
+                                                            p.nombre,
+                                                            p.programa,
+                                                        ]
+                                                            .join(" ")
+                                                            .toLowerCase()
+                                                            .includes(q);
+                                                    })
+                                                    .map((p, i) => (
+                                                        <tr key={`${p.cedula}-${i}`}>
+                                                            <td>{i + 1}</td>
+                                                            <td className="eventos__td-cedula">
+                                                                {p.cedula}
+                                                            </td>
+                                                            <td>{p.nombre}</td>
+                                                            <td>{p.programa}</td>
+                                                            <td>
+                                                                {
+                                                                    p.fechaInscripcion
+                                                                }
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                <tr className="eventos__table-row--total">
+                                                    <td colSpan="3">
+                                                        <strong>
+                                                            Total de inscritos
+                                                        </strong>
+                                                    </td>
+                                                    <td colSpan="2">
+                                                        {inscritosLista.length}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             )}
                         </div>

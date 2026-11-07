@@ -472,6 +472,10 @@
     animation: eventos-modal-in 0.2s ease;
 }
 
+.eventos__modal--wide {
+    max-width: 860px;
+}
+
 @keyframes eventos-modal-in {
     from { opacity: 0; transform: translateY(10px) scale(0.98); }
     to { opacity: 1; transform: translateY(0) scale(1); }
@@ -939,6 +943,7 @@
     width: 100%;
 }
 
+/* --- Toolbar: contador + acciones --- */
 .eventos__table-toolbar {
     display: flex;
     align-items: center;
@@ -948,78 +953,173 @@
     flex-wrap: wrap;
 }
 
-.eventos__table-toolbar h3 {
-    margin: 0;
-    font-family: var(--font-heading);
-    font-size: 15px;
+.eventos__table-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--color-text-muted);
+    font-weight: 600;
+}
+
+.eventos__count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--color-primary-600), var(--color-primary-700));
+    color: #fff;
+    font-size: 12px;
     font-weight: 800;
+    box-shadow: 0 2px 6px rgba(2, 94, 115, 0.3);
+}
+
+.eventos__table-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* --- Buscador dentro del modal --- */
+.eventos__table-search {
+    border: 1px solid var(--color-border);
+    background: var(--color-input-bg);
     color: var(--color-text);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-family: inherit;
+    outline: none;
+    min-width: 230px;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.eventos__table-search::placeholder {
+    color: var(--color-text-muted);
+}
+
+.eventos__table-search:focus {
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 3px rgba(14, 122, 146, 0.15);
 }
 
 .eventos__export-button {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    border: none;
-    background: var(--color-surface);
+    gap: 6px;
     border: 1px solid var(--color-border);
+    background: var(--color-surface);
     color: var(--color-text);
-    border-radius: 7px;
-    padding: 8px 14px;
+    border-radius: 8px;
+    padding: 8px 13px;
     font-size: 10px;
     font-weight: 700;
     cursor: pointer;
     white-space: nowrap;
-    transition: border-color var(--transition-fast), background var(--transition-fast);
+    letter-spacing: 0.02em;
+    transition: border-color var(--transition-fast), background var(--transition-fast),
+        transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .eventos__export-button:hover {
     border-color: var(--color-primary-600);
     background: var(--color-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
 }
 
+.eventos__export-button:active {
+    transform: translateY(0);
+}
+
+.eventos__export-button--print {
+    background: linear-gradient(135deg, var(--color-primary-600), var(--color-primary-700));
+    border-color: transparent;
+    color: #fff;
+}
+
+.eventos__export-button--print:hover {
+    background: linear-gradient(135deg, var(--color-primary-700), var(--color-primary-600));
+    border-color: transparent;
+    box-shadow: 0 3px 10px rgba(2, 94, 115, 0.3);
+}
+
+/* --- Contenedor con scroll interno (tabla larga) --- */
+.eventos__table-scroll {
+    max-height: 52vh;
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background-color: var(--color-surface);
+}
+
+/* --- Tabla --- */
 .eventos__inscritos-table table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 9px;
-    overflow: hidden;
-    font-size: 11px;
+    font-size: 11.5px;
 }
 
-.eventos__inscritos-table th {
-    background-color: var(--color-hover);
-    color: var(--color-text-muted);
-    font-weight: 800;
+.eventos__inscritos-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: linear-gradient(180deg, var(--color-primary-600), var(--color-primary-700));
+    color: #fff;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
-    padding: 11px 10px;
+    letter-spacing: 0.05em;
+    font-size: 10px;
+    padding: 12px 12px;
     text-align: left;
-    border-bottom: 2px solid var(--color-border-strong);
+    border-bottom: 2px solid var(--color-primary-700);
     white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(2, 94, 115, 0.12);
 }
 
-.eventos__inscritos-table td {
-    padding: 10px;
+.eventos__inscritos-table tbody td {
+    padding: 10px 12px;
     border-bottom: 1px solid var(--color-border);
     color: var(--color-text);
+    vertical-align: middle;
 }
 
-.eventos__inscritos-table tr:last-child td {
-    border-bottom: none;
-}
-
-.eventos__table-row--even {
+/* Filas tipo Excel: zebra + hover */
+.eventos__inscritos-table tbody tr:nth-child(even):not(.eventos__table-row--total) {
     background-color: var(--color-surface-alt);
 }
 
-.eventos__table-row--odd {
+.eventos__inscritos-table tbody tr:nth-child(odd):not(.eventos__table-row--total) {
     background-color: var(--color-surface);
 }
 
-.eventos__table-row--total {
+.eventos__inscritos-table tbody tr:not(.eventos__table-row--total):hover {
     background-color: var(--color-primary-50);
+    transition: background 0.12s ease;
+}
+
+.eventos__inscritos-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Celda cédula en monoespaciada (tipo Excel/contabilidad) */
+.eventos__td-cedula {
+    font-family: "SF Mono", "Cascadia Mono", Consolas, "Roboto Mono", monospace;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--color-primary-700) !important;
+    white-space: nowrap;
+}
+
+/* Fila de total */
+.eventos__table-row--total {
+    background-color: var(--color-primary-50) !important;
     font-weight: 800;
     border-top: 2px solid var(--color-primary-600);
 }
@@ -1027,23 +1127,42 @@
 .eventos__table-row--total td {
     color: var(--color-primary-700);
     border-bottom: none;
+    font-size: 12px;
 }
 
 .eventos__inscritos-table th:first-child,
 .eventos__inscritos-table td:first-child {
-    width: 40px;
+    width: 44px;
     text-align: center;
+    color: var(--color-text-muted);
+    font-weight: 600;
 }
 
+.eventos__inscritos-table th:last-child,
 .eventos__inscritos-table td:last-child {
     width: 150px;
+    white-space: nowrap;
 }
 
 /* ============ RESPONSIVE ============ */
 @media (max-width: 600px) {
+    .eventos__modal--wide {
+        max-width: 100%;
+        padding: 16px;
+    }
+
     .eventos__table-toolbar {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .eventos__table-actions {
+        flex-direction: column;
+    }
+
+    .eventos__table-search {
+        min-width: 0;
+        width: 100%;
     }
 
     .eventos__export-button {
@@ -1054,8 +1173,64 @@
         font-size: 10px;
     }
 
-    .eventos__inscritos-table th,
-    .eventos__inscritos-table td {
+    .eventos__inscritos-table thead th,
+    .eventos__inscritos-table tbody td {
         padding: 7px 8px;
+    }
+}
+
+/* ============ IMPRESIÓN ============ */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    .eventos__overlay,
+    .eventos__overlay * {
+        visibility: visible;
+    }
+
+    .eventos__overlay {
+        position: absolute;
+        inset: 0;
+        background: none;
+        padding: 0;
+        z-index: 999;
+    }
+
+    .eventos__modal {
+        max-width: 100%;
+        max-height: none;
+        overflow: visible;
+        box-shadow: none;
+        border-radius: 0;
+        padding: 0;
+    }
+
+    .eventos__modal-close,
+    .eventos__table-actions {
+        display: none !important;
+    }
+
+    .eventos__table-scroll {
+        max-height: none;
+        overflow: visible;
+        border: none;
+    }
+
+    .eventos__inscritos-table thead th {
+        position: static;
+        background: var(--color-primary-700) !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .eventos__inscritos-table tbody tr {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .eventos__inscritos-table tbody td {
+        border-bottom: 1px solid #ccc;
     }
 }
